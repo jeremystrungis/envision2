@@ -130,9 +130,9 @@ export default function GanttChart() {
                     const toRect = toTaskEl.getBoundingClientRect();
 
                     const startX = fromRect.right - containerRect.left + containerRef.current.scrollLeft;
-                    const startY = fromRect.top - containerRect.top + fromRect.height / 2 + containerRef.current.scrollTop - 1 ;
+                    const startY = fromRect.top - containerRect.top + fromRect.height / 2;
                     const endX = toRect.left - containerRect.left + containerRef.current.scrollLeft;
-                    const endY = toRect.top - containerRect.top + toRect.height / 2 + containerRef.current.scrollTop -1 ;
+                    const endY = toRect.top - containerRect.top + toRect.height / 2;
 
                     return (
                       <g key={`${depId}-${task.id}`}>
