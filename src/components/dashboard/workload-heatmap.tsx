@@ -90,7 +90,7 @@ export default function WorkloadHeatmap() {
             </Button>
           </div>
           <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[240px]">
               <SelectValue placeholder="Select Team" />
             </SelectTrigger>
             <SelectContent>
