@@ -94,7 +94,7 @@ export default function GanttChart() {
                       <div
                         ref={el => taskRefs.current[task.id] = el}
                         className={cn("absolute flex items-center h-[30px] rounded bg-primary/80 hover:bg-primary text-primary-foreground text-xs px-2 cursor-pointer transition-all duration-300",
-                          isWithinInterval(new Date(), {start: task.startDate, end: task.endDate}) && "animate-pulse border-2 border-accent"
+                          isWithinInterval(new Date(), {start: task.startDate, end: task.endDate}) && "animate-slow-pulse border-2 border-accent"
                         )}
                         style={{ top: `${index * GANTT_ROW_HEIGHT + 5}px`, ...getTaskStyle(task) }}
                       >

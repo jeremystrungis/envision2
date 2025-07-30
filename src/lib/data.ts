@@ -3,7 +3,7 @@ import { subDays, addDays } from "date-fns";
 export interface User {
   id: string;
   name: string;
-  team: 'Frontend' | 'Backend' | 'DevOps' | 'QA';
+  team: 'System Planning' | 'Protection & Control' | 'Substation Engineering' | 'Transmission Line Design';
   avatar: string;
   capacity: number; // hours per day
 }
@@ -25,12 +25,12 @@ export interface Project {
 }
 
 export const users: User[] = [
-  { id: 'user-1', name: 'Alice Johnson', team: 'Frontend', avatar: '/avatars/01.png', capacity: 8 },
-  { id: 'user-2', name: 'Bob Williams', team: 'Backend', avatar: '/avatars/02.png', capacity: 8 },
-  { id: 'user-3', name: 'Charlie Brown', team: 'Frontend', avatar: '/avatars/03.png', capacity: 6 },
-  { id: 'user-4', name: 'Diana Miller', team: 'DevOps', avatar: '/avatars/04.png', capacity: 8 },
-  { id: 'user-5', name: 'Ethan Garcia', team: 'Backend', avatar: '/avatars/05.png', capacity: 8 },
-  { id: 'user-6', name: 'Fiona Davis', team: 'QA', avatar: '/avatars/06.png', capacity: 8 },
+  { id: 'user-1', name: 'Alice Johnson', team: 'System Planning', avatar: '/avatars/01.png', capacity: 8 },
+  { id: 'user-2', name: 'Bob Williams', team: 'Protection & Control', avatar: '/avatars/02.png', capacity: 8 },
+  { id: 'user-3', name: 'Charlie Brown', team: 'System Planning', avatar: '/avatars/03.png', capacity: 6 },
+  { id: 'user-4', name: 'Diana Miller', team: 'Substation Engineering', avatar: '/avatars/04.png', capacity: 8 },
+  { id: 'user-5', name: 'Ethan Garcia', team: 'Protection & Control', avatar: '/avatars/05.png', capacity: 8 },
+  { id: 'user-6', name: 'Fiona Davis', team: 'Transmission Line Design', avatar: '/avatars/06.png', capacity: 8 },
 ];
 
 export const projects: Project[] = [

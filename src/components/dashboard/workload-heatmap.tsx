@@ -95,10 +95,10 @@ export default function WorkloadHeatmap() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All">All Teams</SelectItem>
-              <SelectItem value="Frontend">Frontend</SelectItem>
-              <SelectItem value="Backend">Backend</SelectItem>
-              <SelectItem value="DevOps">DevOps</SelectItem>
-              <SelectItem value="QA">QA</SelectItem>
+              <SelectItem value="System Planning">System Planning</SelectItem>
+              <SelectItem value="Protection & Control">Protection & Control</SelectItem>
+              <SelectItem value="Substation Engineering">Substation Engineering</SelectItem>
+              <SelectItem value="Transmission Line Design">Transmission Line Design</SelectItem>
             </SelectContent>
           </Select>
         </div>
