@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { eachDayOfInterval, differenceInDays, format, isWithinInterval } from 'date-fns';
@@ -122,16 +123,16 @@ export default function GanttChart() {
                   task.dependencies.map(depId => {
                     const fromTaskEl = taskRefs.current[depId];
                     const toTaskEl = taskRefs.current[task.id];
-                    if (!fromTaskEl || !toTaskEl) return null;
+                    if (!fromTaskEl || !toTaskEl || !containerRef.current) return null;
 
+                    const containerRect = containerRef.current.getBoundingClientRect();
                     const fromRect = fromTaskEl.getBoundingClientRect();
                     const toRect = toTaskEl.getBoundingClientRect();
-                    const containerRect = containerRef.current!.getBoundingClientRect();
 
-                    const startX = fromRect.right - containerRect.left + containerRef.current!.scrollLeft;
-                    const startY = fromRect.top - containerRect.top + fromRect.height / 2;
-                    const endX = toRect.left - containerRect.left + containerRef.current!.scrollLeft;
-                    const endY = toRect.top - containerRect.top + toRect.height / 2;
+                    const startX = fromRect.right - containerRect.left + containerRef.current.scrollLeft;
+                    const startY = fromRect.top - containerRect.top + fromRect.height / 2 + containerRef.current.scrollTop;
+                    const endX = toRect.left - containerRect.left + containerRef.current.scrollLeft;
+                    const endY = toRect.top - containerRect.top + toRect.height / 2 + containerRef.current.scrollTop;
 
                     return (
                       <g key={`${depId}-${task.id}`}>
