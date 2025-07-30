@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Pie, PieChart, Tooltip } from 'recharts';
+import { Pie, PieChart, Tooltip, Cell } from 'recharts';
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -8,17 +9,20 @@ import {
   ChartLegendContent,
 } from '@/components/ui/chart';
 import { projects } from '@/lib/data';
+import { useMemo } from 'react';
 
 export default function ProjectStatusChart() {
-  const statusCounts = projects.reduce((acc, project) => {
-    acc[project.status] = (acc[project.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const chartData = useMemo(() => {
+    const statusCounts = projects.reduce((acc, project) => {
+      acc[project.status] = (acc[project.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-  const chartData = Object.keys(statusCounts).map((status) => ({
-    status,
-    count: statusCounts[status],
-  }));
+    return Object.keys(statusCounts).map((status) => ({
+      status,
+      count: statusCounts[status],
+    }));
+  }, []);
 
   const chartConfig = {
     count: {
@@ -34,7 +38,7 @@ export default function ProjectStatusChart() {
     },
     'Off Track': {
       label: 'Off Track',
-      color: 'hsl(var(--destructive))',
+      color: 'hsl(var(--chart-5))',
     },
   };
 
@@ -55,17 +59,16 @@ export default function ProjectStatusChart() {
           innerRadius={60}
           strokeWidth={5}
         >
-            {chartData.map((entry, index) => (
-                <g key={`cell-${index}`}>
-                    <path
-                        fill={chartConfig[entry.status as keyof typeof chartConfig]?.color}
-                    />
-                </g>
-            ))}
+          {chartData.map((entry) => (
+            <Cell
+              key={entry.status}
+              fill={chartConfig[entry.status as keyof typeof chartConfig]?.color}
+            />
+          ))}
         </Pie>
         <ChartLegend
-            content={<ChartLegendContent nameKey="status" />}
-            className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+          content={<ChartLegendContent nameKey="status" />}
+          className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
         />
       </PieChart>
     </ChartContainer>
