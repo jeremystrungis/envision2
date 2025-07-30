@@ -97,7 +97,7 @@ export default function GanttChart() {
                         className={cn("absolute flex items-center h-[30px] rounded bg-primary/80 hover:bg-primary text-primary-foreground text-xs px-2 cursor-pointer transition-all duration-300",
                           isWithinInterval(new Date(), {start: task.startDate, end: task.endDate}) && "animate-slow-pulse border-2 border-accent"
                         )}
-                        style={{ top: `${index * GANTT_ROW_HEIGHT + 5}px`, ...getTaskStyle(task) }}
+                        style={{ top: `${index * GANTT_ROW_HEIGHT + 4}px`, ...getTaskStyle(task) }}
                       >
                         <p className="truncate font-medium">{task.name}</p>
                         {getAssignee(task.assigneeId) && (
@@ -130,9 +130,9 @@ export default function GanttChart() {
                     const toRect = toTaskEl.getBoundingClientRect();
 
                     const startX = fromRect.right - containerRect.left + containerRef.current.scrollLeft;
-                    const startY = fromRect.top - containerRect.top + fromRect.height / 2 + containerRef.current.scrollTop;
+                    const startY = fromRect.top - containerRect.top + fromRect.height / 2 + containerRef.current.scrollTop - 1 ;
                     const endX = toRect.left - containerRect.left + containerRef.current.scrollLeft;
-                    const endY = toRect.top - containerRect.top + toRect.height / 2 + containerRef.current.scrollTop;
+                    const endY = toRect.top - containerRect.top + toRect.height / 2 + containerRef.current.scrollTop -1 ;
 
                     return (
                       <g key={`${depId}-${task.id}`}>
