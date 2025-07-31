@@ -1,5 +1,5 @@
 
-import { subDays, addDays, isWithinInterval, isSameDay } from "date-fns";
+import { subDays, addDays, isWithinInterval } from "date-fns";
 
 export interface User {
   id: string;
@@ -60,25 +60,27 @@ export const tasks: Task[] = [
     { id: 'task-w1-5', name: 'Security Audit', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 1), endDate: addDays(today, 0), dependencies: [] },
     { id: 'task-w1-15', name: 'Documentation', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 0), endDate: addDays(today, 3), dependencies: [] },
 
-    // User 3 (Charlie) - Light
+    // User 3 (Charlie) - Light (should be blue)
     { id: 'task-w1-6', name: 'Code Review', projectId: 'proj-1', assigneeId: 'user-3', startDate: subDays(today, 0), endDate: addDays(today, 1), dependencies: [] },
 
     // User 4 (Diana) - Good
      { id: 'task-w1-7', name: 'Substation Design', projectId: 'proj-3', assigneeId: 'user-4', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
      { id: 'task-w1-8', name: 'Material Procurement', projectId: 'proj-3', assigneeId: 'user-4', startDate: subDays(today, 1), endDate: addDays(today, 3), dependencies: [] },
 
-    // User 5 (Ethan) - Overloaded
+    // User 5 (Ethan) - Overloaded (should be orange)
     { id: 'task-w1-9', name: 'Control System Logic', projectId: 'proj-3', assigneeId: 'user-5', startDate: subDays(today, 3), endDate: addDays(today, 1), dependencies: [] },
     { id: 'task-w1-10', name: 'P&C Schematics', projectId: 'proj-3', assigneeId: 'user-5', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
     { id: 'task-w1-11', name: 'Relay Settings', projectId: 'proj-3', assigneeId: 'user-5', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
     { id: 'task-w1-16', name: 'FAT Support', projectId: 'proj-3', assigneeId: 'user-5', startDate: subDays(today, 0), endDate: addDays(today, 1), dependencies: [] },
 
-    // User 6 (Fiona) - Critically Overloaded
+    // User 6 (Fiona) - Critically Overloaded (should be red)
     { id: 'task-w1-12', name: 'Transmission Line Analysis', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
     { id: 'task-w1-13', name: 'Tower Spotting', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
     { id: 'task-w1-14', name: 'Foundation Design', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
     { id: 'task-w1-17', name: 'Conductor Selection', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
     { id: 'task-w1-18', name: 'Insulator Config', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 1), endDate: addDays(today, 1), dependencies: [] },
+
+    // User 7 (George) - No tasks this week (should be blue)
 
     // Next Week
     { id: 'task-w2-1', name: 'UI Components', projectId: 'proj-1', assigneeId: 'user-1', startDate: addDays(today, 7), endDate: addDays(today, 11), dependencies: [] },

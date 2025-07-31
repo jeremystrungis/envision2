@@ -7,7 +7,6 @@ import {
   endOfWeek,
   eachDayOfInterval,
   format,
-  isSameDay,
   addDays,
   getDay,
 } from 'date-fns';
@@ -68,8 +67,8 @@ export default function WorkloadHeatmap() {
   }, [filteredUsers, weekDays]);
 
   const getWorkloadColor = (workload: number, capacity: number) => {
+    if (workload === 0) return 'bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30';
     const ratio = capacity > 0 ? workload / capacity : 0;
-    if (workload === 0) return 'bg-muted/20 hover:bg-muted/40';
     if (ratio < 0.5) return 'bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30';
     if (ratio < 0.9) return 'bg-green-500/20 hover:bg-green-500/30 border border-green-500/30';
     if (ratio <= 1) return 'bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30';
