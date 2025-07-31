@@ -10,6 +10,9 @@ import {
 } from '@/components/ui/chart';
 import { projects } from '@/lib/data';
 import { useMemo } from 'react';
+import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
+import { CardDescription } from '../ui/card';
 
 export default function ProjectStatusChart() {
   const chartData = useMemo(() => {
@@ -43,34 +46,57 @@ export default function ProjectStatusChart() {
   };
 
   return (
-    <ChartContainer
-      config={chartConfig}
-      className="mx-auto aspect-square h-[250px]"
-    >
-      <PieChart>
-        <Tooltip
-          cursor={false}
-          content={<ChartTooltipContent hideLabel nameKey="status" />}
-        />
-        <Pie
-          data={chartData}
-          dataKey="count"
-          nameKey="status"
-          innerRadius={60}
-          strokeWidth={5}
+    <div>
+        <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square h-[200px]"
         >
-          {chartData.map((entry) => (
-            <Cell
-              key={entry.status}
-              fill={chartConfig[entry.status as keyof typeof chartConfig]?.color}
-            />
-          ))}
-        </Pie>
-        <ChartLegend
-          content={<ChartLegendContent nameKey="status" />}
-          className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
-        />
-      </PieChart>
-    </ChartContainer>
+            <PieChart>
+                <Tooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel nameKey="status" />}
+                />
+                <Pie
+                data={chartData}
+                dataKey="count"
+                nameKey="status"
+                innerRadius={50}
+                strokeWidth={5}
+                >
+                {chartData.map((entry) => (
+                    <Cell
+                    key={entry.status}
+                    fill={chartConfig[entry.status as keyof typeof chartConfig]?.color}
+                    />
+                ))}
+                </Pie>
+                <ChartLegend
+                content={<ChartLegendContent nameKey="status" />}
+                className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+                />
+            </PieChart>
+        </ChartContainer>
+        <div className="mt-4 space-y-2">
+            <CardDescription>Individual Project Status</CardDescription>
+            <ul className="divide-y divide-border rounded-md border">
+                {projects.map(project => (
+                    <li key={project.id} className="flex items-center justify-between p-2">
+                        <span className="text-sm font-medium">{project.name}</span>
+                        <Badge
+                            variant={project.status === 'On Track' ? 'default' : project.status === 'At Risk' ? 'secondary' : 'destructive'}
+                            className={cn(
+                                'text-xs',
+                                project.status === 'On Track' && 'bg-green-600/80',
+                                project.status === 'At Risk' && 'bg-yellow-600/80',
+                                project.status === 'Off Track' && 'bg-red-600/80',
+                            )}
+                        >
+                            {project.status}
+                        </Badge>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    </div>
   );
 }
