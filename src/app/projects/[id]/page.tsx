@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { Project, Task } from '@/lib/data';
@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import EditTaskDialog from '@/components/projects/edit-task-dialog';
 import EditProjectDialog from '@/components/projects/edit-project-dialog';
+import AddTaskDialog from '@/components/projects/add-task-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 
@@ -29,6 +30,7 @@ export default function ProjectDetailsPage() {
   const { projects, tasks: allTasks, users } = useStore();
   
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isEditTaskOpen, setIsEditTaskOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -41,6 +43,11 @@ export default function ProjectDetailsPage() {
         store.updateProject(project.id, updatedProject);
     }
     setIsEditProjectOpen(false);
+  };
+
+  const handleAddTask = (newTask: Omit<Task, 'id' | 'projectId' | 'dependencies'>) => {
+    store.addTask({ ...newTask, projectId });
+    setIsAddTaskOpen(false);
   };
   
   const handleUpdateTask = (updatedTask: Omit<Task, 'id' | 'projectId' | 'dependencies'>) => {
@@ -117,7 +124,7 @@ export default function ProjectDetailsPage() {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Project
                         </Button>
-                        <Button>
+                        <Button onClick={() => setIsAddTaskOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add New Task
                         </Button>
@@ -199,6 +206,11 @@ export default function ProjectDetailsPage() {
             project={project}
         />
       )}
+      <AddTaskDialog
+        isOpen={isAddTaskOpen}
+        onClose={() => setIsAddTaskOpen(false)}
+        onAddTask={handleAddTask}
+      />
       {selectedTask && (
         <EditTaskDialog
             isOpen={isEditTaskOpen}
