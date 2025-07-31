@@ -31,6 +31,7 @@ const memberSchema = z.object({
   name: z.string().min(1, 'Member name is required'),
   team: z.enum(['System Planning', 'Protection & Control', 'Substation Engineering', 'Transmission Line Design']),
   capacity: z.coerce.number().min(1, 'Capacity must be at least 1 hour').max(12, 'Capacity cannot exceed 12 hours'),
+  avatar: z.string().url('Please enter a valid URL for the avatar.'),
 });
 
 type MemberFormValues = z.infer<typeof memberSchema>;
@@ -38,7 +39,7 @@ type MemberFormValues = z.infer<typeof memberSchema>;
 interface EditMemberDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdateUser: (user: Omit<User, 'id' | 'avatar'>) => void;
+  onUpdateUser: (user: Omit<User, 'id'>) => void;
   user: User;
 }
 
@@ -49,6 +50,7 @@ export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }
       name: user.name,
       team: user.team,
       capacity: user.capacity,
+      avatar: user.avatar,
     },
   });
 
@@ -57,6 +59,7 @@ export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }
         name: user.name,
         team: user.team,
         capacity: user.capacity,
+        avatar: user.avatar,
     })
   }, [user, form]);
 
@@ -83,6 +86,19 @@ export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Jane Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="avatar"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Avatar URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://i.pravatar.cc/150" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

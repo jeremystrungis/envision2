@@ -25,7 +25,7 @@ export default function TeamsPage() {
     setIsEditMemberOpen(true);
   };
 
-  const handleUpdateUser = (updatedUser: Omit<User, 'id' | 'avatar'>) => {
+  const handleUpdateUser = (updatedUser: Omit<User, 'id'>) => {
     if (selectedUser) {
       store.updateUser(selectedUser.id, updatedUser);
     }

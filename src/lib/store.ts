@@ -69,7 +69,7 @@ export const store = {
     emitChange();
   },
 
-  updateUser: (userId: string, updatedUser: Omit<User, 'id' | 'avatar'>) => {
+  updateUser: (userId: string, updatedUser: Omit<User, 'id'>) => {
       users = users.map(u => u.id === userId ? { ...u, ...updatedUser } : u);
       emitChange();
   }
