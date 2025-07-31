@@ -63,7 +63,11 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
   });
 
   const onSubmit = (data: TaskFormValues) => {
-    onUpdateTask(data);
+    const dataToSubmit = {
+        ...data,
+        assigneeId: data.assigneeId === 'unassigned' ? null : data.assigneeId,
+    };
+    onUpdateTask(dataToSubmit);
     form.reset();
   };
 
@@ -97,14 +101,14 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assignee</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+                   <Select onValueChange={field.onChange} defaultValue={field.value || "unassigned"}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a team member" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
                       {users.map(user => (
                         <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                       ))}
