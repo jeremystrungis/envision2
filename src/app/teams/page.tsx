@@ -1,18 +1,41 @@
 
 'use client';
 
+import React, { useState } from 'react';
 import AppHeader from '@/components/app-header';
 import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { users } from '@/lib/data';
+import { users as initialUsers, User } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import EditMemberDialog from '@/components/teams/edit-member-dialog';
 
 export default function TeamsPage() {
+  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
+
+  const handleEditClick = (user: User) => {
+    setSelectedUser(user);
+    setIsEditMemberOpen(true);
+  };
+
+  const handleUpdateUser = (updatedUser: Omit<User, 'id' | 'avatar'>) => {
+    if (selectedUser) {
+      setUsers(currentUsers =>
+        currentUsers.map(u =>
+          u.id === selectedUser.id ? { ...u, ...updatedUser } : u
+        )
+      );
+    }
+    setIsEditMemberOpen(false);
+    setSelectedUser(null);
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <AppSidebar />
@@ -72,7 +95,7 @@ export default function TeamsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditClick(user)}>Edit</DropdownMenuItem>
                             <DropdownMenuItem>Remove</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -85,6 +108,17 @@ export default function TeamsPage() {
           </Card>
         </main>
       </div>
+      {selectedUser && (
+        <EditMemberDialog
+            isOpen={isEditMemberOpen}
+            onClose={() => {
+                setIsEditMemberOpen(false);
+                setSelectedUser(null);
+            }}
+            onUpdateUser={handleUpdateUser}
+            user={selectedUser}
+        />
+      )}
     </div>
   );
 }
