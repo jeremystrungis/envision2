@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import AddProjectDialog from '@/components/projects/add-project-dialog';
+import Link from 'next/link';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
@@ -61,7 +62,9 @@ export default function ProjectsPage() {
                   {projects.map((project) => (
                     <TableRow key={project.id}>
                       <TableCell>
-                        <div className="font-medium">{project.name}</div>
+                        <Link href={`/projects/${project.id}`} className="font-medium hover:underline">
+                            {project.name}
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <Badge variant={
@@ -86,8 +89,9 @@ export default function ProjectsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href={`/projects/${project.id}`}>View Details</Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem>Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
