@@ -25,13 +25,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User } from '@/lib/data';
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useStore } from '@/lib/store';
 
 const memberSchema = z.object({
   name: z.string().min(1, 'Member name is required'),
-  team: z.enum(['System Planning', 'Protection & Control', 'Substation Engineering', 'Transmission Line Design']),
+  team: z.string().min(1, 'Team name cannot be empty'),
   capacity: z.coerce.number().min(1, 'Capacity must be at least 1 hour').max(12, 'Capacity cannot exceed 12 hours'),
   avatar: z.string().url('Please enter a valid URL for the avatar.'),
+  newTeamName: z.string().optional(),
 });
 
 type MemberFormValues = z.infer<typeof memberSchema>;
@@ -44,6 +46,14 @@ interface EditMemberDialogProps {
 }
 
 export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }: EditMemberDialogProps) {
+  const { users } = useStore();
+  const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
+
+  const existingTeams = useMemo(() => {
+    const teams = new Set(users.map(u => u.team));
+    return Array.from(teams);
+  }, [users]);
+
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
     defaultValues: {
@@ -51,6 +61,7 @@ export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }
       team: user.team,
       capacity: user.capacity,
       avatar: user.avatar,
+      newTeamName: '',
     },
   });
 
@@ -60,12 +71,26 @@ export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }
         team: user.team,
         capacity: user.capacity,
         avatar: user.avatar,
-    })
-  }, [user, form]);
+        newTeamName: '',
+    });
+    setIsAddingNewTeam(false);
+  }, [user, form, isOpen]);
 
   const onSubmit = (data: MemberFormValues) => {
-    onUpdateUser(data);
+    const finalTeam = isAddingNewTeam ? data.newTeamName : data.team;
+    const { newTeamName, ...userData } = data;
+    onUpdateUser({ ...userData, team: finalTeam as any });
   };
+  
+  const handleTeamChange = (value: string) => {
+    if (value === 'add_new_team') {
+        setIsAddingNewTeam(true);
+        form.setValue('team', 'add_new_team');
+    } else {
+        setIsAddingNewTeam(false);
+        form.setValue('team', value);
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -104,25 +129,38 @@ export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }
                 </FormItem>
               )}
             />
-            <FormField
+             <FormField
               control={form.control}
               name="team"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Team</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a team" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="System Planning">System Planning</SelectItem>
-                      <SelectItem value="Protection & Control">Protection & Control</SelectItem>
-                      <SelectItem value="Substation Engineering">Substation Engineering</SelectItem>
-                      <SelectItem value="Transmission Line Design">Transmission Line Design</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {!isAddingNewTeam ? (
+                        <Select onValueChange={handleTeamChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a team" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {existingTeams.map(teamName => (
+                                    <SelectItem key={teamName} value={teamName}>{teamName}</SelectItem>
+                                ))}
+                                <SelectItem value="add_new_team">Add New Team...</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                        <FormField
+                            control={form.control}
+                            name="newTeamName"
+                            render={({ field: newTeamField }) => (
+                                <div className="flex items-center gap-2">
+                                    <Input placeholder="Enter new team name" {...newTeamField} />
+                                    <Button type="button" variant="ghost" onClick={() => setIsAddingNewTeam(false)}>Cancel</Button>
+                                </div>
+                            )}
+                        />
+                    )}
                   <FormMessage />
                 </FormItem>
               )}
