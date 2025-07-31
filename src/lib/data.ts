@@ -1,5 +1,5 @@
 
-import { subDays, addDays, isWithinInterval } from "date-fns";
+import { subDays, addDays, isWithinInterval, startOfWeek, endOfWeek } from "date-fns";
 
 export interface User {
   id: string;
@@ -36,53 +36,38 @@ export const users: User[] = [
 ];
 
 export const projects: Project[] = [
-  { id: 'proj-1', name: 'Project Phoenix', status: 'On Track' },
-  { id: 'proj-2', name: 'Project Titan', status: 'At Risk' },
-  { id: 'proj-3', name: 'Project Nova', status: 'Off Track' },
+  { id: 'proj-1', name: 'Substation Expansion', status: 'On Track' },
+  { id: 'proj-2', name: 'New Transmission Line', status: 'At Risk' },
+  { id: 'proj-3', name: 'Protection System Upgrade', status: 'Off Track' },
 ];
 
 const today = new Date();
 
 export const tasks: Task[] = [
-    // Project 1 - Substation Engineering - User 4 (Diana, 8h) & User 7 (George, 8h)
-    // Goal: Show green, yellow, orange for Diana & George
-    { id: 'task-p1-1', name: 'General Arrangement Drawings', projectId: 'proj-1', assigneeId: 'user-4', startDate: subDays(today, 10), endDate: addDays(today, 2), dependencies: [] }, // Diana: 2h
-    { id: 'task-p1-2', name: 'Major Equipment Specification', projectId: 'proj-1', assigneeId: 'user-7', startDate: subDays(today, 8), endDate: addDays(today, 4), dependencies: ['task-p1-1'] }, // George: 2h
-    { id: 'task-p1-3', name: 'Control House Design', projectId: 'proj-1', assigneeId: 'user-4', startDate: subDays(today, 1), endDate: addDays(today, 9), dependencies: ['task-p1-1'] }, // Diana: 2h -> 4h total
-    { id: 'task-p1-3a', name: 'AC/DC Panel Schematics', projectId: 'proj-1', assigneeId: 'user-4', startDate: subDays(today, 1), endDate: addDays(today, 9), dependencies: ['task-p1-1'] }, // Diana: 2h -> 6h total (Green)
-    { id: 'task-p1-3b', name: 'Bill of Materials', projectId: 'proj-1', assigneeId: 'user-4', startDate: subDays(today, 1), endDate: addDays(today, 9), dependencies: ['task-p1-1'] }, // Diana: 2h -> 8h total (Yellow)
-    { id: 'task-p1-4', name: 'Grounding Grid Design', projectId: 'proj-1', assigneeId: 'user-7', startDate: addDays(today, 2), endDate: addDays(today, 12), dependencies: ['task-p1-2'] }, // George: 2h -> 4h total
-    { id: 'task-p1-4a', name: 'Lightning Protection Study', projectId: 'proj-1', assigneeId: 'user-7', startDate: addDays(today, 2), endDate: addDays(today, 12), dependencies: ['task-p1-2'] }, // George: 2h -> 6h total (Green)
-    { id: 'task-p1-5', name: 'Structural Steel Design', projectId: 'proj-1', assigneeId: 'user-4', startDate: addDays(today, 6), endDate: addDays(today, 18), dependencies: ['task-p1-3'] },// Diana: 2h
-    { id: 'task-p1-6', name: 'Insulation Coordination Study', projectId: 'proj-1', assigneeId: 'user-7', startDate: addDays(today, 1), endDate: addDays(today, 6), dependencies: ['task-p1-2'] }, // George: 2h
+    // Project 1: Substation Expansion
+    { id: 'task-p1-1', name: 'General Arrangement Drawings', projectId: 'proj-1', assigneeId: 'user-4', startDate: subDays(today, 10), endDate: addDays(today, 2), dependencies: [] },
+    { id: 'task-p1-2', name: 'Major Equipment Specification', projectId: 'proj-1', assigneeId: 'user-7', startDate: subDays(today, 8), endDate: addDays(today, 4), dependencies: [] },
+    { id: 'task-p1-3', name: 'Control House Design', projectId: 'proj-1', assigneeId: 'user-4', startDate: addDays(today, 3), endDate: addDays(today, 13), dependencies: ['task-p1-1'] },
+    { id: 'task-p1-4', name: 'Grounding Grid Design', projectId: 'proj-1', assigneeId: 'user-7', startDate: addDays(today, 5), endDate: addDays(today, 15), dependencies: ['task-p1-2'] },
+    { id: 'task-p1-5', name: 'Structural Steel Design', projectId: 'proj-1', assigneeId: 'user-4', startDate: addDays(today, 14), endDate: addDays(today, 28), dependencies: ['task-p1-3'] },
+    { id: 'task-p1-6', name: 'Insulation Coordination Study', projectId: 'proj-1', assigneeId: 'user-7', startDate: addDays(today, 16), endDate: addDays(today, 22), dependencies: ['task-p1-4'] },
 
-    // Project 2 - Protection & Control - User 2 (Bob, 8h) & User 5 (Ethan, 8h)
-    // Goal: Show red/orange for Bob, blue/green for Ethan
-    { id: 'task-p2-1', name: 'One-Line Diagrams', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 5), endDate: addDays(today, 5), dependencies: [] }, // Bob: 2h
-    { id: 'task-p2-1a', name: 'Three-Line Diagrams', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 5), endDate: addDays(today, 5), dependencies: [] }, // Bob: 2h -> 4h
-    { id: 'task-p2-1b', name: 'Protection & Control Schematics', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 5), endDate: addDays(today, 5), dependencies: [] }, // Bob: 2h -> 6h
-    { id: 'task-p2-1c', name: 'Panel Layout Drawings', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 5), endDate: addDays(today, 5), dependencies: [] }, // Bob: 2h -> 8h (Yellow)
-    { id: 'task-p2-1d', name: 'Control Logic Diagrams', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 2), endDate: addDays(today, 8), dependencies: ['task-p2-1'] }, // Bob: 2h -> 10h (Orange/Red)
-    
-    { id: 'task-p2-2', name: 'Relay Setting Development', projectId: 'proj-2', assigneeId: 'user-5', startDate: subDays(today, 2), endDate: addDays(today, 8), dependencies: ['task-p2-1'] }, // Ethan: 2h (Blue)
-    { id: 'task-p2-3', name: 'SCADA & Communications Design', projectId: 'proj-2', assigneeId: 'user-2', startDate: addDays(today, 1), endDate: addDays(today, 12), dependencies: ['task-p2-1'] }, // Bob: 2h -> 12h (Red)
-    { id: 'task-p2-4', name: 'FAT/SAT Support', projectId: 'proj-2', assigneeId: 'user-5', startDate: addDays(today, 9), endDate: addDays(today, 20), dependencies: ['task-p2-2', 'task-p2-3'] }, // Ethan: 2h (Blue)
-    { id: 'task-p2-5', name: 'Panel Wiring Diagrams', projectId: 'proj-2', assigneeId: 'user-5', startDate: addDays(today, 2), endDate: addDays(today, 9), dependencies: ['task-p2-1'] }, // Ethan: 2h -> 4h (Green)
-    
-    // Project 3 - System Planning (User 1, Alice, 8h; User 3, Charlie, 6h), Trans. Line (User 6, Fiona, 7h)
-    // Goal: Show blue for Alice, green for Charlie, orange/yellow for Fiona
-    { id: 'task-p3-1', name: 'Load Flow Analysis', projectId: 'proj-3', assigneeId: 'user-1', startDate: subDays(today, 12), endDate: subDays(today, 2), dependencies: [] }, // Alice: 2h (Blue)
-    { id: 'task-p3-2', name: 'Short Circuit Study', projectId: 'proj-3', assigneeId: 'user-3', startDate: subDays(today, 8), endDate: addDays(today, 2), dependencies: ['task-p3-1'] }, // Charlie: 2h
-    { id: 'task-p3-2a', name: 'Coordination Study', projectId: 'proj-3', assigneeId: 'user-3', startDate: subDays(today, 8), endDate: addDays(today, 2), dependencies: ['task-p3-1'] }, // Charlie: 2h -> 4h (Green)
-    { id: 'task-p3-3', name: 'Transient Stability Analysis', projectId: 'proj-3', assigneeId: 'user-1', startDate: subDays(today, 1), endDate: addDays(today, 10), dependencies: ['task-p3-2'] }, // Alice: 2h (Blue)
-    
-    { id: 'task-p3-4', name: 'Tower Spotting & Optimization', projectId: 'proj-3', assigneeId: 'user-6', startDate: subDays(today, 5), endDate: addDays(today, 4), dependencies: [] }, // Fiona: 2h
-    { id: 'task-p3-4a', name: 'PLS-CADD Modeling', projectId: 'proj-3', assigneeId: 'user-6', startDate: subDays(today, 5), endDate: addDays(today, 4), dependencies: [] }, // Fiona: 2h -> 4h
-    { id: 'task-p3-4b', name: 'Structure Loading Trees', projectId: 'proj-3', assigneeId: 'user-6', startDate: subDays(today, 5), endDate: addDays(today, 4), dependencies: [] }, // Fiona: 2h -> 6h (Green/Yellow)
-    
-    { id: 'task-p3-5', name: 'Foundation Design', projectId: 'proj-3', assigneeId: 'user-6', startDate: addDays(today, 5), endDate: addDays(today, 15), dependencies: ['task-p3-4'] }, // Fiona: 2h
-    { id: 'task-p3-6', name: 'Conductor & Shield Wire Sizing', projectId: 'proj-3', assigneeId: 'user-6', startDate: subDays(today, 1), endDate: addDays(today, 6), dependencies: ['task-p3-4'] },// Fiona: 2h -> 8h (Orange)
-    { id: 'task-p3-7', name: 'Permitting Support', projectId: 'proj-3', assigneeId: 'user-1', startDate: addDays(today, 1), endDate: addDays(today, 14), dependencies: ['task-p3-3'] }, // Alice: 2h -> 4h (Green)
+    // Project 2: New Transmission Line
+    { id: 'task-p2-1', name: 'One-Line & Three-Line Diagrams', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 5), endDate: addDays(today, 5), dependencies: [] },
+    { id: 'task-p2-2', name: 'Protection & Control Schematics', projectId: 'proj-2', assigneeId: 'user-5', startDate: subDays(today, 5), endDate: addDays(today, 8), dependencies: [] },
+    { id: 'task-p2-3', name: 'Panel Layout & Wiring Diagrams', projectId: 'proj-2', assigneeId: 'user-2', startDate: addDays(today, 6), endDate: addDays(today, 16), dependencies: ['task-p2-1'] },
+    { id: 'task-p2-4', name: 'Control Logic Diagrams', projectId: 'proj-2', assigneeId: 'user-5', startDate: addDays(today, 9), endDate: addDays(today, 19), dependencies: ['task-p2-2'] },
+    { id: 'task-p2-5', name: 'Relay Setting Development', projectId: 'proj-2', assigneeId: 'user-2', startDate: addDays(today, 17), endDate: addDays(today, 27), dependencies: ['task-p2-3'] },
+    { id: 'task-p2-6', name: 'SCADA & Communications Design', projectId: 'proj-2', assigneeId: 'user-5', startDate: addDays(today, 20), endDate: addDays(today, 30), dependencies: ['task-p2-4'] },
+
+    // Project 3: Protection System Upgrade
+    { id: 'task-p3-1', name: 'Load Flow & Short Circuit Study', projectId: 'proj-3', assigneeId: 'user-1', startDate: subDays(today, 12), endDate: subDays(today, 2), dependencies: [] },
+    { id: 'task-p3-2', name: 'Coordination Study', projectId: 'proj-3', assigneeId: 'user-3', startDate: subDays(today, 8), endDate: addDays(today, 2), dependencies: [] },
+    { id: 'task-p3-3', name: 'Transient Stability Analysis', projectId: 'proj-3', assigneeId: 'user-1', startDate: addDays(today, 4), endDate: addDays(today, 14), dependencies: ['task-p3-1'] },
+    { id: 'task-p3-4', name: 'Tower Spotting & PLS-CADD', projectId: 'proj-3', assigneeId: 'user-6', startDate: subDays(today, 5), endDate: addDays(today, 6), dependencies: [] },
+    { id: 'task-p3-5', name: 'Structure Loading Trees', projectId: 'proj-3', assigneeId: 'user-3', startDate: addDays(today, 3), endDate: addDays(today, 13), dependencies: ['task-p3-2'] },
+    { id: 'task-p3-6', name: 'Foundation Design', projectId: 'proj-3', assigneeId: 'user-6', startDate: addDays(today, 7), endDate: addDays(today, 18), dependencies: ['task-p3-4'] },
+    { id: 'task-p3-7', name: 'Conductor & Shield Wire Sizing', projectId: 'proj-3', assigneeId: 'user-1', startDate: addDays(today, 15), endDate: addDays(today, 25), dependencies: ['task-p3-3'] },
 ];
 
 
