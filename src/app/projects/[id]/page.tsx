@@ -10,13 +10,15 @@ import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MoreHorizontal, PlusCircle, ArrowLeft, Edit } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal, PlusCircle, ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import EditTaskDialog from '@/components/projects/edit-task-dialog';
 import EditProjectDialog from '@/components/projects/edit-project-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
 
 export default function ProjectDetailsPage() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function ProjectDetailsPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [isEditTaskOpen, setIsEditTaskOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
@@ -57,6 +60,19 @@ export default function ProjectDetailsPage() {
   const handleEditTaskClick = (task: Task) => {
     setSelectedTask(task);
     setIsEditTaskOpen(true);
+  }
+
+  const handleDeleteTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const confirmDeleteTask = () => {
+    if (selectedTask) {
+      setTasks(currentTasks => currentTasks.filter(t => t.id !== selectedTask.id));
+    }
+    setIsDeleteAlertOpen(false);
+    setSelectedTask(null);
   }
 
   if (!project) {
@@ -156,9 +172,19 @@ export default function ProjectDetailsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Task Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => handleEditTaskClick(task)}>Edit Task</DropdownMenuItem>
-                                    <DropdownMenuItem>Reassign</DropdownMenuItem>
-                                    <DropdownMenuItem className="text-destructive">Delete Task</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleEditTaskClick(task)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit Task
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleEditTaskClick(task)}>
+                                        <Users className="mr-2 h-4 w-4" />
+                                        Reassign
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => handleDeleteTaskClick(task)} className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Task
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
@@ -182,11 +208,29 @@ export default function ProjectDetailsPage() {
       {selectedTask && (
         <EditTaskDialog
             isOpen={isEditTaskOpen}
-            onClose={() => setIsEditTaskOpen(false)}
+            onClose={() => {
+                setIsEditTaskOpen(false);
+                setSelectedTask(null);
+            }}
             onUpdateTask={handleUpdateTask}
             task={selectedTask}
         />
       )}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the task
+                &quot;{selectedTask?.name}&quot;.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedTask(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteTask}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+       </AlertDialog>
     </div>
   );
 }
