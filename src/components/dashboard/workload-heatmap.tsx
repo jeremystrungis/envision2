@@ -48,6 +48,11 @@ export default function WorkloadHeatmap() {
     end: endOfWeek(currentDate, { weekStartsOn: 1 }),
   }).filter(day => getDay(day) >= 1 && getDay(day) <= 5); // 1 is Monday, 5 is Friday
 
+  const teams = useMemo(() => {
+    const allTeams = new Set(users.map(user => user.team));
+    return ['All', ...Array.from(allTeams)];
+  }, [users]);
+
   const filteredUsers = useMemo(() => {
     if (selectedTeam === 'All') return users;
     return users.filter((user) => user.team === selectedTeam);
@@ -102,11 +107,11 @@ export default function WorkloadHeatmap() {
               <SelectValue placeholder="Select Team" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All">All Teams</SelectItem>
-              <SelectItem value="System Planning">System Planning</SelectItem>
-              <SelectItem value="Protection & Control">Protection & Control</SelectItem>
-              <SelectItem value="Substation Engineering">Substation Engineering</SelectItem>
-              <SelectItem value="Transmission Line Design">Transmission Line Design</SelectItem>
+              {teams.map(team => (
+                <SelectItem key={team} value={team}>
+                  {team === 'All' ? 'All Teams' : team}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
