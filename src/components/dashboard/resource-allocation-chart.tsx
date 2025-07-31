@@ -7,7 +7,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { users, tasks } from '@/lib/data';
-import { eachDayOfInterval, endOfWeek, isWithinInterval, startOfWeek } from 'date-fns';
+import { isWithinInterval, startOfWeek, endOfWeek } from 'date-fns';
 
 export default function ResourceAllocationChart() {
   const allocationData = users.map((user) => {
@@ -15,13 +15,16 @@ export default function ResourceAllocationChart() {
     const start = startOfWeek(today, { weekStartsOn: 1 });
     const end = endOfWeek(today, { weekStartsOn: 1 });
 
-    const assignedTasksThisWeek = tasks.filter(task => 
+    const assignedTasksThisWeek = tasks.filter(
+      (task) =>
         task.assigneeId === user.id &&
-        isWithinInterval(start, { start: task.startDate, end: task.endDate })
+        (isWithinInterval(task.startDate, { start, end }) ||
+          isWithinInterval(task.endDate, { start, end }) ||
+          (task.startDate < start && task.endDate > end))
     );
     
     // Simplified: assume each task takes 2 hours of work per day
-    const allocatedHours = assignedTasksThisWeek.length * 2;
+    const allocatedHours = assignedTasksThisWeek.reduce((acc, task) => acc + 2, 0);
 
     return {
       name: user.name.split(' ')[0], // Use first name for brevity
