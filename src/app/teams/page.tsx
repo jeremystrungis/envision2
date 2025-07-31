@@ -7,7 +7,8 @@ import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { users as initialUsers, User } from '@/lib/data';
+import { User } from '@/lib/data';
+import { useStore, store } from '@/lib/store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -15,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import EditMemberDialog from '@/components/teams/edit-member-dialog';
 
 export default function TeamsPage() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const { users } = useStore();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
 
@@ -26,11 +27,7 @@ export default function TeamsPage() {
 
   const handleUpdateUser = (updatedUser: Omit<User, 'id' | 'avatar'>) => {
     if (selectedUser) {
-      setUsers(currentUsers =>
-        currentUsers.map(u =>
-          u.id === selectedUser.id ? { ...u, ...updatedUser } : u
-        )
-      );
+      store.updateUser(selectedUser.id, updatedUser);
     }
     setIsEditMemberOpen(false);
     setSelectedUser(null);

@@ -8,13 +8,15 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from '@/components/ui/chart';
-import { projects } from '@/lib/data';
+import { useStore } from '@/lib/store';
 import { useMemo } from 'react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { CardDescription } from '../ui/card';
 
 export default function ProjectStatusChart() {
+  const { projects } = useStore();
+  
   const chartData = useMemo(() => {
     const statusCounts = projects.reduce((acc, project) => {
       acc[project.status] = (acc[project.status] || 0) + 1;
@@ -25,7 +27,7 @@ export default function ProjectStatusChart() {
       status,
       count: statusCounts[status],
     }));
-  }, []);
+  }, [projects]);
 
   const chartConfig = {
     count: {

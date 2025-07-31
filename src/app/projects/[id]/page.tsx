@@ -1,10 +1,11 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { projects as initialProjects, tasks as initialTasks, users, Project, Task } from '@/lib/data';
+import { Project, Task } from '@/lib/data';
+import { useStore, store } from '@/lib/store';
 import AppHeader from '@/components/app-header';
 import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
@@ -25,33 +26,26 @@ export default function ProjectDetailsPage() {
   const params = useParams();
   const projectId = params.id as string;
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { projects, tasks: allTasks, users } = useStore();
+  
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [isEditTaskOpen, setIsEditTaskOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  useEffect(() => {
-    const foundProject = initialProjects.find(p => p.id === projectId);
-    if (foundProject) {
-      setProject(foundProject);
-      const projectTasks = initialTasks.filter(t => t.projectId === projectId);
-      setTasks(projectTasks);
-    }
-  }, [projectId]);
+  const project = useMemo(() => projects.find(p => p.id === projectId), [projects, projectId]);
+  const tasks = useMemo(() => allTasks.filter(t => t.projectId === projectId), [allTasks, projectId]);
 
   const handleUpdateProject = (updatedProject: Omit<Project, 'id'>) => {
     if (project) {
-        setProject({ ...project, ...updatedProject });
-        // In a real app, you'd also update the main projects list
+        store.updateProject(project.id, updatedProject);
     }
     setIsEditProjectOpen(false);
   };
   
   const handleUpdateTask = (updatedTask: Omit<Task, 'id' | 'projectId' | 'dependencies'>) => {
     if(selectedTask) {
-        setTasks(currentTasks => currentTasks.map(t => t.id === selectedTask.id ? {...t, ...updatedTask} : t))
+        store.updateTask(selectedTask.id, updatedTask);
     }
     setIsEditTaskOpen(false);
     setSelectedTask(null);
@@ -69,7 +63,7 @@ export default function ProjectDetailsPage() {
 
   const confirmDeleteTask = () => {
     if (selectedTask) {
-      setTasks(currentTasks => currentTasks.filter(t => t.id !== selectedTask.id));
+      store.deleteTask(selectedTask.id);
     }
     setIsDeleteAlertOpen(false);
     setSelectedTask(null);

@@ -8,7 +8,6 @@ import GanttChart from '@/components/dashboard/gantt-chart';
 import ResourceAllocationChart from '@/components/dashboard/resource-allocation-chart';
 import ProjectStatusChart from '@/components/dashboard/project-status-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
 
 export default function Home() {
   return (

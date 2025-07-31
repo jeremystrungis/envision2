@@ -25,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Project } from '@/lib/data';
+import { useEffect } from 'react';
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
@@ -49,9 +50,15 @@ export default function EditProjectDialog({ isOpen, onClose, onUpdateProject, pr
     },
   });
 
+  useEffect(() => {
+    form.reset({
+        name: project.name,
+        status: project.status,
+    });
+  }, [project, form]);
+
   const onSubmit = (data: ProjectFormValues) => {
     onUpdateProject(data);
-    form.reset(data);
   };
 
   return (

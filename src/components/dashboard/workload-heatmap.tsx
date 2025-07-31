@@ -10,7 +10,8 @@ import {
   addDays,
   getDay,
 } from 'date-fns';
-import { users, tasks, User } from '@/lib/data';
+import { User } from '@/lib/data';
+import { useStore } from '@/lib/store';
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ const workloadLevels = [
 ];
 
 export default function WorkloadHeatmap() {
+  const { users, tasks } = useStore();
   const [selectedTeam, setSelectedTeam] = useState('All');
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -49,7 +51,7 @@ export default function WorkloadHeatmap() {
   const filteredUsers = useMemo(() => {
     if (selectedTeam === 'All') return users;
     return users.filter((user) => user.team === selectedTeam);
-  }, [selectedTeam]);
+  }, [selectedTeam, users]);
 
   const workloadData = useMemo(() => {
     return filteredUsers.map((user: User) => {
@@ -64,7 +66,7 @@ export default function WorkloadHeatmap() {
       });
       return { user, dailyWorkload };
     });
-  }, [filteredUsers, weekDays]);
+  }, [filteredUsers, weekDays, tasks]);
 
   const getWorkloadColor = (workload: number, capacity: number) => {
     if (workload === 0) return 'bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30';

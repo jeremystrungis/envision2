@@ -29,7 +29,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Task, users } from '@/lib/data';
+import { Task } from '@/lib/data';
+import { useStore } from '@/lib/store';
+import { useEffect } from 'react';
 
 const taskSchema = z.object({
   name: z.string().min(1, 'Task name is required'),
@@ -52,6 +54,7 @@ interface EditTaskDialogProps {
 }
 
 export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: EditTaskDialogProps) {
+  const { users } = useStore();
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -62,13 +65,21 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
     },
   });
 
+  useEffect(() => {
+    form.reset({
+        name: task.name,
+        assigneeId: task.assigneeId,
+        startDate: task.startDate,
+        endDate: task.endDate,
+    })
+  }, [task, form]);
+
   const onSubmit = (data: TaskFormValues) => {
     const dataToSubmit = {
         ...data,
         assigneeId: data.assigneeId === 'unassigned' ? null : data.assigneeId,
     };
     onUpdateTask(dataToSubmit);
-    form.reset();
   };
 
   return (
@@ -101,7 +112,7 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assignee</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value || "unassigned"}>
+                   <Select onValueChange={field.onChange} value={field.value || "unassigned"}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a team member" />

@@ -1,25 +1,35 @@
 
 'use client';
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { eachDayOfInterval, differenceInDays, format, isWithinInterval, getMonth, getYear } from 'date-fns';
-import { projects, tasks as allTasks, users } from '@/lib/data';
+import { eachDayOfInterval, differenceInDays, format, isWithinInterval } from 'date-fns';
+import { useStore } from '@/lib/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import type { Task } from '@/lib/data';
 
 const GANTT_ROW_HEIGHT = 40; // in pixels
 const GANTT_DAY_WIDTH = 40; // in pixels
 
 export default function GanttChart() {
-  const [selectedProjectId, setSelectedProjectId] = useState(projects[0].id);
+  const { projects, tasks: allTasks, users } = useStore();
+  const [selectedProjectId, setSelectedProjectId] = useState(projects.length > 0 ? projects[0].id : '');
   const taskRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
+  useEffect(() => {
+    // If there are projects but none is selected (e.g., after projects load)
+    if (projects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(projects[0].id);
+    }
+  }, [projects, selectedProjectId]);
+
+
   const tasks = useMemo(() => {
     return allTasks.filter(task => task.projectId === selectedProjectId);
-  }, [selectedProjectId]);
+  }, [allTasks, selectedProjectId]);
 
   const { startDate, endDate, dateInterval, totalDays, monthIntervals } = useMemo(() => {
     if (tasks.length === 0) {
@@ -63,7 +73,7 @@ export default function GanttChart() {
     return () => window.removeEventListener('resize', updateDimensions);
   }, [tasks]);
 
-  const getTaskStyle = (task: typeof tasks[0]) => {
+  const getTaskStyle = (task: Task) => {
     const left = differenceInDays(task.startDate, startDate) * GANTT_DAY_WIDTH;
     const width = differenceInDays(task.endDate, task.startDate) * GANTT_DAY_WIDTH;
     return {
@@ -114,7 +124,7 @@ export default function GanttChart() {
               {/* Dependency Lines (rendered first to be in the background) */}
               <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{height: `${tasks.length * GANTT_ROW_HEIGHT}px`}}>
                 {tasks.flatMap(task => 
-                  task.dependencies.map(depId => {
+                  (task.dependencies || []).map(depId => {
                     const fromTaskEl = taskRefs.current[depId];
                     const toTaskEl = taskRefs.current[task.id];
                     if (!fromTaskEl || !toTaskEl || !containerRef.current) return null;

@@ -7,7 +7,8 @@ import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { projects as initialProjects, Project } from '@/lib/data';
+import { Project } from '@/lib/data';
+import { useStore, store } from '@/lib/store';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
@@ -16,15 +17,11 @@ import AddProjectDialog from '@/components/projects/add-project-dialog';
 import Link from 'next/link';
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const { projects } = useStore();
   const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
 
   const handleAddProject = (newProject: Omit<Project, 'id'>) => {
-    const projectWithId = {
-        ...newProject,
-        id: `proj-${projects.length + 1}`,
-    };
-    setProjects(prevProjects => [...prevProjects, projectWithId]);
+    store.addProject(newProject);
     setIsAddProjectDialogOpen(false);
   };
 

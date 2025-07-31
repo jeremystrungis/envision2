@@ -6,25 +6,31 @@ import {
   ChartContainer,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { users, tasks } from '@/lib/data';
-import { isWithinInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { useStore } from '@/lib/store';
+import { isWithinInterval, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 
 export default function ResourceAllocationChart() {
+  const { users, tasks } = useStore();
+
   const allocationData = users.map((user) => {
     const today = new Date();
     const start = startOfWeek(today, { weekStartsOn: 1 });
     const end = endOfWeek(today, { weekStartsOn: 1 });
+    const weekDays = eachDayOfInterval({start, end});
 
-    const assignedTasksThisWeek = tasks.filter(
-      (task) =>
-        task.assigneeId === user.id &&
-        (isWithinInterval(task.startDate, { start, end }) ||
-          isWithinInterval(task.endDate, { start, end }) ||
-          (task.startDate < start && task.endDate > end))
-    );
-    
-    // Simplified: assume each task takes 2 hours of work per day
-    const allocatedHours = assignedTasksThisWeek.reduce((acc, task) => acc + 2, 0);
+    const dailyWorkload = weekDays.map((day) => {
+        const tasksOnDay = tasks.filter(
+          (task) =>
+            task.assigneeId === user.id &&
+            day >= task.startDate && day <= task.endDate
+        );
+        return tasksOnDay.reduce((acc) => acc + 2, 0); // Simplified: 2 hours per task
+      });
+      
+    // Using the same logic as the heatmap: average weekly workload per day
+    const totalWeeklyHours = dailyWorkload.reduce((sum, load) => sum + load, 0);
+    const allocatedHours = totalWeeklyHours / (dailyWorkload.length || 1);
+
 
     return {
       name: user.name.split(' ')[0], // Use first name for brevity

@@ -25,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User } from '@/lib/data';
+import { useEffect } from 'react';
 
 const memberSchema = z.object({
   name: z.string().min(1, 'Member name is required'),
@@ -51,9 +52,16 @@ export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }
     },
   });
 
+  useEffect(() => {
+    form.reset({
+        name: user.name,
+        team: user.team,
+        capacity: user.capacity,
+    })
+  }, [user, form]);
+
   const onSubmit = (data: MemberFormValues) => {
     onUpdateUser(data);
-    form.reset(data);
   };
 
   return (
