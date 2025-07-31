@@ -8,6 +8,7 @@ import {
   Settings,
   Users,
   BotMessageSquare,
+  ClipboardList,
 } from 'lucide-react';
 
 import {
@@ -27,6 +28,7 @@ export default function AppSidebar() {
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/gantt', label: 'Gantt', icon: GanttChartSquare },
     { href: '/teams', label: 'Teams', icon: Users },
+    { href: '/projects', label: 'Projects', icon: ClipboardList },
   ];
 
   return (
