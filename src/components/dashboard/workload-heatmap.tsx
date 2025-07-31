@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -7,6 +8,7 @@ import {
   eachDayOfInterval,
   format,
   isSameDay,
+  addDays,
 } from 'date-fns';
 import { users, tasks, User } from '@/lib/data';
 import {
@@ -26,6 +28,14 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
+
+const workloadLevels = [
+    { level: 'Light', color: 'bg-sky-500/20 border-sky-500/30', description: '< 50%' },
+    { level: 'Good', color: 'bg-green-500/20 border-green-500/30', description: '50-90%' },
+    { level: 'High', color: 'bg-yellow-500/20 border-yellow-500/30', description: '90-100%' },
+    { level: 'Overloaded', color: 'bg-orange-500/20 border-orange-500/30', description: '100-120%' },
+    { level: 'Critically Overloaded', color: 'bg-red-500/20 border-red-500/30', description: '> 120%' },
+];
 
 export default function WorkloadHeatmap() {
   const [selectedTeam, setSelectedTeam] = useState('All');
@@ -51,33 +61,30 @@ export default function WorkloadHeatmap() {
             isSameDay(day, task.endDate) >= true
         );
         // Simplified: 2 hours per task
-        return tasksOnDay.length * 2;
+        return tasksOnDay.reduce((acc) => acc + 2, 0);
       });
       return { user, dailyWorkload };
     });
   }, [filteredUsers, weekDays]);
 
   const getWorkloadColor = (workload: number, capacity: number) => {
+    if (capacity === 0 || workload === 0) return 'bg-muted/20 hover:bg-muted/40';
     const ratio = workload / capacity;
-    if (workload === 0) return 'bg-muted/20 hover:bg-muted/40';
-    if (ratio < 0.5) return 'bg-green-500/20 hover:bg-green-500/30 border border-green-500/30';
+    if (ratio < 0.5) return 'bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30';
+    if (ratio < 0.9) return 'bg-green-500/20 hover:bg-green-500/30 border border-green-500/30';
     if (ratio <= 1) return 'bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30';
+    if (ratio <= 1.2) return 'bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30';
     return 'bg-red-500/20 hover:bg-red-500/30 border border-red-500/30';
   };
   
   const handleDateChange = (days: number) => {
     setCurrentDate(prev => addDays(prev, days));
   };
-  const addDays = (date: Date, days: number): Date => {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-  }
 
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => handleDateChange(-7)}>
               <ChevronLeft className="h-4 w-4" />
@@ -142,6 +149,17 @@ export default function WorkloadHeatmap() {
               </React.Fragment>
             ))}
           </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-end space-x-4 pt-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Legend:</span>
+            </div>
+            {workloadLevels.map(item => (
+                <div key={item.level} className="flex items-center gap-2">
+                    <div className={cn("h-4 w-4 rounded-sm border", item.color)}></div>
+                    <span className="text-xs text-muted-foreground">{item.level} ({item.description})</span>
+                </div>
+            ))}
         </div>
       </div>
     </TooltipProvider>
