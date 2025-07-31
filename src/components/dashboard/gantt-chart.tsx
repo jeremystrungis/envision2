@@ -86,38 +86,9 @@ export default function GanttChart() {
               ))}
             </div>
 
-            {/* Task Rows */}
+            {/* Task Area */}
             <div className="relative">
-              {tasks.map((task, index) => (
-                <div key={task.id} className="flex items-center border-t" style={{ height: `${GANTT_ROW_HEIGHT}px` }}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div
-                        ref={el => taskRefs.current[task.id] = el}
-                        className={cn("absolute flex items-center h-[30px] rounded bg-primary/80 hover:bg-primary text-primary-foreground text-xs px-2 cursor-pointer transition-all duration-300",
-                          isWithinInterval(new Date(), {start: task.startDate, end: task.endDate}) && "animate-slow-pulse border-2 border-accent"
-                        )}
-                        style={{ top: `${index * GANTT_ROW_HEIGHT + 4}px`, ...getTaskStyle(task) }}
-                      >
-                        <p className="truncate font-medium">{task.name}</p>
-                        {getAssignee(task.assigneeId) && (
-                           <Avatar className="ml-auto h-5 w-5">
-                            <AvatarImage src={getAssignee(task.assigneeId)?.avatar} />
-                            <AvatarFallback>{getAssignee(task.assigneeId)?.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="font-bold">{task.name}</p>
-                      <p>Assignee: {getAssignee(task.assigneeId)?.name || 'Unassigned'}</p>
-                      <p>Dates: {format(task.startDate, 'MMM d')} - {format(task.endDate, 'MMM d')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              ))}
-              
-              {/* Dependency Lines */}
+              {/* Dependency Lines (rendered first to be in the background) */}
               <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{height: `${tasks.length * GANTT_ROW_HEIGHT}px`}}>
                 {tasks.flatMap(task => 
                   task.dependencies.map(depId => {
@@ -128,11 +99,14 @@ export default function GanttChart() {
                     const containerRect = containerRef.current.getBoundingClientRect();
                     const fromRect = fromTaskEl.getBoundingClientRect();
                     const toRect = toTaskEl.getBoundingClientRect();
+                    
+                    const headerEl = containerRef.current.querySelector('.sticky');
+                    const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0;
 
-                    const startX = fromRect.right - containerRect.left + containerRef.current.scrollLeft;
-                    const startY = fromRect.top - containerRect.top + fromRect.height / 2;
-                    const endX = toRect.left - containerRect.left + containerRef.current.scrollLeft;
-                    const endY = toRect.top - containerRect.top + toRect.height / 2;
+                    const startX = fromRect.right - containerRect.left;
+                    const startY = fromRect.top - containerRect.top - headerHeight + fromRect.height / 2;
+                    const endX = toRect.left - containerRect.left;
+                    const endY = toRect.top - containerRect.top - headerHeight + toRect.height / 2;
 
                     return (
                       <g key={`${depId}-${task.id}`}>
@@ -148,6 +122,36 @@ export default function GanttChart() {
                   })
                 )}
               </svg>
+
+              {/* Task Rows and Bars (rendered second to be on top) */}
+              {tasks.map((task, index) => (
+                <div key={task.id} className="flex items-center border-t relative" style={{ height: `${GANTT_ROW_HEIGHT}px` }}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        ref={el => taskRefs.current[task.id] = el}
+                        className={cn("absolute flex items-center h-[30px] rounded bg-primary/80 hover:bg-primary text-primary-foreground text-xs px-2 cursor-pointer transition-all duration-300",
+                          isWithinInterval(new Date(), {start: task.startDate, end: task.endDate}) && "animate-slow-pulse border-2 border-accent"
+                        )}
+                        style={{ top: `${(GANTT_ROW_HEIGHT - 30) / 2}px`, ...getTaskStyle(task) }}
+                      >
+                        <p className="truncate font-medium">{task.name}</p>
+                        {getAssignee(task.assigneeId) && (
+                           <Avatar className="ml-auto h-5 w-5">
+                             <AvatarImage src={getAssignee(task.assigneeId)?.avatar} />
+                             <AvatarFallback>{getAssignee(task.assigneeId)?.name.charAt(0)}</AvatarFallback>
+                           </Avatar>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="font-bold">{task.name}</p>
+                      <p>Assignee: {getAssignee(task.assigneeId)?.name || 'Unassigned'}</p>
+                      <p>Dates: {format(task.startDate, 'MMM d')} - {format(task.endDate, 'MMM d')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              ))}
             </div>
           </div>
         </div>
