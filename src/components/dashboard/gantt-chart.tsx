@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { eachDayOfInterval, differenceInDays, format, isWithinInterval } from 'date-fns';
+import { eachDayOfInterval, differenceInDays, format, isWithinInterval, getMonth, getYear } from 'date-fns';
 import { projects, tasks as allTasks, users } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -21,7 +21,7 @@ export default function GanttChart() {
     return allTasks.filter(task => task.projectId === selectedProjectId);
   }, [selectedProjectId]);
 
-  const { startDate, endDate, dateInterval, totalDays } = useMemo(() => {
+  const { startDate, endDate, dateInterval, totalDays, monthIntervals } = useMemo(() => {
     if (tasks.length === 0) {
       const today = new Date();
       const start = new Date(today);
@@ -29,12 +29,24 @@ export default function GanttChart() {
       const end = new Date(today);
       end.setDate(today.getDate() + 15);
       const interval = eachDayOfInterval({ start, end });
-      return { startDate: start, endDate: end, dateInterval: interval, totalDays: interval.length };
+      return { startDate: start, endDate: end, dateInterval: interval, totalDays: interval.length, monthIntervals: [] };
     }
     const start = tasks.reduce((min, t) => t.startDate < min ? t.startDate : min, tasks[0].startDate);
     const end = tasks.reduce((max, t) => t.endDate > max ? t.endDate : max, tasks[0].endDate);
     const interval = eachDayOfInterval({ start, end });
-    return { startDate: start, endDate: end, dateInterval: interval, totalDays: interval.length };
+
+    const months: { name: string; days: number }[] = [];
+    interval.forEach(day => {
+      const monthName = format(day, 'MMM yyyy');
+      const month = months.find(m => m.name === monthName);
+      if (month) {
+        month.days++;
+      } else {
+        months.push({ name: monthName, days: 1 });
+      }
+    });
+
+    return { startDate: start, endDate: end, dateInterval: interval, totalDays: interval.length, monthIntervals: months };
   }, [tasks]);
 
   useEffect(() => {
@@ -77,13 +89,24 @@ export default function GanttChart() {
         <div className="relative overflow-x-auto border rounded-lg" ref={containerRef}>
           <div style={{ width: `${totalDays * GANTT_DAY_WIDTH}px` }}>
             {/* Timeline Header */}
-            <div className="sticky top-0 z-10 flex bg-muted/50">
-              {dateInterval.map(day => (
-                <div key={day.toString()} className="flex-shrink-0 text-center border-r" style={{ width: `${GANTT_DAY_WIDTH}px` }}>
-                  <div className="text-xs text-muted-foreground">{format(day, 'E')}</div>
-                  <div className="text-sm font-medium">{format(day, 'd')}</div>
-                </div>
-              ))}
+            <div className="sticky top-0 z-10 bg-muted/50">
+               {/* Month row */}
+              <div className="flex">
+                {monthIntervals.map((month, index) => (
+                  <div key={index} className="flex-shrink-0 text-center border-r border-b font-semibold text-sm py-1" style={{ width: `${month.days * GANTT_DAY_WIDTH}px` }}>
+                    {month.name}
+                  </div>
+                ))}
+              </div>
+               {/* Day row */}
+              <div className="flex">
+                {dateInterval.map(day => (
+                  <div key={day.toString()} className="flex-shrink-0 text-center border-r" style={{ width: `${GANTT_DAY_WIDTH}px` }}>
+                    <div className="text-xs text-muted-foreground">{format(day, 'E')}</div>
+                    <div className="text-sm font-medium">{format(day, 'd')}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Task Area */}
@@ -102,10 +125,12 @@ export default function GanttChart() {
                     
                     const headerEl = containerRef.current.querySelector('.sticky');
                     const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0;
+                    
+                    const scrollLeft = containerRef.current.scrollLeft;
 
-                    const startX = fromRect.right - containerRect.left;
+                    const startX = fromRect.right - containerRect.left + scrollLeft;
                     const startY = fromRect.top - containerRect.top - headerHeight + fromRect.height / 2;
-                    const endX = toRect.left - containerRect.left;
+                    const endX = toRect.left - containerRect.left + scrollLeft;
                     const endY = toRect.top - containerRect.top - headerHeight + toRect.height / 2;
 
                     return (

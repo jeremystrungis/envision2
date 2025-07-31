@@ -43,62 +43,41 @@ export const projects: Project[] = [
 
 const today = new Date();
 
-// Spanning tasks across 3 weeks to show varied workload
 export const tasks: Task[] = [
-    // Past Week
-    { id: 'task-w0-1', name: 'Feasibility Study', projectId: 'proj-1', assigneeId: 'user-1', startDate: subDays(today, 10), endDate: subDays(today, 7), dependencies: [] },
-    { id: 'task-w0-2', name: 'Initial Scoping', projectId: 'proj-1', assigneeId: 'user-2', startDate: subDays(today, 9), endDate: subDays(today, 6), dependencies: [] },
+    // Project 1
+    { id: 'task-p1-1', name: 'General Arrangement Drawings', projectId: 'proj-1', assigneeId: 'user-4', startDate: subDays(today, 10), endDate: subDays(today, 2), dependencies: [] },
+    { id: 'task-p1-2', name: 'Major Equipment Specification', projectId: 'proj-1', assigneeId: 'user-7', startDate: subDays(today, 8), endDate: addDays(today, 1), dependencies: ['task-p1-1'] },
+    { id: 'task-p1-3', name: 'Control House Design', projectId: 'proj-1', assigneeId: 'user-4', startDate: subDays(today, 1), endDate: addDays(today, 5), dependencies: ['task-p1-1'] },
+    { id: 'task-p1-4', name: 'Grounding Grid Design', projectId: 'proj-1', assigneeId: 'user-7', startDate: addDays(today, 2), endDate: addDays(today, 8), dependencies: ['task-p1-2'] },
+    { id: 'task-p1-5', name: 'Structural Steel Design', projectId: 'proj-1', assigneeId: 'user-4', startDate: addDays(today, 6), endDate: addDays(today, 15), dependencies: ['task-p1-3'] },
 
-    // Current Week (to create varied loads)
-    // User 1 (Alice) - Good
-    { id: 'task-w1-1', name: 'API Dev', projectId: 'proj-2', assigneeId: 'user-1', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-    { id: 'task-w1-2', name: 'UI Mockups', projectId: 'proj-1', assigneeId: 'user-1', startDate: subDays(today, 1), endDate: addDays(today, 3), dependencies: [] },
-    
-    // User 2 (Bob) - High
-    { id: 'task-w1-3', name: 'DB Setup', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 3), endDate: addDays(today, 1), dependencies: [] },
-    { id: 'task-w1-4', name: 'Backend Logic', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-    { id: 'task-w1-5', name: 'Security Audit', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 1), endDate: addDays(today, 0), dependencies: [] },
-    { id: 'task-w1-15', name: 'Documentation', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 0), endDate: addDays(today, 3), dependencies: [] },
+    // Project 2
+    { id: 'task-p2-1', name: 'Protection & Control Schematics', projectId: 'proj-2', assigneeId: 'user-2', startDate: subDays(today, 5), endDate: addDays(today, 5), dependencies: [] },
+    { id: 'task-p2-2', name: 'Relay Setting Development', projectId: 'proj-2', assigneeId: 'user-5', startDate: subDays(today, 2), endDate: addDays(today, 8), dependencies: ['task-p2-1'] },
+    { id: 'task-p2-3', name: 'SCADA & Communications Design', projectId: 'proj-2', assigneeId: 'user-2', startDate: addDays(today, 6), endDate: addDays(today, 12), dependencies: ['task-p2-1'] },
+    { id: 'task-p2-4', name: 'FAT/SAT Support', projectId: 'proj-2', assigneeId: 'user-5', startDate: addDays(today, 13), endDate: addDays(today, 20), dependencies: ['task-p2-2', 'task-p2-3'] },
 
-    // User 3 (Charlie) - Light (should be blue)
-    { id: 'task-w1-6', name: 'Code Review', projectId: 'proj-1', assigneeId: 'user-3', startDate: subDays(today, 0), endDate: addDays(today, 1), dependencies: [] },
-
-    // User 4 (Diana) - Good
-     { id: 'task-w1-7', name: 'Substation Design', projectId: 'proj-3', assigneeId: 'user-4', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-     { id: 'task-w1-8', name: 'Material Procurement', projectId: 'proj-3', assigneeId: 'user-4', startDate: subDays(today, 1), endDate: addDays(today, 3), dependencies: [] },
-
-    // User 5 (Ethan) - Overloaded (should be orange)
-    { id: 'task-w1-9', name: 'Control System Logic', projectId: 'proj-3', assigneeId: 'user-5', startDate: subDays(today, 3), endDate: addDays(today, 1), dependencies: [] },
-    { id: 'task-w1-10', name: 'P&C Schematics', projectId: 'proj-3', assigneeId: 'user-5', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-    { id: 'task-w1-11', name: 'Relay Settings', projectId: 'proj-3', assigneeId: 'user-5', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-    { id: 'task-w1-16', name: 'FAT Support', projectId: 'proj-3', assigneeId: 'user-5', startDate: subDays(today, 0), endDate: addDays(today, 1), dependencies: [] },
-
-    // User 6 (Fiona) - Critically Overloaded (should be red)
-    { id: 'task-w1-12', name: 'Transmission Line Analysis', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-    { id: 'task-w1-13', name: 'Tower Spotting', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-    { id: 'task-w1-14', name: 'Foundation Design', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-    { id: 'task-w1-17', name: 'Conductor Selection', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 2), dependencies: [] },
-    { id: 'task-w1-18', name: 'Insulator Config', projectId: 'proj-2', assigneeId: 'user-6', startDate: subDays(today, 1), endDate: addDays(today, 1), dependencies: [] },
-
-    // User 7 (George) - No tasks this week (should be blue)
-
-    // Next Week
-    { id: 'task-w2-1', name: 'UI Components', projectId: 'proj-1', assigneeId: 'user-1', startDate: addDays(today, 7), endDate: addDays(today, 11), dependencies: [] },
-    { id: 'task-w2-2', name: 'E2E Tests', projectId: 'proj-3', assigneeId: 'user-7', startDate: addDays(today, 6), endDate: addDays(today, 10), dependencies: [] },
-    { id: 'task-w2-3', name: 'UAT', projectId: 'proj-3', assigneeId: null, startDate: addDays(today, 12), endDate: addDays(today, 14), dependencies: [] },
-
+    // Project 3
+    { id: 'task-p3-1', name: 'Site Selection & Survey', projectId: 'proj-3', assigneeId: 'user-1', startDate: subDays(today, 12), endDate: subDays(today, 5), dependencies: [] },
+    { id: 'task-p3-2', name: 'Geotechnical Investigation', projectId: 'proj-3', assigneeId: 'user-3', startDate: subDays(today, 4), endDate: addDays(today, 2), dependencies: ['task-p3-1'] },
+    { id: 'task-p3-3', name: 'Permitting Support', projectId: 'proj-3', assigneeId: 'user-1', startDate: addDays(today, 3), endDate: addDays(today, 10), dependencies: ['task-p3-2'] },
+    { id: 'task-p3-4', name: 'Bill of Materials (BOM) Creation', projectId: 'proj-3', assigneeId: 'user-6', startDate: subDays(today, 2), endDate: addDays(today, 4), dependencies: [] },
+    { id: 'task-p3-5', name: 'Vendor Drawing Review', projectId: 'proj-3', assigneeId: 'user-6', startDate: addDays(today, 5), endDate: addDays(today, 12), dependencies: ['task-p3-4'] },
+    { id: 'task-p3-6', name: 'Construction Sequencing Plan', projectId: 'proj-3', assigneeId: null, startDate: addDays(today, 13), endDate: addDays(today, 18), dependencies: ['task-p3-5'] },
 ];
 
+
+// Function to determine workload and return overloaded users
 export const getOverloadedUsers = () => {
-  const today = new Date();
-  const allocation: Record<string, { count: number, tasks: string[] }> = {};
-  users.forEach(u => allocation[u.id] = { count: 0, tasks: [] });
+    const today = new Date();
+    const allocation: Record<string, { count: number, tasks: string[] }> = {};
+    users.forEach(u => allocation[u.id] = { count: 0, tasks: [] });
 
-  tasks.forEach(task => {
-    if (task.assigneeId && isWithinInterval(today, { start: task.startDate, end: task.endDate })) {
-      allocation[task.assigneeId].count += 2; // Assume each task is 2hr/day
-    }
-  });
+    tasks.forEach(task => {
+        if (task.assigneeId && isWithinInterval(today, { start: task.startDate, end: task.endDate })) {
+            allocation[task.assigneeId].count += 2; // Assume each task is 2hr/day
+        }
+    });
 
-  return users.filter(user => (allocation[user.id]?.count || 0) > user.capacity);
+    return users.filter(user => (allocation[user.id]?.count || 0) > user.capacity);
 };
