@@ -9,6 +9,7 @@ import {
   format,
   isSameDay,
   addDays,
+  getDay,
 } from 'date-fns';
 import { users, tasks, User } from '@/lib/data';
 import {
@@ -44,7 +45,7 @@ export default function WorkloadHeatmap() {
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
     end: endOfWeek(currentDate, { weekStartsOn: 1 }),
-  });
+  }).filter(day => getDay(day) >= 1 && getDay(day) <= 5); // 1 is Monday, 5 is Friday
 
   const filteredUsers = useMemo(() => {
     if (selectedTeam === 'All') return users;
@@ -57,8 +58,7 @@ export default function WorkloadHeatmap() {
         const tasksOnDay = tasks.filter(
           (task) =>
             task.assigneeId === user.id &&
-            isSameDay(day, task.startDate) <= true &&
-            isSameDay(day, task.endDate) >= true
+            day >= task.startDate && day <= task.endDate
         );
         // Simplified: 2 hours per task
         return tasksOnDay.reduce((acc) => acc + 2, 0);
@@ -68,9 +68,8 @@ export default function WorkloadHeatmap() {
   }, [filteredUsers, weekDays]);
 
   const getWorkloadColor = (workload: number, capacity: number) => {
-    if (capacity === 0) return 'bg-muted/20 hover:bg-muted/40';
-    const ratio = workload / capacity;
-    if (workload === 0) return 'bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30';
+    const ratio = capacity > 0 ? workload / capacity : 0;
+    if (workload === 0) return 'bg-muted/20 hover:bg-muted/40';
     if (ratio < 0.5) return 'bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30';
     if (ratio < 0.9) return 'bg-green-500/20 hover:bg-green-500/30 border border-green-500/30';
     if (ratio <= 1) return 'bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30';
@@ -91,7 +90,7 @@ export default function WorkloadHeatmap() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium text-muted-foreground">
-              {format(weekDays[0], 'MMM d')} - {format(weekDays[6], 'MMM d, yyyy')}
+              {format(weekDays[0], 'MMM d')} - {format(weekDays[weekDays.length - 1], 'MMM d, yyyy')}
             </span>
              <Button variant="outline" size="icon" onClick={() => handleDateChange(7)}>
               <ChevronRight className="h-4 w-4" />
