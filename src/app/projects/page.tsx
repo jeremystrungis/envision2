@@ -1,18 +1,32 @@
 
 'use client';
 
+import React, { useState } from 'react';
 import AppHeader from '@/components/app-header';
 import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { projects } from '@/lib/data';
+import { projects as initialProjects, Project } from '@/lib/data';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import AddProjectDialog from '@/components/projects/add-project-dialog';
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
+
+  const handleAddProject = (newProject: Omit<Project, 'id'>) => {
+    const projectWithId = {
+        ...newProject,
+        id: `proj-${projects.length + 1}`,
+    };
+    setProjects(prevProjects => [...prevProjects, projectWithId]);
+    setIsAddProjectDialogOpen(false);
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <AppSidebar />
@@ -26,7 +40,7 @@ export default function ProjectsPage() {
                         <CardTitle>Projects</CardTitle>
                         <CardDescription>Manage your engineering projects.</CardDescription>
                     </div>
-                    <Button>
+                    <Button onClick={() => setIsAddProjectDialogOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add New Project
                     </Button>
@@ -86,6 +100,11 @@ export default function ProjectsPage() {
           </Card>
         </main>
       </div>
+      <AddProjectDialog
+        isOpen={isAddProjectDialogOpen}
+        onClose={() => setIsAddProjectDialogOpen(false)}
+        onAddProject={handleAddProject}
+      />
     </div>
   );
 }
