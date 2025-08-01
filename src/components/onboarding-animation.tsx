@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
-import { MoreHorizontal, PlusCircle, CalendarIcon, Users, GanttChartSquare, LayoutDashboard, MousePointer, Edit } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, CalendarIcon, Users, GanttChartSquare, LayoutDashboard, MousePointer, Edit, ClipboardList } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
 
