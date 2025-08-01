@@ -11,6 +11,7 @@ import type { Task } from '@/lib/data';
 
 const GANTT_ROW_HEIGHT = 40; // in pixels
 const GANTT_DAY_WIDTH = 36; // in pixels
+const GANTT_CONTAINER_HEIGHT = 400; // in pixels
 
 export default function GanttChart() {
   const { projects, tasks: allTasks, users } = useStore();
@@ -104,8 +105,12 @@ export default function GanttChart() {
           </SelectContent>
         </Select>
 
-        <div className="relative overflow-x-auto border rounded-lg" ref={containerRef}>
-          <div style={{ width: `${totalDays * GANTT_DAY_WIDTH}px` }}>
+        <div 
+            className="relative overflow-auto border rounded-lg" 
+            ref={containerRef}
+            style={{height: `${GANTT_CONTAINER_HEIGHT}px`}}
+        >
+          <div style={{ width: `${totalDays * GANTT_DAY_WIDTH}px`, height: '100%' }}>
             {/* Timeline Header */}
             <div className="sticky top-0 z-10 bg-muted/50">
                {/* Month row */}
@@ -156,11 +161,12 @@ export default function GanttChart() {
                     const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0;
                     
                     const scrollLeft = containerRef.current.scrollLeft;
+                    const scrollTop = containerRef.current.scrollTop;
 
                     const startX = fromRect.right - containerRect.left + scrollLeft;
-                    const startY = fromRect.top - containerRect.top - headerHeight + fromRect.height / 2;
+                    const startY = fromRect.top - containerRect.top - headerHeight + fromRect.height / 2 + scrollTop;
                     const endX = toRect.left - containerRect.left + scrollLeft;
-                    const endY = toRect.top - containerRect.top - headerHeight + toRect.height / 2;
+                    const endY = toRect.top - containerRect.top - headerHeight + toRect.height / 2 + scrollTop;
 
                     return (
                       <g key={`${depId}-${task.id}`}>
