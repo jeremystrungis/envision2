@@ -135,8 +135,7 @@ export default function GanttChart() {
                     className="absolute top-0 bottom-0 w-px bg-red-500 z-20"
                     style={{ left: `${todayPosition + GANTT_DAY_WIDTH / 2}px` }}
                 >
-                    <div className="absolute -top-5 -translate-x-1/2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                        TODAY
+                    <div className="absolute -top-5 -translate-x-1/2 bg-red-500/50 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                     </div>
                 </div>
               )}
