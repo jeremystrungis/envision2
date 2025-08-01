@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import AppHeader from '@/components/app-header';
 import WorkloadHeatmap from '@/components/dashboard/workload-heatmap';
@@ -10,20 +10,11 @@ import ResourceAllocationChart from '@/components/dashboard/resource-allocation-
 import ProjectStatusChart from '@/components/dashboard/project-status-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import OnboardingModal from '@/components/onboarding-modal';
+import { Button } from '@/components/ui/button';
+import { PlayCircle } from 'lucide-react';
 
 export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
-
-  useEffect(() => {
-    // To re-test the onboarding modal, open your browser's developer tools,
-    // go to the Application tab, find Local Storage, and delete the 'hasVisitedEngVision' key.
-    const hasVisited = localStorage.getItem('hasVisitedEngVision');
-    if (!hasVisited) {
-      setShowOnboarding(true);
-      localStorage.setItem('hasVisitedEngVision', 'true');
-    }
-  }, []);
-
 
   return (
     <>
@@ -33,6 +24,12 @@ export default function Home() {
         <div className="flex flex-1 flex-col">
           <AppHeader />
           <main className="flex-1 p-4 sm:p-6 grid auto-rows-max gap-6">
+            <div className="flex justify-start">
+                <Button onClick={() => setShowOnboarding(true)}>
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Test Onboarding Guide
+                </Button>
+            </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <Card className="lg:col-span-2">
                 <CardHeader>
