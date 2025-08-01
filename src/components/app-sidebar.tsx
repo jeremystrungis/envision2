@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Settings,
   Users,
-  BotMessageSquare,
   ClipboardList,
 } from 'lucide-react';
 
@@ -20,6 +19,7 @@ import {
 import { Button } from './ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import AppLogo from './app-logo';
 
 export default function AppSidebar() {
   const pathname = usePathname();
@@ -39,8 +39,8 @@ export default function AppSidebar() {
             href="/"
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
-            <BotMessageSquare className="h-5 w-5 transition-all group-hover:scale-110" />
-            <span className="sr-only">EngVision</span>
+            <AppLogo className="h-6 w-6" />
+            <span className="sr-only">ENTRUST PMvision</span>
           </Link>
           {navItems.map((item) => (
             <Tooltip key={item.href}>

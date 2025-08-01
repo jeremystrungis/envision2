@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Bell, BotMessageSquare, Search, User } from 'lucide-react';
+import { Bell, Menu, Search, User } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import {
 import { getOverloadedUsers } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import AppLogo from './app-logo';
 
 export default function AppHeader() {
   const overloadedUsers = getOverloadedUsers();
@@ -29,18 +31,18 @@ export default function AppHeader() {
        <Sheet>
             <SheetTrigger asChild>
               <Button size="icon" variant="outline" className="sm:hidden">
-                <BotMessageSquare className="h-5 w-5" />
+                <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs">
               <nav className="grid gap-6 text-lg font-medium">
                 <Link
-                  href="#"
+                  href="/"
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
-                  <BotMessageSquare className="h-5 w-5 transition-all group-hover:scale-110" />
-                  <span className="sr-only">EngVision</span>
+                  <AppLogo className="h-6 w-6" />
+                  <span className="sr-only">ENTRUST PMvision</span>
                 </Link>
                 <Link
                   href="#"
@@ -71,7 +73,7 @@ export default function AppHeader() {
           </Sheet>
       <div className="flex items-baseline gap-2">
          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
-          EngVision
+          ENTRUST PMvision
         </h1>
       </div>
       <div className="relative ml-auto flex-1 md:grow-0">
