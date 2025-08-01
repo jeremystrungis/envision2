@@ -23,41 +23,41 @@ export default function Home() {
         <AppSidebar />
         <div className="flex flex-1 flex-col">
           <AppHeader />
-          <main className="flex-1 p-4 sm:p-6 grid auto-rows-max gap-6">
+          <main className="flex-1 p-4 sm:p-6 flex flex-col gap-6">
             <div className="flex justify-start">
                 <Button onClick={() => setShowOnboarding(true)}>
                     <PlayCircle className="mr-2 h-4 w-4" />
                     Test Onboarding Guide
                 </Button>
             </div>
-            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-              <Card className="xl:col-span-2">
-                <CardHeader>
-                  <CardTitle>Workload Heatmap</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <WorkloadHeatmap />
-                </CardContent>
-              </Card>
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Resource Allocation</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResourceAllocationChart />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Project Status</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ProjectStatusChart />
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Workload Heatmap</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <WorkloadHeatmap />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Resource Allocation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResourceAllocationChart />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProjectStatusChart />
+              </CardContent>
+            </Card>
+            
             <Card>
               <CardHeader>
                 <CardTitle>Project Gantt Chart</CardTitle>
