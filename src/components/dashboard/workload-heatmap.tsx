@@ -46,7 +46,7 @@ export default function WorkloadHeatmap() {
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
     end: endOfWeek(currentDate, { weekStartsOn: 1 }),
-  }).filter(day => getDay(day) >= 1 && getDay(day) <= 3); // 1 is Monday, 3 is Wednesday
+  }).filter(day => getDay(day) >= 1 && getDay(day) <= 5); // 1 is Monday, 5 is Friday
 
   const teams = useMemo(() => {
     const allTeams = new Set(users.map(user => user.team));
