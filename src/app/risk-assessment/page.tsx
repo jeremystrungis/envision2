@@ -88,7 +88,7 @@ export default function RiskAssessmentPage() {
       <div className="flex flex-1 flex-col">
         <AppHeader />
         <main className="flex-1 p-4 sm:p-6">
-          <Card className="max-w-4xl mx-auto">
+          <Card className="max-w-3xl mx-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot /> Risk Assessment AI Agent
@@ -134,7 +134,7 @@ export default function RiskAssessmentPage() {
           </Card>
 
           {assessmentResult && (
-            <div className="max-w-4xl mx-auto mt-6">
+            <div className="max-w-3xl mx-auto mt-6">
                 <Card>
                     <CardHeader>
                          <CardTitle className="flex items-center gap-2">

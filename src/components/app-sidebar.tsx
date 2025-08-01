@@ -34,7 +34,7 @@ export default function AppSidebar() {
   ];
 
   return (
-    <aside className="hidden w-64 flex-col border-r bg-background sm:flex">
+    <aside className="hidden w-56 flex-col border-r bg-background sm:flex">
         <nav className="flex flex-col gap-4 p-4">
           <Link
             href="/"

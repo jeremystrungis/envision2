@@ -117,7 +117,7 @@ export default function WorkloadHeatmap() {
         </div>
 
         <div className="overflow-x-auto">
-          <div className="grid gap-px bg-border" style={{gridTemplateColumns: `120px repeat(${weekDays.length}, 1fr)`}}>
+          <div className="grid gap-px bg-border" style={{gridTemplateColumns: `110px repeat(${weekDays.length}, 1fr)`}}>
             {/* Header */}
             <div className="p-2 text-sm font-semibold bg-muted/50">Member</div>
             {weekDays.map((day) => (

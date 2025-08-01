@@ -90,7 +90,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Add New Project</DialogTitle>
           <DialogDescription>

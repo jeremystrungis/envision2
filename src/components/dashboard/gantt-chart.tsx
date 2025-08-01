@@ -10,7 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import type { Task } from '@/lib/data';
 
 const GANTT_ROW_HEIGHT = 40; // in pixels
-const GANTT_DAY_WIDTH = 40; // in pixels
+const GANTT_DAY_WIDTH = 36; // in pixels
 
 export default function GanttChart() {
   const { projects, tasks: allTasks, users } = useStore();

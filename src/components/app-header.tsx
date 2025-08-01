@@ -50,7 +50,7 @@ export default function AppHeader() {
         <Input
           type="search"
           placeholder="Search..."
-          className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+          className="w-full rounded-lg bg-background pl-8 md:w-[180px] lg:w-[300px]"
         />
       </div>
        <Popover>
