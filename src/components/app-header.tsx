@@ -22,6 +22,7 @@ import { getOverloadedUsers } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import AppLogo from './app-logo';
+import AppSidebar from './app-sidebar';
 
 export default function AppHeader() {
   const overloadedUsers = getOverloadedUsers();
@@ -35,43 +36,11 @@ export default function AppHeader() {
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="sm:max-w-xs">
-              <nav className="grid gap-6 text-lg font-medium">
-                <Link
-                  href="/"
-                  className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-                >
-                  <AppLogo className="h-6 w-6" />
-                  <span className="sr-only">ENTRUST PMvision</span>
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  Gantt
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  Teams
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  Settings
-                </Link>
-              </nav>
+            <SheetContent side="left" className="sm:max-w-xs p-0">
+              <AppSidebar />
             </SheetContent>
           </Sheet>
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-baseline gap-2 sm:hidden">
          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
           ENTRUST PMvision
         </h1>

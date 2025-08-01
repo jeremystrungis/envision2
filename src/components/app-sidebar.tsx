@@ -32,55 +32,38 @@ export default function AppSidebar() {
   ];
 
   return (
-    <aside className="hidden h-screen w-16 flex-col border-r bg-background sm:flex">
-      <TooltipProvider>
-        <nav className="flex flex-col items-center gap-4 px-2 py-4">
+    <aside className="hidden w-64 flex-col border-r bg-background sm:flex">
+        <nav className="flex flex-col gap-4 p-4">
           <Link
             href="/"
-            className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+            className="group mb-4 flex h-9 shrink-0 items-center gap-2"
           >
-            <AppLogo className="h-6 w-6" />
-            <span className="sr-only">ENTRUST PMvision</span>
+            <AppLogo className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">ENTRUST PMvision</span>
           </Link>
           {navItems.map((item) => (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn("rounded-lg", pathname === item.href && "bg-accent")}
-                  aria-label={item.label}
-                  asChild
-                >
-                  <Link href={item.href}>
-                    <item.icon className="h-5 w-5" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={5}>
-                {item.label}
-              </TooltipContent>
-            </Tooltip>
+            <Link 
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                pathname === item.href && "bg-gradient-to-r from-green-400/20 to-green-500/20 text-primary font-bold"
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </Link>
           ))}
         </nav>
-        <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-4">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
+        <div className="mt-auto p-4">
+            <Button
                 variant="ghost"
-                size="icon"
-                className="mt-auto rounded-lg"
-                aria-label="Settings"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary w-full justify-start"
               >
                 <Settings className="h-5 w-5" />
+                Settings
               </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={5}>
-              Settings
-            </TooltipContent>
-          </Tooltip>
-        </nav>
-      </TooltipProvider>
+        </div>
     </aside>
   );
 }
