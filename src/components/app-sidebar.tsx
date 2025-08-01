@@ -8,6 +8,7 @@ import {
   Settings,
   Users,
   ClipboardList,
+  TriangleAlert,
 } from 'lucide-react';
 
 import {
@@ -29,6 +30,7 @@ export default function AppSidebar() {
     { href: '/gantt', label: 'Gantt', icon: GanttChartSquare },
     { href: '/teams', label: 'Teams', icon: Users },
     { href: '/projects', label: 'Projects', icon: ClipboardList },
+    { href: '/risk-assessment', label: 'Risk Assessment', icon: TriangleAlert },
   ];
 
   return (
