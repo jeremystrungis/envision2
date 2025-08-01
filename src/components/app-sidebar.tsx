@@ -9,6 +9,7 @@ import {
   Users,
   ClipboardList,
   TriangleAlert,
+  BookOpenCheck,
 } from 'lucide-react';
 
 import {
@@ -31,6 +32,7 @@ export default function AppSidebar() {
     { href: '/teams', label: 'Teams', icon: Users },
     { href: '/projects', label: 'Projects', icon: ClipboardList },
     { href: '/risk-assessment', label: 'Risk Assessment', icon: TriangleAlert },
+    { href: '/features', label: 'Features', icon: BookOpenCheck },
   ];
 
   return (
