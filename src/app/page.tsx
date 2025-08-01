@@ -15,6 +15,8 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
+    // To re-test the onboarding modal, open your browser's developer tools,
+    // go to the Application tab, find Local Storage, and delete the 'hasVisitedEngVision' key.
     const hasVisited = localStorage.getItem('hasVisitedEngVision');
     if (!hasVisited) {
       setShowOnboarding(true);
