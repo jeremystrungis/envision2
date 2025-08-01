@@ -46,7 +46,7 @@ export default function WorkloadHeatmap() {
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
     end: endOfWeek(currentDate, { weekStartsOn: 1 }),
-  }).filter(day => getDay(day) >= 1 && getDay(day) <= 5); // 1 is Monday, 5 is Friday
+  }).filter(day => getDay(day) >= 1 && getDay(day) <= 3); // 1 is Monday, 3 is Wednesday
 
   const teams = useMemo(() => {
     const allTeams = new Set(users.map(user => user.team));
@@ -96,7 +96,7 @@ export default function WorkloadHeatmap() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium text-muted-foreground">
-              {format(weekDays[0], 'MMM d')} - {format(weekDays[weekDays.length - 1], 'MMM d, yyyy')}
+              {format(startOfWeek(currentDate, {weekStartsOn: 1}), 'MMM d')} - {format(endOfWeek(currentDate, {weekStartsOn: 1}), 'MMM d, yyyy')}
             </span>
              <Button variant="outline" size="icon" onClick={() => handleDateChange(7)}>
               <ChevronRight className="h-4 w-4" />
