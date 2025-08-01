@@ -93,9 +93,9 @@ export default function GanttChart() {
         <div 
             className="relative overflow-auto border rounded-lg" 
             ref={containerRef}
-            style={{height: `${GANTT_CONTAINER_HEIGHT}px`}}
+            style={{maxHeight: `${GANTT_CONTAINER_HEIGHT}px`}}
         >
-          <div style={{ width: `${totalDays * GANTT_DAY_WIDTH}px`, height: '100%' }}>
+          <div style={{ width: `${totalDays * GANTT_DAY_WIDTH}px` }}>
             {/* Timeline Header */}
             <div className="sticky top-0 z-10 bg-muted/50 backdrop-blur-sm">
                {/* Month row */}
