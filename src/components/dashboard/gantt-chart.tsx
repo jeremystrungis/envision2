@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { eachDayOfInterval, differenceInDays, format, isWithinInterval } from 'date-fns';
+import { eachDayOfInterval, differenceInDays, format, isWithinInterval, startOfToday } from 'date-fns';
 import { useStore } from '@/lib/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -81,6 +81,14 @@ export default function GanttChart() {
       width: `${width}px`,
     };
   };
+  
+  const todayPosition = useMemo(() => {
+    const today = startOfToday();
+    if (isWithinInterval(today, {start: startDate, end: endDate})) {
+        return differenceInDays(today, startDate) * GANTT_DAY_WIDTH;
+    }
+    return -1;
+  }, [startDate, endDate]);
 
   const getAssignee = (assigneeId: string | null) => users.find(u => u.id === assigneeId);
 
@@ -121,6 +129,18 @@ export default function GanttChart() {
 
             {/* Task Area */}
             <div className="relative">
+              {/* Today Marker */}
+              {todayPosition !== -1 && (
+                <div 
+                    className="absolute top-0 bottom-0 w-px bg-red-500 z-20"
+                    style={{ left: `${todayPosition + GANTT_DAY_WIDTH / 2}px` }}
+                >
+                    <div className="absolute -top-5 -translate-x-1/2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        TODAY
+                    </div>
+                </div>
+              )}
+
               {/* Dependency Lines (rendered first to be in the background) */}
               <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{height: `${tasks.length * GANTT_ROW_HEIGHT}px`}}>
                 {tasks.flatMap(task => 
@@ -165,8 +185,10 @@ export default function GanttChart() {
                     <TooltipTrigger asChild>
                       <div
                         ref={el => taskRefs.current[task.id] = el}
-                        className={cn("absolute flex items-center h-[30px] rounded bg-primary/80 hover:bg-primary text-primary-foreground text-xs px-2 cursor-pointer transition-all duration-300",
-                          isWithinInterval(new Date(), {start: task.startDate, end: task.endDate}) && "animate-slow-pulse border-2 border-accent"
+                        className={cn("absolute z-10 flex items-center h-[30px] rounded text-primary-foreground text-xs px-2 cursor-pointer transition-colors",
+                          isWithinInterval(new Date(), {start: task.startDate, end: task.endDate}) 
+                            ? "bg-accent hover:bg-accent/90 border-2 border-primary" 
+                            : "bg-primary/80 hover:bg-primary"
                         )}
                         style={{ top: `${(GANTT_ROW_HEIGHT - 30) / 2}px`, ...getTaskStyle(task) }}
                       >
