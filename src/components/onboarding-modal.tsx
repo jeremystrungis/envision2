@@ -6,37 +6,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
 import { ClipboardList, Users, GanttChartSquare, LayoutDashboard } from 'lucide-react';
-import Image from 'next/image';
 import { Progress } from './ui/progress';
+import OnboardingAnimation from './onboarding-animation';
 
 const onboardingSteps = [
   {
     icon: ClipboardList,
     title: 'Add Projects & Tasks',
     description: 'Start by creating a new project. In the same step, you can add all the initial tasks, assign them to team members, and set their deadlines.',
-    image: 'https://placehold.co/600x400.png',
-    "data-ai-hint": "project management",
   },
   {
     icon: Users,
     title: 'Manage Your Team',
     description: 'Navigate to the Teams page to add new members or edit existing ones. You can create new teams on the fly and set each member\'s daily work capacity.',
-    image: 'https://placehold.co/600x400.png',
-    "data-ai-hint": "team collaboration",
   },
   {
     icon: GanttChartSquare,
     title: 'Schedule & Allocate',
     description: 'Use the Gantt charts to visualize project timelines. Assign tasks to team members and draw dependencies between tasks to create a clear project plan.',
-    image: 'https://placehold.co/600x400.png',
-    "data-ai-hint": "scheduling chart",
   },
   {
     icon: LayoutDashboard,
     title: 'Visualize Your Data',
     description: 'The dashboard provides a real-time overview of your team\'s workload, project statuses, and resource allocation. Use the heatmap to prevent burnout!',
-    image: 'https://placehold.co/600x400.png',
-    "data-ai-hint": "dashboard data",
   },
 ];
 
@@ -84,8 +76,8 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               <CarouselItem key={index}>
                 <div className="p-1">
                     <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                        <div className="relative w-full h-64 rounded-lg overflow-hidden border">
-                            <Image src={step.image} alt={step.title} layout="fill" objectFit="cover" data-ai-hint={step['data-ai-hint']} />
+                        <div className="relative w-full h-64 rounded-lg overflow-hidden border bg-muted">
+                           <OnboardingAnimation step={index} />
                         </div>
                         <step.icon className="h-10 w-10 text-primary" />
                         <h3 className="text-xl font-semibold">{step.title}</h3>
