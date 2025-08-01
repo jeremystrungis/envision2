@@ -7,7 +7,7 @@ import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Project } from '@/lib/data';
+import { Project, Task } from '@/lib/data';
 import { useStore, store } from '@/lib/store';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -20,8 +20,8 @@ export default function ProjectsPage() {
   const { projects } = useStore();
   const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
 
-  const handleAddProject = (newProject: Omit<Project, 'id'>) => {
-    store.addProject(newProject);
+  const handleAddProject = (newProject: Omit<Project, 'id'>, tasks: Omit<Task, 'id' | 'projectId' | 'dependencies'>[]) => {
+    store.addProject(newProject, tasks);
     setIsAddProjectDialogOpen(false);
   };
 

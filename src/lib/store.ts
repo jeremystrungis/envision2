@@ -40,9 +40,20 @@ export const store = {
     };
   },
 
-  addProject: (project: Omit<Project, 'id'>) => {
+  addProject: (project: Omit<Project, 'id'>, newTasks: Omit<Task, 'id' | 'projectId' | 'dependencies'>[]) => {
     const newProject = { ...project, id: `proj-${Date.now()}` };
     projects = [...projects, newProject];
+    
+    const tasksToAdd: Task[] = newTasks
+      .filter(task => task.name) // Only add tasks that have a name
+      .map(task => ({
+        ...task,
+        id: `task-${Date.now()}-${Math.random()}`,
+        projectId: newProject.id,
+        dependencies: []
+    }));
+
+    tasks = [...tasks, ...tasksToAdd];
     emitChange();
   },
 
