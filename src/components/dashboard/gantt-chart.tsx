@@ -18,7 +18,6 @@ export default function GanttChart() {
   const [selectedProjectId, setSelectedProjectId] = useState(projects.length > 0 ? projects[0].id : '');
   const taskRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     // If there are projects but none is selected (e.g., after projects load)
@@ -60,20 +59,6 @@ export default function GanttChart() {
     return { startDate: start, endDate: end, dateInterval: interval, totalDays: interval.length, monthIntervals: months };
   }, [tasks]);
 
-  useEffect(() => {
-    const updateDimensions = () => {
-      if(containerRef.current) {
-        setDimensions({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight,
-        });
-      }
-    };
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, [tasks]);
-
   const getTaskStyle = (task: Task) => {
     const left = differenceInDays(task.startDate, startDate) * GANTT_DAY_WIDTH;
     const width = differenceInDays(task.endDate, task.startDate) * GANTT_DAY_WIDTH;
@@ -112,7 +97,7 @@ export default function GanttChart() {
         >
           <div style={{ width: `${totalDays * GANTT_DAY_WIDTH}px`, height: '100%' }}>
             {/* Timeline Header */}
-            <div className="sticky top-0 z-10 bg-muted/50">
+            <div className="sticky top-0 z-10 bg-muted/50 backdrop-blur-sm">
                {/* Month row */}
               <div className="flex">
                 {monthIntervals.map((month, index) => (
@@ -140,7 +125,8 @@ export default function GanttChart() {
                     className="absolute top-0 bottom-0 w-px bg-red-500 z-20"
                     style={{ left: `${todayPosition + GANTT_DAY_WIDTH / 2}px` }}
                 >
-                    <div className="absolute -top-5 -translate-x-1/2 bg-red-500/50 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    <div className="absolute -top-5 -translate-x-1/2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        Today
                     </div>
                 </div>
               )}
@@ -172,11 +158,11 @@ export default function GanttChart() {
                       <g key={`${depId}-${task.id}`}>
                         <path
                           d={`M ${startX} ${startY} L ${startX + 10} ${startY} L ${startX + 10} ${endY} L ${endX} ${endY}`}
-                          stroke="hsl(var(--accent))"
+                          stroke="hsl(var(--accent-foreground))"
                           strokeWidth="2"
                           fill="none"
                         />
-                        <path d={`M ${endX - 5} ${endY - 4} L ${endX} ${endY} L ${endX - 5} ${endY + 4}`} stroke="hsl(var(--accent))" fill="none" strokeWidth="2" />
+                        <path d={`M ${endX - 5} ${endY - 4} L ${endX} ${endY} L ${endX - 5} ${endY + 4}`} stroke="hsl(var(--accent-foreground))" fill="none" strokeWidth="2" />
                       </g>
                     );
                   })
@@ -221,3 +207,5 @@ export default function GanttChart() {
     </TooltipProvider>
   );
 }
+
+    
