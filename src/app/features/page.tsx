@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import AppHeader from '@/components/app-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
