@@ -1,12 +1,10 @@
 
 'use client';
 
-import { Pie, PieChart, Tooltip, Cell } from 'recharts';
+import { Bar, BarChart, Tooltip, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import {
   ChartContainer,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from '@/components/ui/chart';
 import { useStore } from '@/lib/store';
 import { useMemo } from 'react';
@@ -17,22 +15,23 @@ import { CardDescription } from '../ui/card';
 export default function ProjectStatusChart() {
   const { projects } = useStore();
   
-  const chartData = useMemo(() => {
+  const { chartData, totalProjects } = useMemo(() => {
     const statusCounts = projects.reduce((acc, project) => {
       acc[project.status] = (acc[project.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
+    
+    const data = [{
+        name: 'status',
+        'On Track': statusCounts['On Track'] || 0,
+        'At Risk': statusCounts['At Risk'] || 0,
+        'Off Track': statusCounts['Off Track'] || 0,
+    }];
 
-    return Object.keys(statusCounts).map((status) => ({
-      status,
-      count: statusCounts[status],
-    }));
+    return { chartData: data, totalProjects: projects.length };
   }, [projects]);
 
   const chartConfig = {
-    count: {
-      label: 'Projects',
-    },
     'On Track': {
       label: 'On Track',
       color: 'hsl(var(--chart-2))',
@@ -49,36 +48,47 @@ export default function ProjectStatusChart() {
 
   return (
     <div>
-        <ChartContainer
-            config={chartConfig}
-            className="mx-auto aspect-square h-[200px]"
-        >
-            <PieChart>
-                <Tooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel nameKey="status" />}
-                />
-                <Pie
-                data={chartData}
-                dataKey="count"
-                nameKey="status"
-                innerRadius={50}
-                strokeWidth={5}
-                >
-                {chartData.map((entry) => (
-                    <Cell
-                    key={entry.status}
-                    fill={chartConfig[entry.status as keyof typeof chartConfig]?.color}
-                    />
-                ))}
-                </Pie>
-                <ChartLegend
-                content={<ChartLegendContent nameKey="status" />}
-                className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
-                />
-            </PieChart>
-        </ChartContainer>
-        <div className="mt-4 space-y-2">
+      <ChartContainer config={chartConfig} className="h-[50px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            layout="vertical"
+            data={chartData}
+            stackOffset="expand"
+            margin={{ top: 0, right: 10, left: 10, bottom: 0 }}
+          >
+            <XAxis type="number" hide />
+            <YAxis type="category" dataKey="name" hide />
+            <Tooltip
+              cursor={false}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                   const total = payload.reduce((sum, item) => sum + (item.value as number), 0);
+                   return (
+                    <div className="min-w-[8rem] rounded-lg border bg-background p-2 text-xs shadow-sm">
+                      <div className="grid gap-1.5">
+                        {payload.map((item) => (
+                           <div key={item.dataKey} className="flex items-center gap-2">
+                             <div className="h-2.5 w-2.5 rounded-full" style={{backgroundColor: item.color}}/>
+                             <div className="flex flex-1 justify-between">
+                               <span>{chartConfig[item.dataKey as keyof typeof chartConfig].label}</span>
+                               <span>{item.value} ({total > 0 ? Math.round(((item.value as number) / totalProjects) * 100) : 0}%)</span>
+                             </div>
+                           </div>
+                         ))}
+                      </div>
+                    </div>
+                   )
+                }
+                return null
+              }}
+            />
+            <Bar dataKey="On Track" stackId="a" fill="var(--color-On Track)" radius={[4, 0, 0, 4]} />
+            <Bar dataKey="At Risk" stackId="a" fill="var(--color-At Risk)" radius={0} />
+            <Bar dataKey="Off Track" stackId="a" fill="var(--color-Off Track)" radius={[0, 4, 4, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+      <div className="mt-4 space-y-2">
             <CardDescription>Individual Project Status</CardDescription>
             <ul className="divide-y divide-border rounded-md border">
                 {projects.map(project => (
