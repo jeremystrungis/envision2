@@ -17,14 +17,7 @@ export default function Home() {
         <div className="flex flex-1 flex-col">
           <AppHeader />
           <main className="flex-1 p-4 sm:px-6 sm:py-4 flex flex-col gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Workload Heatmap</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <WorkloadHeatmap />
-              </CardContent>
-            </Card>
+            <WorkloadHeatmap />
             
             <Card>
               <CardHeader>

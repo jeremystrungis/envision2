@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
-import { CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const workloadLevels = [
     { level: 'Light', color: 'bg-sky-500/20 border-sky-500/30', description: '< 50%' },
@@ -89,22 +89,23 @@ export default function WorkloadHeatmap() {
   };
 
   return (
-    <TooltipProvider>
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 -mt-4">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Workload Heatmap</CardTitle>
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => handleDateChange(-7)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium text-muted-foreground">
-              {format(startOfWeek(currentDate, {weekStartsOn: 1}), 'MMM d')} - {format(endOfWeek(currentDate, {weekStartsOn: 1}), 'MMM d, yyyy')}
+            <span className="text-sm font-medium text-muted-foreground w-max">
+              {format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - {format(endOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d, yyyy')}
             </span>
-             <Button variant="outline" size="icon" onClick={() => handleDateChange(7)}>
+            <Button variant="outline" size="icon" onClick={() => handleDateChange(7)}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
           <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-            <SelectTrigger className="w-[240px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select Team" />
             </SelectTrigger>
             <SelectContent>
@@ -116,59 +117,64 @@ export default function WorkloadHeatmap() {
             </SelectContent>
           </Select>
         </div>
-
-        <div className="overflow-x-auto">
-          <div className="grid gap-px bg-border" style={{gridTemplateColumns: `110px repeat(${weekDays.length}, 1fr)`}}>
-            {/* Header */}
-            <div className="p-2 text-sm font-semibold bg-muted/50">Member</div>
-            {weekDays.map((day) => (
-              <div key={day.toISOString()} className="p-2 text-center text-sm font-semibold bg-muted/50">
-                <div>{format(day, 'E')}</div>
-                <div className="text-xs text-muted-foreground">{format(day, 'd')}</div>
-              </div>
-            ))}
-
-            {/* User Rows */}
-            {workloadData.map(({ user, dailyWorkload }) => (
-              <React.Fragment key={user.id}>
-                <div className="p-2 flex items-center gap-2 bg-muted/30">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs font-medium truncate">{user.name}</span>
-                </div>
-                {dailyWorkload.map((load, index) => (
-                  <Tooltip key={index}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          'h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors',
-                          getWorkloadColor(load, user.capacity)
-                        )}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{load}h / {user.capacity}h allocated</p>
-                    </TooltipContent>
-                  </Tooltip>
+      </CardHeader>
+      <CardContent>
+        <TooltipProvider>
+          <div className="space-y-4">
+            <div className="overflow-x-auto">
+              <div className="grid gap-px bg-border" style={{ gridTemplateColumns: `110px repeat(${weekDays.length}, 1fr)` }}>
+                {/* Header */}
+                <div className="p-2 text-sm font-semibold bg-muted/50">Member</div>
+                {weekDays.map((day) => (
+                  <div key={day.toISOString()} className="p-2 text-center text-sm font-semibold bg-muted/50">
+                    <div>{format(day, 'E')}</div>
+                    <div className="text-xs text-muted-foreground">{format(day, 'd')}</div>
+                  </div>
                 ))}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-end space-x-4 pt-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>Legend:</span>
+
+                {/* User Rows */}
+                {workloadData.map(({ user, dailyWorkload }) => (
+                  <React.Fragment key={user.id}>
+                    <div className="p-2 flex items-center gap-2 bg-muted/30">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs font-medium truncate">{user.name}</span>
+                    </div>
+                    {dailyWorkload.map((load, index) => (
+                      <Tooltip key={index}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              'h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors',
+                              getWorkloadColor(load, user.capacity)
+                            )}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{load}h / {user.capacity}h allocated</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
-            {workloadLevels.map(item => (
+            <div className="flex flex-wrap items-center justify-end space-x-4 pt-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Legend:</span>
+              </div>
+              {workloadLevels.map(item => (
                 <div key={item.level} className="flex items-center gap-2">
-                    <div className={cn("h-4 w-4 rounded-sm border", item.color)}></div>
-                    <span className="text-xs text-muted-foreground">{item.level} ({item.description})</span>
+                  <div className={cn("h-4 w-4 rounded-sm border", item.color)}></div>
+                  <span className="text-xs text-muted-foreground">{item.level} ({item.description})</span>
                 </div>
-            ))}
-        </div>
-      </div>
-    </TooltipProvider>
+              ))}
+            </div>
+          </div>
+        </TooltipProvider>
+      </CardContent>
+    </Card>
   );
 }
