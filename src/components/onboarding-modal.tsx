@@ -61,7 +61,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
             Welcome to ENTRUST PMvision!
