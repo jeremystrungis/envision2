@@ -87,7 +87,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               </CarouselItem>
             ))}
           </CarouselContent>
-          <div className="flex justify-center items-center gap-4 mt-4">
+          <div className="flex items-center gap-4 mt-4">
             <CarouselPrevious />
             <CarouselNext />
           </div>
