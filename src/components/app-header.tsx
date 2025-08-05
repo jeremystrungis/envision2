@@ -22,19 +22,14 @@ import {
 import { useStore } from '@/lib/store';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
-import AppLogo from './app-logo';
 import AppSidebar from './app-sidebar';
-import OnboardingModal from './onboarding-modal';
 
 export default function AppHeader() {
   const { getOverloadedUsers } = useStore();
   const overloadedUsers = getOverloadedUsers();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
 
   return (
     <>
-    <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 py-2 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
        <Sheet>
             <SheetTrigger asChild>
@@ -61,9 +56,11 @@ export default function AppHeader() {
             className="w-full rounded-lg bg-background pl-8 md:w-[180px] lg:w-[300px]"
             />
         </div>
-        <Button variant="outline" size="sm" onClick={() => setShowOnboarding(true)}>
-            <PlayCircle className="mr-2 h-4 w-4" />
-            How to use PMVision
+        <Button variant="outline" size="sm" asChild>
+            <Link href="/features">
+                <PlayCircle className="mr-2 h-4 w-4" />
+                How to use PMVision
+            </Link>
         </Button>
       </div>
        <Popover>

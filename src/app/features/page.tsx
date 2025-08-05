@@ -1,13 +1,17 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import AppHeader from '@/components/app-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bot, ClipboardList, GanttChartSquare, LayoutDashboard, TriangleAlert, Users } from 'lucide-react';
+import { Bot, ClipboardList, GanttChartSquare, LayoutDashboard, TriangleAlert, Users, BookOpenCheck, PlayCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
+import { Progress } from '@/components/ui/progress';
+import OnboardingAnimation from '@/components/onboarding-animation';
+import { Button } from '@/components/ui/button';
 
 const features = [
   {
@@ -66,6 +70,90 @@ const features = [
   },
 ];
 
+const onboardingSteps = [
+  {
+    icon: ClipboardList,
+    title: 'Add Projects & Tasks',
+    description: 'Start by creating a new project. In the same step, you can add all the initial tasks, assign them to team members, and set their deadlines.',
+  },
+  {
+    icon: Users,
+    title: 'Manage Your Team',
+    description: 'Navigate to the Teams page to add new members or edit existing ones. You can create new teams on the fly and set each member\'s daily work capacity.',
+  },
+  {
+    icon: GanttChartSquare,
+    title: 'Schedule & Allocate',
+    description: 'Use the Gantt charts to visualize project timelines. Assign tasks to team members and draw dependencies between tasks to create a clear project plan.',
+  },
+  {
+    icon: LayoutDashboard,
+    title: 'Visualize Your Data',
+    description: 'The dashboard provides a real-time overview of your team\'s workload, project statuses, and resource allocation. Use the heatmap to prevent burnout!',
+  },
+];
+
+
+const OnboardingGuide = () => {
+    const [api, setApi] = useState<CarouselApi>();
+    const [current, setCurrent] = useState(0);
+    const [count, setCount] = useState(0);
+    
+    useEffect(() => {
+        if (!api) return;
+        
+        setCount(api.scrollSnapList().length);
+        setCurrent(api.selectedScrollSnap() + 1);
+
+        const onSelect = () => {
+            setCurrent(api.selectedScrollSnap() + 1);
+        };
+        api.on("select", onSelect);
+
+        return () => {
+            api.off("select", onSelect);
+        };
+    }, [api]);
+
+    return (
+        <Card className="mb-8 bg-background/50">
+            <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
+                    How to use PMvision
+                </CardTitle>
+                <CardDescription>A quick tour to get you started.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <Carousel setApi={setApi} className="w-full max-w-lg mx-auto">
+                    <CarouselContent>
+                        {onboardingSteps.map((step, index) => (
+                        <CarouselItem key={index}>
+                            <div className="p-1">
+                                <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                                    <div className="relative w-full h-64 rounded-lg overflow-hidden border bg-muted">
+                                    <OnboardingAnimation step={index} />
+                                    </div>
+                                    <step.icon className="h-10 w-10 text-primary" />
+                                    <h3 className="text-xl font-semibold">{step.title}</h3>
+                                    <p className="text-muted-foreground px-8">{step.description}</p>
+                                </div>
+                            </div>
+                        </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <div className="flex items-center justify-center gap-4 mt-4">
+                        <CarouselPrevious />
+                        <CarouselNext />
+                    </div>
+                </Carousel>
+                <div className="flex items-center justify-center space-x-4 mt-4">
+                    <Progress value={(current / count) * 100} className="w-1/3" />
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
 
 export default function FeaturesPage() {
   return (
@@ -75,6 +163,8 @@ export default function FeaturesPage() {
         <AppHeader />
         <main className="flex-1 p-4 sm:p-6">
             <div className="max-w-4xl mx-auto">
+                <OnboardingGuide />
+
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
                         ENTRUST PMvision Features
@@ -95,7 +185,7 @@ export default function FeaturesPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-6 space-y-4">
-                            {feature.subFeatures.map((sub, index) => (
+                            {feature.subFeatures.map((sub) => (
                                 <React.Fragment key={sub.title}>
                                     <div className="flex items-start gap-4">
                                         <div className="h-5 flex items-center">
