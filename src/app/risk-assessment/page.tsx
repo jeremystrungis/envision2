@@ -189,16 +189,13 @@ function PortfolioHealthAnalyzer() {
     const analyze = async () => {
       setIsLoading(true);
       try {
-        const input: PortfolioHealthInput = { 
-            projects: projects.map(p => ({...p})), // Pass copies to avoid issues
+        const input: PortfolioHealthInput = {
+            projects: projects.map(p => ({...p})),
             tasks: tasks.map(t => ({
-                id: t.id,
-                name: t.name,
-                projectId: t.projectId,
-                assigneeId: t.assigneeId,
-                startDate: new Date(t.startDate), // Ensure they are Date objects
+                ...t,
+                startDate: new Date(t.startDate), // Ensure dates are Date objects
                 endDate: new Date(t.endDate),
-            })), 
+            })),
             users: users.map(u => ({...u}))
         };
         const analysisResult = await assessPortfolioHealth(input);
