@@ -4,7 +4,6 @@
 import { Bar, BarChart, Tooltip, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import {
   ChartContainer,
-  ChartTooltipContent,
 } from '@/components/ui/chart';
 import { useStore } from '@/lib/store';
 import { useMemo } from 'react';
@@ -16,6 +15,7 @@ export default function ProjectStatusChart() {
   const { projects } = useStore();
   
   const { chartData, totalProjects } = useMemo(() => {
+    if (!projects) return { chartData: [], totalProjects: 0 };
     const statusCounts = projects.reduce((acc, project) => {
       acc[project.status] = (acc[project.status] || 0) + 1;
       return acc;

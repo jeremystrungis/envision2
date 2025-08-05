@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { projects as initialProjects, tasks as initialTasks, users as initialUsers, Project, Task, User } from './data';
+import { isWithinInterval } from 'date-fns';
 
 // In-memory store
 let projects: Project[] = [...initialProjects];
@@ -13,6 +14,7 @@ type Store = {
   projects: Project[];
   tasks: Task[];
   users: User[];
+  getOverloadedUsers: () => User[];
 }
 
 let listeners: (() => void)[] = [];
@@ -30,6 +32,19 @@ export const store = {
       projects,
       tasks,
       users,
+      getOverloadedUsers: () => {
+        const today = new Date();
+        const allocation: Record<string, { count: number, tasks: string[] }> = {};
+        users.forEach(u => allocation[u.id] = { count: 0, tasks: [] });
+    
+        tasks.forEach(task => {
+            if (task.assigneeId && isWithinInterval(today, { start: task.startDate, end: task.endDate })) {
+                allocation[task.assigneeId].count += 2; // Assume each task is 2hr/day
+            }
+        });
+    
+        return users.filter(user => (allocation[user.id]?.count || 0) > user.capacity);
+      }
     };
   },
   

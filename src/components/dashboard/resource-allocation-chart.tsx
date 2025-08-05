@@ -7,37 +7,38 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { useStore } from '@/lib/store';
-import { isWithinInterval, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { useMemo } from 'react';
 
 export default function ResourceAllocationChart() {
   const { users, tasks } = useStore();
 
-  const allocationData = users.map((user) => {
-    const today = new Date();
-    const start = startOfWeek(today, { weekStartsOn: 1 });
-    const end = endOfWeek(today, { weekStartsOn: 1 });
-    const weekDays = eachDayOfInterval({start, end});
+  const allocationData = useMemo(() => {
+    return users.map((user) => {
+      const today = new Date();
+      const start = startOfWeek(today, { weekStartsOn: 1 });
+      const end = endOfWeek(today, { weekStartsOn: 1 });
+      const weekDays = eachDayOfInterval({start, end});
 
-    const dailyWorkload = weekDays.map((day) => {
-        const tasksOnDay = tasks.filter(
-          (task) =>
-            task.assigneeId === user.id &&
-            day >= task.startDate && day <= task.endDate
-        );
-        return tasksOnDay.reduce((acc) => acc + 2, 0); // Simplified: 2 hours per task
-      });
-      
-    // Using the same logic as the heatmap: average weekly workload per day
-    const totalWeeklyHours = dailyWorkload.reduce((sum, load) => sum + load, 0);
-    const allocatedHours = totalWeeklyHours / (dailyWorkload.length || 1);
+      const dailyWorkload = weekDays.map((day) => {
+          const tasksOnDay = tasks.filter(
+            (task) =>
+              task.assigneeId === user.id &&
+              day >= task.startDate && day <= task.endDate
+          );
+          return tasksOnDay.reduce((acc) => acc + 2, 0); // Simplified: 2 hours per task
+        });
+        
+      const totalWeeklyHours = dailyWorkload.reduce((sum, load) => sum + load, 0);
+      const allocatedHours = totalWeeklyHours / (dailyWorkload.length || 1);
 
-
-    return {
-      name: user.name.split(' ')[0], // Use first name for brevity
-      capacity: user.capacity,
-      allocated: allocatedHours,
-    };
-  });
+      return {
+        name: user.name.split(' ')[0], // Use first name for brevity
+        capacity: user.capacity,
+        allocated: allocatedHours,
+      };
+    });
+  }, [users, tasks]);
 
   const chartConfig = {
     allocated: {

@@ -179,7 +179,7 @@ export default function ProjectDetailsPage() {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleEditTaskClick(task)}>
                                         <Users className="mr-2 h-4 w-4" />
-                                        Reassign
+                                        Reassign / Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => handleDeleteTaskClick(task)} className="text-destructive">

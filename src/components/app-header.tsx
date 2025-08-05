@@ -18,13 +18,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { getOverloadedUsers } from '@/lib/data';
+import { useStore } from '@/lib/store';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import AppLogo from './app-logo';
 import AppSidebar from './app-sidebar';
 
 export default function AppHeader() {
+  const { getOverloadedUsers } = useStore();
   const overloadedUsers = getOverloadedUsers();
 
   return (

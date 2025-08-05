@@ -90,19 +90,3 @@ export const tasks: Task[] = [
     { id: 'task-p3-7', name: 'Conductor & Shield Wire Sizing', projectId: 'proj-3', assigneeId: 'user-1', startDate: addDays(today, 15), endDate: addDays(today, 25), dependencies: ['task-p3-3'] },
     { id: 'task-p3-8', name: 'Fiber Optic Splice Plan', projectId: 'proj-3', assigneeId: 'user-3', startDate: addDays(today, 14), endDate: addDays(today, 24), dependencies: [] },
 ];
-
-
-// Function to determine workload and return overloaded users
-export const getOverloadedUsers = () => {
-    const today = new Date();
-    const allocation: Record<string, { count: number, tasks: string[] }> = {};
-    users.forEach(u => allocation[u.id] = { count: 0, tasks: [] });
-
-    tasks.forEach(task => {
-        if (task.assigneeId && isWithinInterval(today, { start: task.startDate, end: task.endDate })) {
-            allocation[task.assigneeId].count += 2; // Assume each task is 2hr/day
-        }
-    });
-
-    return users.filter(user => (allocation[user.id]?.count || 0) > user.capacity);
-};
