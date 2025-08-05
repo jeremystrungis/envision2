@@ -103,10 +103,10 @@ body {
 
 
   @keyframes cursor-add-project {
-    0%, 15% { top: 3.5rem; left: 16.5rem; }
-    20%, 35% { top: 2rem; left: 14rem; opacity: 1; transform: scale(1); }
-    40% { transform: scale(0.9); }
-    45%, 100% { transform: scale(1); opacity: 0; }
+    0%, 15% { top: 3.5rem; left: 16.5rem; opacity: 0; } /* Start hidden */
+    20%, 35% { top: 2.2rem; left: 18rem; opacity: 1; transform: scale(1); } /* Move over 'Add New Project' button */
+    40% { transform: scale(0.9); } /* Click animation */
+    45%, 100% { transform: scale(1); opacity: 0; } /* Disappear */
   }
 
   @keyframes dialog-add-project {
@@ -116,11 +116,10 @@ body {
   }
   
   @keyframes cursor-manage-team {
-    0%, 15% { top: 5.5rem; left: 16.5rem; } /* Start pos */
-    20% { top: 6.5rem; left: 4rem; opacity: 1; } /* Move over sidebar */
-    30% { top: 6.5rem; left: 4rem; opacity: 1; }
-    35% { transform: scale(0.9); } /* Click sidebar */
-    40%, 45% { transform: scale(1); opacity: 1; top: 3rem; left: 14rem; } /* Move over edit */
+    0%, 15% { top: 5.5rem; left: 16.5rem; opacity: 0; } /* Start pos */
+    20%, 25% { top: 4.2rem; left: 2.5rem; opacity: 1; transform: scale(1); } /* Move over sidebar team icon */
+    30% { transform: scale(0.9); } /* Click sidebar */
+    35%, 45% { transform: scale(1); opacity: 1; top: 4.8rem; left: 21rem; } /* Move over edit button */
     50% { transform: scale(0.9); } /* Click edit */
     55%, 100% { transform: scale(1); opacity: 0; }
   }
@@ -132,17 +131,17 @@ body {
   }
 
   @keyframes cursor-gantt {
-      0%, 20% { top: 5rem; left: 16rem; }
-      25%, 45% { top: 6rem; left: 5rem; opacity: 1; transform: scale(1)}
-      50% { transform: scale(0.95) }
-      55%, 65% { transform: scale(1); top: 6rem; left: 10rem; }
-      70% { transform: scale(0.95) }
-      75%, 100% { top: 8.5rem; left: 10rem; opacity: 1; transform: scale(1) }
+      0%, 20% { top: 5rem; left: 16rem; opacity: 0; }
+      25%, 45% { top: 5.5rem; left: 5rem; opacity: 1; transform: scale(1)} /* Move over Task B start */
+      50% { transform: scale(0.95) } /* "Click" start */
+      55%, 65% { transform: scale(1); top: 5.5rem; left: 10rem; } /* "Drag" to new end */
+      70% { transform: scale(0.95) } /* "Release" */
+      75%, 100% { top: 8rem; left: 10rem; opacity: 1; transform: scale(1) } /* Move to dependency line start */
   }
 
   @keyframes task-gantt {
-      0%, 50% { width: 5rem; }
-      70%, 100% { width: 8rem; }
+      0%, 50% { width: 5rem; } /* 80px */
+      70%, 100% { width: 8rem; } /* 128px */
   }
 
   @keyframes dep-gantt {
@@ -151,10 +150,10 @@ body {
   }
 
   @keyframes cursor-dashboard {
-      0%, 20% { top: 8rem; left: 16rem; }
-      25%, 55% { top: 9rem; left: 8rem; opacity: 1; transform: scale(1)}
+      0%, 20% { top: 8rem; left: 16rem; opacity: 0; }
+      25%, 55% { top: 8rem; left: 8rem; opacity: 1; transform: scale(1)} /* Hover over heatmap */
       60% { transform: scale(0.95) }
-      65%, 100% { transform: scale(1); top: 12rem; left: 14rem; }
+      65%, 100% { transform: scale(1); top: 12rem; left: 14rem; opacity: 0; } /* Fade away */
   }
 
 }

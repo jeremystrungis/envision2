@@ -105,7 +105,7 @@ const OnboardingAnimation = ({ step }: { step: number }) => {
                     </CardHeader>
                     <CardContent>
                         <Table>
-                            <TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Team</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Team</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 <TableRow>
                                     <TableCell className="flex items-center gap-2">
@@ -113,7 +113,7 @@ const OnboardingAnimation = ({ step }: { step: number }) => {
                                         <span>Alice Johnson</span>
                                     </TableCell>
                                     <TableCell>System Planning</TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-right">
                                         <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4"/></Button>
                                     </TableCell>
                                 </TableRow>
@@ -158,7 +158,7 @@ const OnboardingAnimation = ({ step }: { step: number }) => {
             {/* Task Area */}
             <div className="mt-2 space-y-2 relative">
                 <div className="h-6 w-20 bg-primary/80 rounded absolute left-4 top-2 z-10 text-white text-xs px-1 flex items-center">Task A</div>
-                <div className="h-6 w-20 bg-primary/80 rounded absolute left-8 top-10 z-10 text-white text-xs px-1 flex items-center animate-task-gantt">Task B</div>
+                <div className="h-6 bg-primary/80 rounded absolute left-8 top-10 z-10 text-white text-xs px-1 flex items-center animate-task-gantt">Task B</div>
                 <div className="h-6 w-24 bg-primary/80 rounded absolute left-12 top-20 z-10 text-white text-xs px-1 flex items-center">Task C</div>
                 
                 {/* Dependency Line */}
@@ -207,11 +207,30 @@ const OnboardingAnimation = ({ step }: { step: number }) => {
             <div className="col-span-1 space-y-4">
                 <Card>
                     <CardHeader><CardTitle className="text-base">Project Status</CardTitle></CardHeader>
-                    <CardContent className="h-10"></CardContent>
+                    <CardContent className="h-10 p-2">
+                      <div className="flex w-full h-3 rounded-full overflow-hidden">
+                        <div className="w-1/2 bg-green-500/80"></div>
+                        <div className="w-1/4 bg-yellow-500/80"></div>
+                        <div className="w-1/4 bg-red-500/80"></div>
+                      </div>
+                    </CardContent>
                 </Card>
                  <Card>
                     <CardHeader><CardTitle className="text-base">Allocation</CardTitle></CardHeader>
-                    <CardContent className="h-10"></CardContent>
+                    <CardContent className="h-10 p-2 flex items-end gap-1">
+                      <div className="w-1/4 h-full bg-muted rounded-t-sm">
+                        <div className="h-1/2 w-full bg-primary rounded-t-sm"></div>
+                      </div>
+                      <div className="w-1/4 h-3/4 bg-muted rounded-t-sm">
+                        <div className="h-full w-full bg-primary rounded-t-sm"></div>
+                      </div>
+                      <div className="w-1/4 h-full bg-muted rounded-t-sm">
+                         <div className="h-1/4 w-full bg-primary rounded-t-sm"></div>
+                      </div>
+                      <div className="w-1/4 h-1/2 bg-muted rounded-t-sm">
+                         <div className="h-full w-full bg-primary rounded-t-sm"></div>
+                      </div>
+                    </CardContent>
                 </Card>
             </div>
         </div>
