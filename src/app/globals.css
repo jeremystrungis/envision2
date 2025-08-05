@@ -104,7 +104,7 @@ body {
 
   @keyframes cursor-add-project {
     0%, 15% { top: 3.5rem; left: 16.5rem; opacity: 0; } /* Start hidden */
-    20%, 35% { top: 2.2rem; left: 18rem; opacity: 1; transform: scale(1); } /* Move over 'Add New Project' button */
+    20%, 35% { top: 2.2rem; left: 17rem; opacity: 1; transform: scale(1); } /* Move over 'Add New Project' button */
     40% { transform: scale(0.9); } /* Click animation */
     45%, 100% { transform: scale(1); opacity: 0; } /* Disappear */
   }
