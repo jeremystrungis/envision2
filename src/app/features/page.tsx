@@ -123,19 +123,19 @@ const OnboardingGuide = () => {
                 </CardTitle>
                 <CardDescription>A quick tour to get you started.</CardDescription>
             </CardHeader>
-            <CardContent>
-                 <Carousel setApi={setApi} className="w-full max-w-lg mx-auto">
+            <CardContent className="pt-2">
+                 <Carousel setApi={setApi} className="w-full max-w-2xl mx-auto">
                     <CarouselContent>
                         {onboardingSteps.map((step, index) => (
                         <CarouselItem key={index}>
                             <div className="p-1">
                                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                                    <div className="relative w-full h-64 rounded-lg overflow-hidden border bg-muted">
+                                    <div className="relative w-full h-80 rounded-lg overflow-hidden border bg-muted">
                                     <OnboardingAnimation step={index} />
                                     </div>
                                     <step.icon className="h-10 w-10 text-primary" />
                                     <h3 className="text-xl font-semibold">{step.title}</h3>
-                                    <p className="text-muted-foreground px-8">{step.description}</p>
+                                    <p className="text-muted-foreground px-4">{step.description}</p>
                                 </div>
                             </div>
                         </CarouselItem>
