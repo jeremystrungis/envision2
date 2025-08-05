@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { Project, Task, User } from '@/lib/data'; // Assuming types can be imported
 
 // Define Zod schemas that match the data structures
 const UserSchema = z.object({
@@ -24,8 +23,8 @@ const TaskSchema = z.object({
   name: z.string(),
   projectId: z.string(),
   assigneeId: z.string().nullable(),
-  startDate: z.date(),
-  endDate: z.date(),
+  startDate: z.string().describe('The start date of the task in ISO format.'),
+  endDate: z.string().describe('The end date of the task in ISO format.'),
 });
 
 const ProjectSchema = z.object({
@@ -65,9 +64,9 @@ const prompt = ai.definePrompt({
   name: 'portfolioHealthPrompt',
   input: { schema: PortfolioHealthInputSchema },
   output: { schema: PortfolioHealthOutputSchema },
-  prompt: `You are an expert Program Manager overseeing a portfolio of complex engineering projects. Your task is to conduct a holistic risk and health assessment of the entire portfolio based on the provided data.
+  prompt: `You are an expert Program Manager overseeing a portfolio of complex engineering projects. Your task is to conduct a holistic risk and health assessment of the entire portfolio based on the provided data. The current date is ${new Date().toISOString()}.
 
-Analyze the projects, tasks, and team members to identify systemic risks, resource contention, and potential bottlenecks. Assume each task assigned to a person consumes 2 hours of their daily capacity for the duration of the task.
+Analyze the projects, tasks, and team members to identify systemic risks, resource contention, and potential bottlenecks. Assume each task assigned to a person consumes 2 hours of their daily capacity for the duration of the task. Dates are provided in ISO 8601 format.
 
 - Project Data: {{{json projects}}}
 - Task Data: {{{json tasks}}}

@@ -193,8 +193,8 @@ function PortfolioHealthAnalyzer() {
             projects: projects.map(p => ({...p})),
             tasks: tasks.map(t => ({
                 ...t,
-                startDate: new Date(t.startDate), // Ensure dates are Date objects
-                endDate: new Date(t.endDate),
+                startDate: new Date(t.startDate).toISOString(), // Ensure dates are ISO strings
+                endDate: new Date(t.endDate).toISOString(),
             })),
             users: users.map(u => ({...u}))
         };
