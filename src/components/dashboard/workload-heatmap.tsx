@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
+import { CardHeader, CardTitle, CardDescription } from '../ui/card';
 
 const workloadLevels = [
     { level: 'Light', color: 'bg-sky-500/20 border-sky-500/30', description: '< 50%' },
@@ -90,7 +91,7 @@ export default function WorkloadHeatmap() {
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 -mt-4">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => handleDateChange(-7)}>
               <ChevronLeft className="h-4 w-4" />
