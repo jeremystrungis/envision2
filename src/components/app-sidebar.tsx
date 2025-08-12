@@ -51,7 +51,8 @@ export default function AppSidebar() {
               href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                pathname === item.href && "bg-gradient-to-r from-green-400/20 to-green-500/20 text-primary font-bold"
+                pathname.startsWith(item.href) && item.href !== '/' && "bg-gradient-to-r from-green-400/20 to-green-500/20 text-primary font-bold",
+                pathname === '/' && item.href === '/' && "bg-gradient-to-r from-green-400/20 to-green-500/20 text-primary font-bold"
               )}
             >
               <item.icon className="h-5 w-5" />
@@ -60,13 +61,16 @@ export default function AppSidebar() {
           ))}
         </nav>
         <div className="mt-auto p-4">
-            <Button
-                variant="ghost"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary w-full justify-start"
+            <Link
+                href="/settings"
+                className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary w-full justify-start",
+                    pathname === '/settings' && "bg-gradient-to-r from-green-400/20 to-green-500/20 text-primary font-bold"
+                )}
               >
                 <Settings className="h-5 w-5" />
                 Settings
-              </Button>
+              </Link>
         </div>
     </aside>
   );
