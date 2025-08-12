@@ -117,13 +117,7 @@ const OnboardingGuide = () => {
 
     return (
         <Card className="mb-8 bg-background/50">
-            <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
-                    How to use ENTRUST PMvision
-                </CardTitle>
-                <CardDescription>A quick tour to get you started.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
+            <CardContent className="pt-6">
                  <Carousel setApi={setApi} className="w-full max-w-2xl mx-auto">
                     <CarouselContent>
                         {onboardingSteps.map((step, index) => (
