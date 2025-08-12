@@ -117,7 +117,6 @@ export default function AppHeader() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
             <Avatar>
-              <AvatarImage src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="User avatar" />
               <AvatarFallback>
                 <User className="h-4 w-4" />
               </AvatarFallback>
