@@ -26,8 +26,9 @@ import AppSidebar from './app-sidebar';
 import Image from 'next/image';
 
 export default function AppHeader() {
-  const { getOverloadedUsers } = useStore();
+  const { users, getOverloadedUsers } = useStore();
   const overloadedUsers = getOverloadedUsers();
+  const currentUser = users[0];
 
   return (
     <>
@@ -117,9 +118,16 @@ export default function AppHeader() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
             <Avatar>
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
+              {currentUser ? (
+                <>
+                  <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                  <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                </>
+              ) : (
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              )}
             </Avatar>
           </Button>
         </DropdownMenuTrigger>

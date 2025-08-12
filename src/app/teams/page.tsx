@@ -51,7 +51,7 @@ export default function TeamsPage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle>Team Members</CardTitle>
-                        <CardDescription>Manage your engineering team members.</CardDescription>
+                        <CardDescription>Manage your engineering team members. The first member is considered "Me".</CardDescription>
                     </div>
                     <Button onClick={() => setIsAddMemberOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
@@ -72,7 +72,7 @@ export default function TeamsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {users.map((user, index) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-4">
@@ -81,7 +81,10 @@ export default function TeamsPage() {
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div className="grid gap-1">
-                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                            <p className="text-sm font-medium leading-none flex items-center gap-2">
+                              {user.name}
+                              {index === 0 && <Badge variant="secondary">(Me)</Badge>}
+                            </p>
                           </div>
                         </div>
                       </TableCell>
