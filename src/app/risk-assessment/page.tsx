@@ -308,7 +308,7 @@ export default function RiskAssessmentPage() {
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:py-6 sm:px-10 md:px-16 lg:px-24 xl:px-32">
           <div className="max-w-4xl mx-auto">
              <div className="mb-6 text-center">
                     <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">

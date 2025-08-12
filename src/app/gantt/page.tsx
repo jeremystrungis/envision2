@@ -12,7 +12,7 @@ export default function GanttPage() {
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:py-6 sm:px-10 md:px-16 lg:px-24 xl:px-32">
           <Card>
             <CardHeader>
               <CardTitle>Project Gantt Chart</CardTitle>

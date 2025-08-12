@@ -95,7 +95,7 @@ export default function ProjectDetailsPage() {
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:py-6 sm:px-10 md:px-16 lg:px-24 xl:px-32">
             <div className="mb-4">
                  <Button variant="outline" onClick={() => router.push('/projects')}>
                     <ArrowLeft className="mr-2 h-4 w-4" />

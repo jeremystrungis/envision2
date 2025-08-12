@@ -30,7 +30,7 @@ export default function ProjectsPage() {
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:py-6 sm:px-10 md:px-16 lg:px-24 xl:px-32">
           <Card>
             <CardHeader>
                 <div className="flex items-center justify-between">
