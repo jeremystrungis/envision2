@@ -49,13 +49,15 @@ export default function AppHeader() {
         </h1>
       </div>
       <div className="relative ml-auto flex items-center gap-2">
-        <Image
-            src="https://i.ibb.co/X1TzKgY/a.png"
-            alt="Header Logo"
-            width={120}
-            height={40}
-            className="h-10 w-auto"
-            />
+        <div className="bg-white rounded-md p-1">
+            <Image
+                src="https://i.ibb.co/X1TzKgY/a.png"
+                alt="Header Logo"
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+                />
+        </div>
         <div className="relative flex-1 md:grow-0">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
