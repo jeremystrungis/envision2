@@ -141,10 +141,8 @@ const OnboardingGuide = () => {
                         </CarouselItem>
                         ))}
                     </CarouselContent>
-                    <div className="flex items-center justify-center gap-4 mt-4">
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </div>
+                    <CarouselPrevious className="absolute left-[-50px] top-[140px] -translate-y-1/2" />
+                    <CarouselNext className="absolute right-[-50px] top-[140px] -translate-y-1/2" />
                 </Carousel>
                 <div className="flex items-center justify-center space-x-4 mt-4">
                     <Progress value={(current / count) * 100} className="w-1/3" />
