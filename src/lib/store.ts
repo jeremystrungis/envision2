@@ -95,6 +95,12 @@ export const store = {
     emitChange();
   },
 
+  addUser: (user: Omit<User, 'id'>) => {
+    const newUser = { ...user, id: `user-${Date.now()}` };
+    users = [...users, newUser];
+    emitChange();
+  },
+
   updateUser: (userId: string, updatedUser: Omit<User, 'id'>) => {
       users = users.map(u => u.id === userId ? { ...u, ...updatedUser } : u);
       emitChange();

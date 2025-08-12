@@ -11,7 +11,7 @@ import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MoreHorizontal, PlusCircle, ArrowLeft, Edit, Trash2, Users } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -176,10 +176,6 @@ export default function ProjectDetailsPage() {
                                     <DropdownMenuItem onClick={() => handleEditTaskClick(task)}>
                                         <Edit className="mr-2 h-4 w-4" />
                                         Edit Task
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleEditTaskClick(task)}>
-                                        <Users className="mr-2 h-4 w-4" />
-                                        Reassign / Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => handleDeleteTaskClick(task)} className="text-destructive">

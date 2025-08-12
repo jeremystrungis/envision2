@@ -119,7 +119,7 @@ const OnboardingGuide = () => {
         <Card className="mb-8 bg-background/50">
             <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
-                    How to use PMvision
+                    How to use EngVision
                 </CardTitle>
                 <CardDescription>A quick tour to get you started.</CardDescription>
             </CardHeader>
@@ -167,7 +167,7 @@ export default function FeaturesPage() {
 
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
-                        ENTRUST PMvision Features
+                        EngVision Features
                     </h1>
                     <p className="mt-4 text-lg text-muted-foreground">A comprehensive suite of tools for engineering project and resource management.</p>
                 </div>

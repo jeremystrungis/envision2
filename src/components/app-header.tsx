@@ -44,7 +44,7 @@ export default function AppHeader() {
           </Sheet>
       <div className="flex items-baseline gap-2 sm:hidden">
          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">
-          ENTRUST PMvision
+          EngVision
         </h1>
       </div>
       <div className="relative ml-auto flex items-center gap-2">
@@ -59,7 +59,7 @@ export default function AppHeader() {
         <Button variant="outline" size="sm" asChild>
             <Link href="/features">
                 <PlayCircle className="mr-2 h-4 w-4" />
-                How to use PMVision
+                How to use EngVision
             </Link>
         </Button>
       </div>

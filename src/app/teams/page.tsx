@@ -14,11 +14,13 @@ import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import EditMemberDialog from '@/components/teams/edit-member-dialog';
+import AddMemberDialog from '@/components/teams/add-member-dialog';
 
 export default function TeamsPage() {
   const { users } = useStore();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
   const handleEditClick = (user: User) => {
     setSelectedUser(user);
@@ -32,6 +34,11 @@ export default function TeamsPage() {
     setIsEditMemberOpen(false);
     setSelectedUser(null);
   };
+  
+  const handleAddUser = (newUser: Omit<User, 'id'>) => {
+    store.addUser(newUser);
+    setIsAddMemberOpen(false);
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
@@ -46,7 +53,7 @@ export default function TeamsPage() {
                         <CardTitle>Team Members</CardTitle>
                         <CardDescription>Manage your engineering team members.</CardDescription>
                     </div>
-                    <Button>
+                    <Button onClick={() => setIsAddMemberOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add New Member
                     </Button>
@@ -105,6 +112,11 @@ export default function TeamsPage() {
           </Card>
         </main>
       </div>
+       <AddMemberDialog
+        isOpen={isAddMemberOpen}
+        onClose={() => setIsAddMemberOpen(false)}
+        onAddUser={handleAddUser}
+       />
       {selectedUser && (
         <EditMemberDialog
             isOpen={isEditMemberOpen}
