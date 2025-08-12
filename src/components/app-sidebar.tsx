@@ -43,7 +43,7 @@ export default function AppSidebar() {
             className="group mb-4 flex h-9 shrink-0 items-center gap-2"
           >
             <AppLogo className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">EngVision</span>
+            <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-green-300 via-green-400 to-green-500 bg-clip-text text-transparent">ENTRUST PMvision</span>
           </Link>
           {navItems.map((item) => (
             <Link 

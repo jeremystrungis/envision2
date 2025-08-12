@@ -4,7 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'EngVision',
+  title: 'ENTRUST PMvision',
   description: 'Resource planning and visualization for engineering teams.',
 };
 
