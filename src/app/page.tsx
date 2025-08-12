@@ -16,26 +16,28 @@ export default function Home() {
         <AppSidebar />
         <div className="flex flex-1 flex-col">
           <AppHeader />
-          <main className="flex-1 p-4 sm:py-6 sm:px-10 md:px-16 lg:px-24 xl:px-32 flex flex-col gap-6">
+          <main className="flex-1 p-6 flex flex-col gap-6">
             <WorkloadHeatmap />
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Resource Allocation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResourceAllocationChart />
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resource Allocation</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResourceAllocationChart />
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ProjectStatusChart />
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ProjectStatusChart />
+                </CardContent>
+              </Card>
+            </div>
             
             <Card>
               <CardHeader>

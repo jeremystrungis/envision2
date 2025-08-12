@@ -118,7 +118,7 @@ const OnboardingGuide = () => {
     return (
         <Card className="mb-8 bg-background/50">
             <CardContent className="pt-6">
-                 <Carousel setApi={setApi} className="w-full max-w-2xl mx-auto">
+                 <Carousel setApi={setApi} className="w-full max-w-2xl mx-auto relative">
                     <CarouselContent>
                         {onboardingSteps.map((step, index) => (
                         <CarouselItem key={index}>
@@ -129,14 +129,14 @@ const OnboardingGuide = () => {
                                     </div>
                                     <step.icon className="h-10 w-10 text-primary" />
                                     <h3 className="text-xl font-semibold">{step.title}</h3>
-                                    <p className="text-muted-foreground px-4">{step.description}</p>
+                                    <p className="text-muted-foreground px-4 max-w-lg mx-auto">{step.description}</p>
                                 </div>
                             </div>
                         </CarouselItem>
                         ))}
                     </CarouselContent>
-                    <CarouselPrevious className="absolute left-[-50px] top-[140px] -translate-y-1/2" />
-                    <CarouselNext className="absolute right-[-50px] top-[140px] -translate-y-1/2" />
+                    <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2" />
+                    <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2" />
                 </Carousel>
                 <div className="flex items-center justify-center space-x-4 mt-4">
                     <Progress value={(current / count) * 100} className="w-1/3" />
@@ -153,7 +153,7 @@ export default function FeaturesPage() {
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 p-4 sm:py-6 sm:px-10 md:px-16 lg:px-24 xl:px-32">
+        <main className="flex-1 p-6">
             <div className="max-w-4xl mx-auto">
                 <OnboardingGuide />
 
