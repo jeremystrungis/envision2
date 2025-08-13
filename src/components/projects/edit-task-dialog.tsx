@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,13 +31,14 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Task } from '@/lib/data';
 import { useStore } from '@/lib/store';
-import { useEffect } from 'react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Checkbox } from '../ui/checkbox';
+import { Slider } from '../ui/slider';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
     workingDays: z.array(z.number()).min(1, "Must select at least one working day"),
+    effort: z.number().min(0).max(100),
 });
 
 const taskSchema = z.object({
@@ -49,6 +50,12 @@ const taskSchema = z.object({
 }).refine(data => data.endDate >= data.startDate, {
     message: "End date cannot be before start date",
     path: ["endDate"],
+}).refine(data => {
+    const totalEffort = data.assignments.reduce((sum, a) => sum + a.effort, 0);
+    return Math.abs(totalEffort - 100) < 0.01;
+}, {
+    message: "Total effort must sum to 100%",
+    path: ["assignments"],
 });
 
 
@@ -78,6 +85,49 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
       hours: task.hours,
     },
   });
+  
+  const redistributeEffort = useCallback(() => {
+    const assignments = form.getValues('assignments');
+    if (assignments.length > 0) {
+      const evenSplit = 100 / assignments.length;
+      const updatedAssignments = assignments.map(a => ({...a, effort: evenSplit}));
+      form.setValue('assignments', updatedAssignments, { shouldValidate: true });
+    }
+  }, [form]);
+
+  const handleSliderChange = (assignmentIndex: number, newEffort: number) => {
+    const assignments = form.getValues('assignments');
+    const otherAssignments = assignments.filter((_, i) => i !== assignmentIndex);
+    const remainingEffort = 100 - newEffort;
+    
+    if (otherAssignments.length > 0) {
+        const totalPreviousEffort = otherAssignments.reduce((sum, a) => sum + a.effort, 0);
+        
+        const updatedAssignments = [...assignments];
+        updatedAssignments[assignmentIndex].effort = newEffort;
+
+        if (totalPreviousEffort > 0) {
+            otherAssignments.forEach((ass, i) => {
+                const originalProportion = ass.effort / totalPreviousEffort;
+                const otherIndex = assignments.findIndex(a => a.assigneeId === ass.assigneeId);
+                updatedAssignments[otherIndex].effort = remainingEffort * originalProportion;
+            });
+        } else {
+            const evenSplit = remainingEffort / otherAssignments.length;
+            otherAssignments.forEach((ass, i) => {
+                const otherIndex = assignments.findIndex(a => a.assigneeId === ass.assigneeId);
+                updatedAssignments[otherIndex].effort = evenSplit;
+            });
+        }
+        
+        form.setValue(`assignments`, updatedAssignments, { shouldValidate: true });
+    } else {
+        const updatedAssignments = [...assignments];
+        updatedAssignments[assignmentIndex].effort = 100;
+        form.setValue(`assignments`, updatedAssignments, { shouldValidate: true });
+    }
+  };
+
 
   useEffect(() => {
     form.reset({
@@ -123,7 +173,7 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
                 name="assignments"
                 render={({ field: assignmentsField }) => (
                     <FormItem>
-                        <FormLabel>Assignees & Work Days</FormLabel>
+                        <FormLabel>Assignees, Work Days & Effort</FormLabel>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start">
@@ -148,15 +198,16 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
                                                                 if (isSelected) {
                                                                     form.setValue(`assignments`, currentAssignments.filter(a => a.assigneeId !== user.id));
                                                                 } else {
-                                                                    form.setValue(`assignments`, [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5] }]);
+                                                                    form.setValue(`assignments`, [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5], effort: 0 }]);
                                                                 }
+                                                                redistributeEffort();
                                                             }}
                                                         >
                                                             <Checkbox className="mr-2" checked={isSelected} />
                                                             {user.name}
                                                         </CommandItem>
                                                         {isSelected && (
-                                                            <div className="pl-8 pr-2 pb-2">
+                                                            <div className="pl-8 pr-2 pb-2 space-y-2">
                                                                 <div className="flex items-center gap-1.5">
                                                                     {weekDays.map(day => (
                                                                         <FormField
@@ -169,11 +220,12 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
                                                                                     <FormControl>
                                                                                         <Checkbox
                                                                                             id={`day-edit-${assignmentIndex}-${day.id}`}
-                                                                                            checked={daysField.value.includes(day.id)}
+                                                                                            checked={daysField.value?.includes(day.id)}
                                                                                             onCheckedChange={(checked) => {
+                                                                                                const currentDays = daysField.value || [];
                                                                                                 return checked
-                                                                                                    ? daysField.onChange([...daysField.value, day.id])
-                                                                                                    : daysField.onChange(daysField.value.filter((value) => value !== day.id));
+                                                                                                    ? daysField.onChange([...currentDays, day.id])
+                                                                                                    : daysField.onChange(currentDays.filter((value) => value !== day.id));
                                                                                             }}
                                                                                         />
                                                                                     </FormControl>
@@ -181,6 +233,17 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
                                                                             )}
                                                                         />
                                                                     ))}
+                                                                </div>
+                                                                 <div className="flex items-center gap-2">
+                                                                    <Slider
+                                                                        value={[assignmentsField.value[assignmentIndex]?.effort || 0]}
+                                                                        onValueChange={([val]) => handleSliderChange(assignmentIndex, val)}
+                                                                        max={100}
+                                                                        step={5}
+                                                                    />
+                                                                    <span className="text-xs text-muted-foreground w-16 text-right">
+                                                                        {Math.round(assignmentsField.value[assignmentIndex]?.effort || 0)}%
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -202,7 +265,7 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
               name="hours"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Estimated # of hours per person</FormLabel>
+                  <FormLabel>Total Estimated Hours</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="8" {...field} />
                   </FormControl>

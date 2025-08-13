@@ -98,7 +98,8 @@ export default function WorkloadHeatmap() {
       return tasksOnDay.reduce((acc, task) => {
           const assignment = task.assignments.find(a => a.assigneeId === user.id)!;
           const taskWorkDays = assignment.workingDays.length;
-          const dailyHours = task.hours > 0 && taskWorkDays > 0 ? task.hours / taskWorkDays : 0;
+          const assignedHours = task.hours * (assignment.effort / 100);
+          const dailyHours = taskWorkDays > 0 ? assignedHours / taskWorkDays : 0;
           return acc + dailyHours;
       }, 0);
   };

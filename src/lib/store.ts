@@ -42,18 +42,11 @@ export const store = {
             if (isWithinInterval(today, { start: task.startDate, end: task.endDate })) {
                 task.assignments.forEach(assignment => {
                     if (assignment.workingDays.includes(todayDay)) {
-                        const taskDuration = task.assignments
-                            .filter(a => a.assigneeId === assignment.assigneeId)
-                            .reduce((acc, a) => acc + a.workingDays.length, 0);
+                        const individualDuration = assignment.workingDays.length;
 
-                        const totalBusinessDays = differenceInBusinessDays(task.endDate, task.startDate) + 1;
-                        const individualDuration = assignment.workingDays.filter(day => {
-                            const date = new Date(task.startDate);
-                            date.setDate(date.getDate() + day);
-                            return isWithinInterval(date, {start: task.startDate, end: task.endDate});
-                        }).length;
-
-                        const dailyHours = task.hours > 0 && individualDuration > 0 ? task.hours / individualDuration : 0;
+                        // Calculate daily hours based on individual effort and schedule
+                        const assignedHours = task.hours * (assignment.effort / 100);
+                        const dailyHours = individualDuration > 0 ? assignedHours / individualDuration : 0;
                         
                         if (allocation[assignment.assigneeId]) {
                             allocation[assignment.assigneeId].workHours += dailyHours;

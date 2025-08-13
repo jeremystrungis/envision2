@@ -12,6 +12,7 @@ export interface User {
 export interface Assignment {
   assigneeId: string;
   workingDays: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+  effort: number; // Percentage of task hours
 }
 
 export interface Task {

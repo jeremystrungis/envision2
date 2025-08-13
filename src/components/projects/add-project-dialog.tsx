@@ -26,20 +26,22 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, PlusCircle, Trash2, ChevronsUpDown } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Project, Task, User, Assignment } from '@/lib/data';
+import { Project, Task, Assignment } from '@/lib/data';
 import { useStore } from '@/lib/store';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Checkbox } from '../ui/checkbox';
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { Slider } from '../ui/slider';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
     workingDays: z.array(z.number()).min(1, "Must select at least one working day"),
+    effort: z.number().min(0).max(100),
 });
 
 const taskSchema = z.object({
@@ -51,6 +53,13 @@ const taskSchema = z.object({
 }).refine(data => !data.name || data.endDate >= data.startDate, {
   message: "End date must be after start date",
   path: ["endDate"],
+}).refine(data => {
+    const totalEffort = data.assignments.reduce((sum, a) => sum + a.effort, 0);
+    // Allow for small floating point inaccuracies
+    return Math.abs(totalEffort - 100) < 0.01;
+}, {
+    message: "Total effort must sum to 100%",
+    path: ["assignments"],
 });
 
 
@@ -96,6 +105,52 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     control: form.control,
     name: 'tasks',
   });
+
+  const redistributeEffort = useCallback((taskIndex: number) => {
+    const assignments = form.getValues(`tasks.${taskIndex}.assignments`);
+    if (assignments.length > 0) {
+      const evenSplit = 100 / assignments.length;
+      const updatedAssignments = assignments.map(a => ({...a, effort: evenSplit}));
+      form.setValue(`tasks.${taskIndex}.assignments`, updatedAssignments, { shouldValidate: true });
+    }
+  }, [form]);
+
+  const handleSliderChange = (taskIndex: number, assignmentIndex: number, newEffort: number) => {
+    const assignments = form.getValues(`tasks.${taskIndex}.assignments`);
+    const otherAssignments = assignments.filter((_, i) => i !== assignmentIndex);
+    const remainingEffort = 100 - newEffort;
+    
+    if (otherAssignments.length > 0) {
+        const totalPreviousEffort = otherAssignments.reduce((sum, a) => sum + a.effort, 0);
+        
+        const updatedAssignments = [...assignments];
+        updatedAssignments[assignmentIndex].effort = newEffort;
+
+        if (totalPreviousEffort > 0) {
+            // Distribute remaining effort proportionally
+            otherAssignments.forEach((ass, i) => {
+                const originalProportion = ass.effort / totalPreviousEffort;
+                const otherIndex = assignments.findIndex(a => a.assigneeId === ass.assigneeId);
+                updatedAssignments[otherIndex].effort = remainingEffort * originalProportion;
+            });
+        } else {
+             // Distribute remaining effort equally
+            const evenSplit = remainingEffort / otherAssignments.length;
+            otherAssignments.forEach((ass, i) => {
+                const otherIndex = assignments.findIndex(a => a.assigneeId === ass.assigneeId);
+                updatedAssignments[otherIndex].effort = evenSplit;
+            });
+        }
+        
+        form.setValue(`tasks.${taskIndex}.assignments`, updatedAssignments, { shouldValidate: true });
+    } else {
+        // Only one assignee, they get 100%
+        const updatedAssignments = [...assignments];
+        updatedAssignments[assignmentIndex].effort = 100;
+        form.setValue(`tasks.${taskIndex}.assignments`, updatedAssignments, { shouldValidate: true });
+    }
+  };
+
 
   const onSubmit = (data: ProjectFormValues) => {
     const { tasks, ...projectData } = data;
@@ -164,7 +219,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                           <div className="col-span-12">
                               <FormLabel>Task #{index + 1}</FormLabel>
                           </div>
-                          <div className="col-span-12 sm:col-span-6 md:col-span-5">
+                          <div className="col-span-12 sm:col-span-6 md:col-span-8">
                               <FormField
                               control={form.control}
                               name={`tasks.${index}.name`}
@@ -179,13 +234,30 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                               )}
                               />
                           </div>
-                          <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                          
+                           <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                              <FormField
+                                  control={form.control}
+                                  name={`tasks.${index}.hours`}
+                                  render={({ field }) => (
+                                      <FormItem>
+                                      <FormLabel>Total Est. Hours</FormLabel>
+                                      <FormControl>
+                                          <Input type="number" placeholder="Hours" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                      </FormItem>
+                                  )}
+                              />
+                          </div>
+
+                           <div className="col-span-12">
                             <FormField
                                 control={form.control}
                                 name={`tasks.${index}.assignments`}
                                 render={({ field: assignmentsField }) => (
                                     <FormItem>
-                                        <FormLabel>Assignees & Work Days</FormLabel>
+                                        <FormLabel>Assignees, Work Days & Effort</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button variant="outline" className="w-full justify-start">
@@ -210,15 +282,16 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                                                                 if (isSelected) {
                                                                                     form.setValue(`tasks.${index}.assignments`, currentAssignments.filter(a => a.assigneeId !== user.id));
                                                                                 } else {
-                                                                                    form.setValue(`tasks.${index}.assignments`, [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5] }]);
+                                                                                    form.setValue(`tasks.${index}.assignments`, [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5], effort: 0 }]);
                                                                                 }
+                                                                                redistributeEffort(index);
                                                                             }}
                                                                         >
                                                                             <Checkbox className="mr-2" checked={isSelected} />
                                                                             {user.name}
                                                                         </CommandItem>
                                                                         {isSelected && (
-                                                                            <div className="pl-8 pr-2 pb-2">
+                                                                            <div className="pl-8 pr-2 pb-2 space-y-2">
                                                                                 <div className="flex items-center gap-1.5">
                                                                                     {weekDays.map(day => (
                                                                                         <FormField
@@ -231,11 +304,12 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                                                                                     <FormControl>
                                                                                                         <Checkbox
                                                                                                             id={`day-${index}-${assignmentIndex}-${day.id}`}
-                                                                                                            checked={daysField.value.includes(day.id)}
+                                                                                                            checked={daysField.value?.includes(day.id)}
                                                                                                             onCheckedChange={(checked) => {
+                                                                                                                const currentDays = daysField.value || [];
                                                                                                                 return checked
-                                                                                                                    ? daysField.onChange([...daysField.value, day.id])
-                                                                                                                    : daysField.onChange(daysField.value.filter((value) => value !== day.id));
+                                                                                                                    ? daysField.onChange([...currentDays, day.id])
+                                                                                                                    : daysField.onChange(currentDays.filter((value) => value !== day.id));
                                                                                                             }}
                                                                                                         />
                                                                                                     </FormControl>
@@ -243,6 +317,17 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                                                                             )}
                                                                                         />
                                                                                     ))}
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <Slider
+                                                                                        value={[assignmentsField.value[assignmentIndex]?.effort || 0]}
+                                                                                        onValueChange={([val]) => handleSliderChange(index, assignmentIndex, val)}
+                                                                                        max={100}
+                                                                                        step={5}
+                                                                                    />
+                                                                                    <span className="text-xs text-muted-foreground w-16 text-right">
+                                                                                        {Math.round(assignmentsField.value[assignmentIndex]?.effort || 0)}%
+                                                                                    </span>
                                                                                 </div>
                                                                             </div>
                                                                         )}
@@ -254,26 +339,12 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                                 </Command>
                                             </PopoverContent>
                                         </Popover>
-                                        <FormMessage />
+                                        <FormMessage>{form.formState.errors.tasks?.[index]?.assignments?.message}</FormMessage>
                                     </FormItem>
                                 )}
                             />
                            </div>
-                           <div className="col-span-12 sm:col-span-6 md:col-span-3">
-                              <FormField
-                                  control={form.control}
-                                  name={`tasks.${index}.hours`}
-                                  render={({ field }) => (
-                                      <FormItem>
-                                      <FormLabel>Est. hours per person</FormLabel>
-                                      <FormControl>
-                                          <Input type="number" placeholder="Hours" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                      </FormItem>
-                                  )}
-                              />
-                          </div>
+                           
                            <div className="col-span-6">
                              <FormField
                                 control={form.control}
