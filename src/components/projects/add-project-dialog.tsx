@@ -226,6 +226,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                   name={`tasks.${index}.hours`}
                                   render={({ field }) => (
                                       <FormItem>
+                                      <FormLabel>Est. hours per person</FormLabel>
                                       <FormControl>
                                           <Input type="number" placeholder="Hours" {...field} />
                                       </FormControl>

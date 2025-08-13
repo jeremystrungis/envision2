@@ -161,7 +161,7 @@ export default function AddTaskDialog({ isOpen, onClose, onAddTask }: AddTaskDia
               name="hours"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Estimated Hours</FormLabel>
+                  <FormLabel>Estimated # of hours per person</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="8" {...field} />
                   </FormControl>
