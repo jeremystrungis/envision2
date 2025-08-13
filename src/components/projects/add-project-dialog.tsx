@@ -29,16 +29,22 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, PlusCircle, Trash2, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Project, Task, User } from '@/lib/data';
+import { Project, Task, User, Assignment } from '@/lib/data';
 import { useStore } from '@/lib/store';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Checkbox } from '../ui/checkbox';
+import React from 'react';
+
+const assignmentSchema = z.object({
+    assigneeId: z.string(),
+    workingDays: z.array(z.number()).min(1, "Must select at least one working day"),
+});
 
 const taskSchema = z.object({
   name: z.string().min(1, 'Task name is required'),
-  assigneeIds: z.array(z.string()).min(1, 'At least one assignee is required'),
+  assignments: z.array(assignmentSchema).min(1, 'At least one assignee is required'),
   startDate: z.date(),
   endDate: z.date(),
   hours: z.coerce.number().min(0, "Hours must be positive"),
@@ -64,11 +70,16 @@ interface AddProjectDialogProps {
 
 const defaultTaskValues = {
   name: '',
-  assigneeIds: [],
+  assignments: [],
   startDate: new Date(),
   endDate: new Date(),
   hours: 8,
 };
+
+const weekDays = [
+    { id: 1, label: 'M' }, { id: 2, label: 'T' }, { id: 3, label: 'W' },
+    { id: 4, label: 'T' }, { id: 5, label: 'F' }, { id: 6, label: 'S' }, { id: 0, label: 'S' }
+];
 
 export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddProjectDialogProps) {
   const { users } = useStore();
@@ -94,7 +105,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Add New Project</DialogTitle>
           <DialogDescription>
@@ -159,6 +170,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                               name={`tasks.${index}.name`}
                               render={({ field }) => (
                                   <FormItem>
+                                  <FormLabel>Task Name</FormLabel>
                                   <FormControl>
                                       <Input placeholder="Task name" {...field} />
                                   </FormControl>
@@ -167,59 +179,86 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                               )}
                               />
                           </div>
-                           <div className="col-span-12 sm:col-span-6 md:col-span-4">
-                               <FormField
+                          <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                            <FormField
                                 control={form.control}
-                                name={`tasks.${index}.assigneeIds`}
-                                render={({ field: selectField }) => (
+                                name={`tasks.${index}.assignments`}
+                                render={({ field: assignmentsField }) => (
                                     <FormItem>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            className={cn("w-full justify-between", !selectField.value?.length && "text-muted-foreground")}
-                                            >
-                                            <span className="truncate">
-                                                {selectField.value?.length ? `${selectField.value.length} selected` : "Select members"}
-                                            </span>
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                            <Command>
-                                            <CommandInput placeholder="Search members..." />
-                                            <CommandEmpty>No members found.</CommandEmpty>
-                                            <CommandGroup>
-                                                <ScrollArea className="h-48">
-                                                    {users.map((user) => (
-                                                        <CommandItem
-                                                        key={user.id}
-                                                        onSelect={() => {
-                                                            const selected = selectField.value || [];
-                                                            const isSelected = selected.includes(user.id);
-                                                            form.setValue(
-                                                            `tasks.${index}.assigneeIds`,
-                                                            isSelected ? selected.filter(id => id !== user.id) : [...selected, user.id]
-                                                            );
-                                                        }}
-                                                        >
-                                                        <Checkbox className="mr-2" checked={selectField.value?.includes(user.id)} />
-                                                        {user.name}
-                                                        </CommandItem>
-                                                    ))}
-                                                </ScrollArea>
-                                            </CommandGroup>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
+                                        <FormLabel>Assignees & Work Days</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" className="w-full justify-start">
+                                                    {assignmentsField.value.length > 0 ? `${assignmentsField.value.length} selected` : 'Select members'}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                                                <Command>
+                                                    <CommandInput placeholder="Search members..." />
+                                                    <CommandList>
+                                                        <CommandEmpty>No members found.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            {users.map(user => {
+                                                                const assignmentIndex = assignmentsField.value.findIndex(a => a.assigneeId === user.id);
+                                                                const isSelected = assignmentIndex > -1;
+                                                                
+                                                                return (
+                                                                    <React.Fragment key={user.id}>
+                                                                        <CommandItem
+                                                                            onSelect={() => {
+                                                                                const currentAssignments = assignmentsField.value || [];
+                                                                                if (isSelected) {
+                                                                                    form.setValue(`tasks.${index}.assignments`, currentAssignments.filter(a => a.assigneeId !== user.id));
+                                                                                } else {
+                                                                                    form.setValue(`tasks.${index}.assignments`, [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5] }]);
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <Checkbox className="mr-2" checked={isSelected} />
+                                                                            {user.name}
+                                                                        </CommandItem>
+                                                                        {isSelected && (
+                                                                            <div className="pl-8 pr-2 pb-2">
+                                                                                <div className="flex items-center gap-1.5">
+                                                                                    {weekDays.map(day => (
+                                                                                        <FormField
+                                                                                            key={day.id}
+                                                                                            control={form.control}
+                                                                                            name={`tasks.${index}.assignments.${assignmentIndex}.workingDays`}
+                                                                                            render={({ field: daysField }) => (
+                                                                                                <FormItem className="flex flex-col items-center space-y-1">
+                                                                                                    <FormLabel htmlFor={`day-${index}-${assignmentIndex}-${day.id}`} className="text-xs">{day.label}</FormLabel>
+                                                                                                    <FormControl>
+                                                                                                        <Checkbox
+                                                                                                            id={`day-${index}-${assignmentIndex}-${day.id}`}
+                                                                                                            checked={daysField.value.includes(day.id)}
+                                                                                                            onCheckedChange={(checked) => {
+                                                                                                                return checked
+                                                                                                                    ? daysField.onChange([...daysField.value, day.id])
+                                                                                                                    : daysField.onChange(daysField.value.filter((value) => value !== day.id));
+                                                                                                            }}
+                                                                                                        />
+                                                                                                    </FormControl>
+                                                                                                </FormItem>
+                                                                                            )}
+                                                                                        />
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </React.Fragment>
+                                                                )
+                                                            })}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
-                                />
-                            </div>
+                            />
+                           </div>
                            <div className="col-span-12 sm:col-span-6 md:col-span-3">
                               <FormField
                                   control={form.control}
@@ -235,59 +274,77 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                   )}
                               />
                           </div>
-                          <div className="col-span-6">
-                              <Controller
-                                  control={form.control}
-                                  name={`tasks.${index}.startDate`}
-                                  render={({ field: dateField }) => (
-                                      <Popover>
-                                          <PopoverTrigger asChild>
-                                          <FormControl>
-                                              <Button
-                                              variant={"outline"}
-                                              className={cn(
-                                                  "w-full justify-start text-left font-normal",
-                                                  !dateField.value && "text-muted-foreground"
-                                              )}
-                                              >
-                                              <CalendarIcon className="mr-2 h-4 w-4" />
-                                              {dateField.value ? format(dateField.value, "PPP") : <span>Start date</span>}
-                                              </Button>
-                                          </FormControl>
-                                          </PopoverTrigger>
-                                          <PopoverContent className="w-auto p-0" align="start">
-                                          <Calendar mode="single" selected={dateField.value} onSelect={dateField.onChange} initialFocus />
-                                          </PopoverContent>
-                                      </Popover>
-                                  )}
-                              />
+                           <div className="col-span-6">
+                             <FormField
+                                control={form.control}
+                                name={`tasks.${index}.startDate`}
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                    <FormLabel>Start Date</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                            >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            initialFocus
+                                        />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
                           </div>
                           <div className="col-span-6">
-                              <Controller
-                                  control={form.control}
-                                  name={`tasks.${index}.endDate`}
-                                  render={({ field: dateField }) => (
-                                      <Popover>
-                                          <PopoverTrigger asChild>
-                                          <FormControl>
-                                              <Button
-                                              variant={"outline"}
-                                              className={cn(
-                                                  "w-full justify-start text-left font-normal",
-                                                  !dateField.value && "text-muted-foreground"
-                                              )}
-                                              >
-                                              <CalendarIcon className="mr-2 h-4 w-4" />
-                                              {dateField.value ? format(dateField.value, "PPP") : <span>End date</span>}
-                                              </Button>
-                                          </FormControl>
-                                          </PopoverTrigger>
-                                          <PopoverContent className="w-auto p-0" align="start">
-                                          <Calendar mode="single" selected={dateField.value} onSelect={dateField.onChange} initialFocus />
-                                          </PopoverContent>
-                                      </Popover>
-                                  )}
-                              />
+                              <FormField
+                                control={form.control}
+                                name={`tasks.${index}.endDate`}
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                    <FormLabel>End Date</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                            >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            initialFocus
+                                        />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
                           </div>
                           <div className="col-span-12 flex justify-end">
                               <Button

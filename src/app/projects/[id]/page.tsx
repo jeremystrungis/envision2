@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { Project, Task, User } from '@/lib/data';
+import { Project, Task, User, Assignment } from '@/lib/data';
 import { useStore, store } from '@/lib/store';
 import AppHeader from '@/components/app-header';
 import AppSidebar from '@/components/app-sidebar';
@@ -88,8 +88,9 @@ export default function ProjectDetailsPage() {
     );
   }
 
-  const getAssignees = (assigneeIds: string[]): User[] => {
-    if (!assigneeIds) return [];
+  const getAssignees = (assignments: Assignment[]): User[] => {
+    if (!assignments) return [];
+    const assigneeIds = assignments.map(a => a.assigneeId);
     return users.filter(u => assigneeIds.includes(u.id));
   }
 
@@ -98,7 +99,7 @@ export default function ProjectDetailsPage() {
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 p-6">
+        <main className="p-6">
             <div className="mb-4">
                  <Button variant="outline" onClick={() => router.push('/projects')}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -150,7 +151,7 @@ export default function ProjectDetailsPage() {
                 </TableHeader>
                 <TableBody>
                   {tasks.map((task) => {
-                    const assignees = getAssignees(task.assigneeIds);
+                    const assignees = getAssignees(task.assignments);
                     return (
                         <TableRow key={task.id}>
                             <TableCell className="font-medium">{task.name}</TableCell>

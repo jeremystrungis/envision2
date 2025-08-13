@@ -9,11 +9,16 @@ export interface User {
   capacity: number; // hours per day
 }
 
+export interface Assignment {
+  assigneeId: string;
+  workingDays: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+}
+
 export interface Task {
   id:string;
   name: string;
   projectId: string;
-  assigneeIds: string[];
+  assignments: Assignment[];
   startDate: Date;
   endDate: Date;
   dependencies: string[];

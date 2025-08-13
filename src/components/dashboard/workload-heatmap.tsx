@@ -62,19 +62,21 @@ export default function WorkloadHeatmap() {
 
   const workloadData = useMemo(() => {
     return filteredUsers.map((user: User) => {
-      const dailyWorkload = weekDays.map((day) => {
-        const tasksOnDay = tasks.filter(
-          (task) =>
-            task.assigneeIds.includes(user.id) &&
-            day >= task.startDate && day <= task.endDate
-        );
-         return tasksOnDay.reduce((acc, task) => {
-            const taskDuration = differenceInBusinessDays(task.endDate, task.startDate) + 1;
-            const dailyHours = task.hours > 0 && taskDuration > 0 ? task.hours / taskDuration : 0;
-            return acc + dailyHours;
-        }, 0);
-      });
-      return { user, dailyWorkload };
+        const dailyWorkload = weekDays.map((day) => {
+            const dayOfWeek = getDay(day);
+            const tasksOnDay = tasks.filter(task =>
+                task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek)) &&
+                day >= task.startDate && day <= task.endDate
+            );
+
+            return tasksOnDay.reduce((acc, task) => {
+                const assignment = task.assignments.find(a => a.assigneeId === user.id)!;
+                const taskWorkDays = assignment.workingDays.length;
+                const dailyHours = task.hours > 0 && taskWorkDays > 0 ? task.hours / taskWorkDays : 0;
+                return acc + dailyHours;
+            }, 0);
+        });
+        return { user, dailyWorkload };
     });
   }, [filteredUsers, weekDays, tasks]);
 

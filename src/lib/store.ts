@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { projects as initialProjects, tasks as initialTasks, users as initialUsers, Project, Task, User } from './data';
-import { isWithinInterval, differenceInBusinessDays } from 'date-fns';
+import { projects as initialProjects, tasks as initialTasks, users as initialUsers, Project, Task, User, Assignment } from './data';
+import { isWithinInterval, differenceInBusinessDays, getDay } from 'date-fns';
 
 // In-memory store
 let projects: Project[] = [...initialProjects];
@@ -34,17 +34,30 @@ export const store = {
       users,
       getOverloadedUsers: () => {
         const today = new Date();
+        const todayDay = getDay(today);
         const allocation: Record<string, { workHours: number }> = {};
         users.forEach(u => allocation[u.id] = { workHours: 0 });
 
         tasks.forEach(task => {
             if (isWithinInterval(today, { start: task.startDate, end: task.endDate })) {
-                const taskDuration = differenceInBusinessDays(task.endDate, task.startDate) + 1;
-                const dailyHours = task.hours / taskDuration;
+                task.assignments.forEach(assignment => {
+                    if (assignment.workingDays.includes(todayDay)) {
+                        const taskDuration = task.assignments
+                            .filter(a => a.assigneeId === assignment.assigneeId)
+                            .reduce((acc, a) => acc + a.workingDays.length, 0);
 
-                task.assigneeIds.forEach(assigneeId => {
-                    if (allocation[assigneeId]) {
-                        allocation[assigneeId].workHours += dailyHours;
+                        const totalBusinessDays = differenceInBusinessDays(task.endDate, task.startDate) + 1;
+                        const individualDuration = assignment.workingDays.filter(day => {
+                            const date = new Date(task.startDate);
+                            date.setDate(date.getDate() + day);
+                            return isWithinInterval(date, {start: task.startDate, end: task.endDate});
+                        }).length;
+
+                        const dailyHours = task.hours > 0 && individualDuration > 0 ? task.hours / individualDuration : 0;
+                        
+                        if (allocation[assignment.assigneeId]) {
+                            allocation[assignment.assigneeId].workHours += dailyHours;
+                        }
                     }
                 });
             }

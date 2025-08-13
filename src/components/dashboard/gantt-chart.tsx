@@ -93,7 +93,9 @@ export default function GanttChart() {
     return -1;
   }, [startDate, endDate]);
 
-  const getAssignees = (assigneeIds: string[]): User[] => {
+  const getAssignees = (assignments: Task['assignments']): User[] => {
+    if (!assignments) return [];
+    const assigneeIds = assignments.map(a => a.assigneeId);
     return users.filter(u => assigneeIds.includes(u.id));
   };
 
@@ -193,7 +195,7 @@ export default function GanttChart() {
 
                   {/* Task Rows and Bars (rendered second to be on top) */}
                   {tasks.map((task, index) => {
-                      const assignees = getAssignees(task.assigneeIds);
+                      const assignees = getAssignees(task.assignments);
                       return (
                       <div key={task.id} className="flex items-center border-t relative" style={{ height: `${GANTT_ROW_HEIGHT}px` }}>
                       <Tooltip>

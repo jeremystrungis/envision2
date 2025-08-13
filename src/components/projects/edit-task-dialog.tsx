@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,13 +32,17 @@ import { cn } from '@/lib/utils';
 import { Task } from '@/lib/data';
 import { useStore } from '@/lib/store';
 import { useEffect } from 'react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
-import { ScrollArea } from '../ui/scroll-area';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Checkbox } from '../ui/checkbox';
+
+const assignmentSchema = z.object({
+    assigneeId: z.string(),
+    workingDays: z.array(z.number()).min(1, "Must select at least one working day"),
+});
 
 const taskSchema = z.object({
   name: z.string().min(1, 'Task name is required'),
-  assigneeIds: z.array(z.string()).min(1, 'At least one assignee is required'),
+  assignments: z.array(assignmentSchema).min(1, 'At least one assignee is required'),
   startDate: z.date(),
   endDate: z.date(),
   hours: z.coerce.number().min(0, "Hours must be a positive number"),
@@ -56,13 +61,18 @@ interface EditTaskDialogProps {
   task: Task;
 }
 
+const weekDays = [
+    { id: 1, label: 'M' }, { id: 2, label: 'T' }, { id: 3, label: 'W' },
+    { id: 4, label: 'T' }, { id: 5, label: 'F' }, { id: 6, label: 'S' }, { id: 0, label: 'S' }
+];
+
 export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: EditTaskDialogProps) {
   const { users } = useStore();
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       name: task.name,
-      assigneeIds: task.assigneeIds,
+      assignments: task.assignments,
       startDate: task.startDate,
       endDate: task.endDate,
       hours: task.hours,
@@ -72,12 +82,12 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
   useEffect(() => {
     form.reset({
         name: task.name,
-        assigneeIds: task.assigneeIds,
-        startDate: task.startDate,
-        endDate: task.endDate,
+        assignments: task.assignments,
+        startDate: new Date(task.startDate),
+        endDate: new Date(task.endDate),
         hours: task.hours,
     })
-  }, [task, form]);
+  }, [task, form, isOpen]);
 
   const onSubmit = (data: TaskFormValues) => {
     onUpdateTask(data);
@@ -85,7 +95,7 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
@@ -107,66 +117,86 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
                 </FormItem>
               )}
             />
+            
             <FormField
-              control={form.control}
-              name="assigneeIds"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assignees</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            "w-full justify-between",
-                            !field.value?.length && "text-muted-foreground"
-                          )}
-                        >
-                           <span className="truncate">
-                            {field.value?.length ? `${field.value.length} selected` : "Select team members"}
-                          </span>
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search members..." />
-                        <CommandEmpty>No members found.</CommandEmpty>
-                        <CommandGroup>
-                           <ScrollArea className="h-48">
-                                {users.map((user) => (
-                                    <CommandItem
-                                    key={user.id}
-                                    onSelect={() => {
-                                        const selected = field.value || [];
-                                        const isSelected = selected.includes(user.id);
-                                        form.setValue(
-                                        "assigneeIds",
-                                        isSelected
-                                            ? selected.filter((id) => id !== user.id)
-                                            : [...selected, user.id]
-                                        );
-                                    }}
-                                    >
-                                    <Checkbox
-                                        className="mr-2"
-                                        checked={field.value?.includes(user.id)}
-                                    />
-                                    {user.name}
-                                    </CommandItem>
-                                ))}
-                           </ScrollArea>
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
+                control={form.control}
+                name="assignments"
+                render={({ field: assignmentsField }) => (
+                    <FormItem>
+                        <FormLabel>Assignees & Work Days</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start">
+                                    {assignmentsField.value.length > 0 ? `${assignmentsField.value.length} selected` : 'Select members'}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                                <Command>
+                                    <CommandInput placeholder="Search members..." />
+                                    <CommandList>
+                                        <CommandEmpty>No members found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {users.map(user => {
+                                                const assignmentIndex = assignmentsField.value.findIndex(a => a.assigneeId === user.id);
+                                                const isSelected = assignmentIndex > -1;
+                                                
+                                                return (
+                                                    <React.Fragment key={user.id}>
+                                                        <CommandItem
+                                                            onSelect={() => {
+                                                                const currentAssignments = assignmentsField.value || [];
+                                                                if (isSelected) {
+                                                                    form.setValue(`assignments`, currentAssignments.filter(a => a.assigneeId !== user.id));
+                                                                } else {
+                                                                    form.setValue(`assignments`, [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5] }]);
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Checkbox className="mr-2" checked={isSelected} />
+                                                            {user.name}
+                                                        </CommandItem>
+                                                        {isSelected && (
+                                                            <div className="pl-8 pr-2 pb-2">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    {weekDays.map(day => (
+                                                                        <FormField
+                                                                            key={day.id}
+                                                                            control={form.control}
+                                                                            name={`assignments.${assignmentIndex}.workingDays`}
+                                                                            render={({ field: daysField }) => (
+                                                                                <FormItem className="flex flex-col items-center space-y-1">
+                                                                                    <FormLabel htmlFor={`day-edit-${assignmentIndex}-${day.id}`} className="text-xs">{day.label}</FormLabel>
+                                                                                    <FormControl>
+                                                                                        <Checkbox
+                                                                                            id={`day-edit-${assignmentIndex}-${day.id}`}
+                                                                                            checked={daysField.value.includes(day.id)}
+                                                                                            onCheckedChange={(checked) => {
+                                                                                                return checked
+                                                                                                    ? daysField.onChange([...daysField.value, day.id])
+                                                                                                    : daysField.onChange(daysField.value.filter((value) => value !== day.id));
+                                                                                            }}
+                                                                                        />
+                                                                                    </FormControl>
+                                                                                </FormItem>
+                                                                            )}
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </React.Fragment>
+                                                )
+                                            })}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
+
              <FormField
               control={form.control}
               name="hours"
@@ -180,82 +210,84 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Start Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>End Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="flex gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>End Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">

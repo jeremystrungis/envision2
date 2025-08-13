@@ -7,7 +7,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { useStore } from '@/lib/store';
-import { eachDayOfInterval, startOfWeek, endOfWeek, differenceInBusinessDays } from 'date-fns';
+import { eachDayOfInterval, startOfWeek, endOfWeek, differenceInBusinessDays, getDay } from 'date-fns';
 import { useMemo } from 'react';
 
 export default function ResourceAllocationChart() {
@@ -20,21 +20,31 @@ export default function ResourceAllocationChart() {
       const end = endOfWeek(today, { weekStartsOn: 1 });
       const weekDays = eachDayOfInterval({start, end});
 
-      const dailyWorkload = weekDays.map((day) => {
-          const tasksOnDay = tasks.filter(
-            (task) =>
-              task.assigneeIds.includes(user.id) &&
-              day >= task.startDate && day <= task.endDate
-          );
-           return tasksOnDay.reduce((acc, task) => {
-              const taskDuration = differenceInBusinessDays(task.endDate, task.startDate) + 1;
-              const dailyHours = task.hours > 0 && taskDuration > 0 ? task.hours / taskDuration : 0;
-              return acc + dailyHours;
-          }, 0);
-        });
+      let totalWeeklyHours = 0;
+      let workingDaysCount = 0;
+
+      weekDays.forEach(day => {
+        const dayOfWeek = getDay(day);
+        const tasksOnDay = tasks.filter(task =>
+          task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek)) &&
+          day >= task.startDate && day <= task.endDate
+        );
+
+        if (tasksOnDay.length > 0) {
+            workingDaysCount++;
+        }
         
-      const totalWeeklyHours = dailyWorkload.reduce((sum, load) => sum + load, 0);
-      const allocatedHours = totalWeeklyHours / (dailyWorkload.length || 1);
+        const dailyLoad = tasksOnDay.reduce((acc, task) => {
+            const assignment = task.assignments.find(a => a.assigneeId === user.id)!;
+            const taskWorkDays = assignment.workingDays.length;
+            const dailyHours = task.hours > 0 && taskWorkDays > 0 ? task.hours / taskWorkDays : 0;
+            return acc + dailyHours;
+        }, 0);
+        
+        totalWeeklyHours += dailyLoad;
+      });
+      
+      const allocatedHours = workingDaysCount > 0 ? totalWeeklyHours / workingDaysCount : 0;
 
       return {
         name: user.name.split(' ')[0], // Use first name for brevity
