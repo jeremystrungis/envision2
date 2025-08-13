@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
-import type { Task } from '@/lib/data';
+import type { Task, User } from '@/lib/data';
 import EditTaskDialog from '@/components/projects/edit-task-dialog';
 
 const GANTT_ROW_HEIGHT = 40; // in pixels
@@ -93,7 +93,10 @@ export default function GanttChart() {
     return -1;
   }, [startDate, endDate]);
 
-  const getAssignee = (assigneeId: string | null) => users.find(u => u.id === assigneeId);
+  const getAssignees = (assigneeIds: string[]): User[] => {
+    return users.filter(u => assigneeIds.includes(u.id));
+  };
+
 
   return (
     <>
@@ -189,7 +192,9 @@ export default function GanttChart() {
                   </svg>
 
                   {/* Task Rows and Bars (rendered second to be on top) */}
-                  {tasks.map((task, index) => (
+                  {tasks.map((task, index) => {
+                      const assignees = getAssignees(task.assigneeIds);
+                      return (
                       <div key={task.id} className="flex items-center border-t relative" style={{ height: `${GANTT_ROW_HEIGHT}px` }}>
                       <Tooltip>
                           <TooltipTrigger asChild>
@@ -204,23 +209,25 @@ export default function GanttChart() {
                               onClick={() => handleTaskClick(task)}
                           >
                               <p className="truncate font-medium">{task.name}</p>
-                              {getAssignee(task.assigneeId) && (
-                              <Avatar className="ml-auto h-5 w-5">
-                                  <AvatarImage src={getAssignee(task.assigneeId)?.avatar} />
-                                  <AvatarFallback>{getAssignee(task.assigneeId)?.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              )}
+                              <div className="ml-auto flex items-center -space-x-2">
+                                {assignees.map(assignee => (
+                                    <Avatar key={assignee.id} className="h-5 w-5 border-2 border-primary-foreground">
+                                        <AvatarImage src={assignee?.avatar} />
+                                        <AvatarFallback>{assignee?.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                ))}
+                                </div>
                           </div>
                           </TooltipTrigger>
                           <TooltipContent>
                           <p className="font-bold">{task.name}</p>
-                          <p>Assignee: {getAssignee(task.assigneeId)?.name || 'Unassigned'}</p>
+                          <p>Assignees: {assignees.length > 0 ? assignees.map(a => a.name).join(', ') : 'Unassigned'}</p>
                           <p>Dates: {format(task.startDate, 'MMM d')} - {format(task.endDate, 'MMM d')}</p>
                           <p className="text-muted-foreground text-xs mt-1">Click to edit this task.</p>
                           </TooltipContent>
                       </Tooltip>
                       </div>
-                  ))}
+                  )})}
                   </div>
               </div>
               </div>

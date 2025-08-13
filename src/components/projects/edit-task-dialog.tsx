@@ -23,21 +23,24 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Task } from '@/lib/data';
 import { useStore } from '@/lib/store';
 import { useEffect } from 'react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+import { ScrollArea } from '../ui/scroll-area';
+import { Checkbox } from '../ui/checkbox';
 
 const taskSchema = z.object({
   name: z.string().min(1, 'Task name is required'),
-  assigneeId: z.string().nullable(),
+  assigneeIds: z.array(z.string()).min(1, 'At least one assignee is required'),
   startDate: z.date(),
   endDate: z.date(),
+  hours: z.coerce.number().min(0, "Hours must be a positive number"),
 }).refine(data => data.endDate >= data.startDate, {
     message: "End date cannot be before start date",
     path: ["endDate"],
@@ -59,27 +62,25 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
     resolver: zodResolver(taskSchema),
     defaultValues: {
       name: task.name,
-      assigneeId: task.assigneeId,
+      assigneeIds: task.assigneeIds,
       startDate: task.startDate,
       endDate: task.endDate,
+      hours: task.hours,
     },
   });
 
   useEffect(() => {
     form.reset({
         name: task.name,
-        assigneeId: task.assigneeId,
+        assigneeIds: task.assigneeIds,
         startDate: task.startDate,
         endDate: task.endDate,
+        hours: task.hours,
     })
   }, [task, form]);
 
   const onSubmit = (data: TaskFormValues) => {
-    const dataToSubmit = {
-        ...data,
-        assigneeId: data.assigneeId === 'unassigned' ? null : data.assigneeId,
-    };
-    onUpdateTask(dataToSubmit);
+    onUpdateTask(data);
   };
 
   return (
@@ -108,23 +109,73 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
             />
             <FormField
               control={form.control}
-              name="assigneeId"
+              name="assigneeIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Assignee</FormLabel>
-                   <Select onValueChange={field.onChange} value={field.value || "unassigned"}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a team member" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {users.map(user => (
-                        <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Assignees</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value?.length && "text-muted-foreground"
+                          )}
+                        >
+                           <span className="truncate">
+                            {field.value?.length ? `${field.value.length} selected` : "Select team members"}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search members..." />
+                        <CommandEmpty>No members found.</CommandEmpty>
+                        <CommandGroup>
+                           <ScrollArea className="h-48">
+                                {users.map((user) => (
+                                    <CommandItem
+                                    key={user.id}
+                                    onSelect={() => {
+                                        const selected = field.value || [];
+                                        const isSelected = selected.includes(user.id);
+                                        form.setValue(
+                                        "assigneeIds",
+                                        isSelected
+                                            ? selected.filter((id) => id !== user.id)
+                                            : [...selected, user.id]
+                                        );
+                                    }}
+                                    >
+                                    <Checkbox
+                                        className="mr-2"
+                                        checked={field.value?.includes(user.id)}
+                                    />
+                                    {user.name}
+                                    </CommandItem>
+                                ))}
+                           </ScrollArea>
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="hours"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estimated Hours</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="8" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

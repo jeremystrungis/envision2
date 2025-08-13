@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { projects as initialProjects, tasks as initialTasks, users as initialUsers, Project, Task, User } from './data';
-import { isWithinInterval } from 'date-fns';
+import { isWithinInterval, differenceInBusinessDays } from 'date-fns';
 
 // In-memory store
 let projects: Project[] = [...initialProjects];
@@ -34,16 +34,23 @@ export const store = {
       users,
       getOverloadedUsers: () => {
         const today = new Date();
-        const allocation: Record<string, { count: number, tasks: string[] }> = {};
-        users.forEach(u => allocation[u.id] = { count: 0, tasks: [] });
-    
+        const allocation: Record<string, { workHours: number }> = {};
+        users.forEach(u => allocation[u.id] = { workHours: 0 });
+
         tasks.forEach(task => {
-            if (task.assigneeId && isWithinInterval(today, { start: task.startDate, end: task.endDate })) {
-                allocation[task.assigneeId].count += 2; // Assume each task is 2hr/day
+            if (isWithinInterval(today, { start: task.startDate, end: task.endDate })) {
+                const taskDuration = differenceInBusinessDays(task.endDate, task.startDate) + 1;
+                const dailyHours = task.hours / taskDuration;
+
+                task.assigneeIds.forEach(assigneeId => {
+                    if (allocation[assigneeId]) {
+                        allocation[assigneeId].workHours += dailyHours;
+                    }
+                });
             }
         });
-    
-        return users.filter(user => (allocation[user.id]?.count || 0) > user.capacity);
+
+        return users.filter(user => (allocation[user.id]?.workHours || 0) > user.capacity);
       }
     };
   },

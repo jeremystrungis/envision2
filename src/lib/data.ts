@@ -13,10 +13,11 @@ export interface Task {
   id:string;
   name: string;
   projectId: string;
-  assigneeId: string | null;
+  assigneeIds: string[];
   startDate: Date;
   endDate: Date;
   dependencies: string[];
+  hours: number;
 }
 
 export interface Project {

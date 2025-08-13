@@ -9,6 +9,7 @@ import {
   format,
   addDays,
   getDay,
+  differenceInBusinessDays
 } from 'date-fns';
 import { User } from '@/lib/data';
 import { useStore } from '@/lib/store';
@@ -64,11 +65,14 @@ export default function WorkloadHeatmap() {
       const dailyWorkload = weekDays.map((day) => {
         const tasksOnDay = tasks.filter(
           (task) =>
-            task.assigneeId === user.id &&
+            task.assigneeIds.includes(user.id) &&
             day >= task.startDate && day <= task.endDate
         );
-        // Simplified: 2 hours per task
-        return tasksOnDay.reduce((acc) => acc + 2, 0);
+         return tasksOnDay.reduce((acc, task) => {
+            const taskDuration = differenceInBusinessDays(task.endDate, task.startDate) + 1;
+            const dailyHours = task.hours > 0 && taskDuration > 0 ? task.hours / taskDuration : 0;
+            return acc + dailyHours;
+        }, 0);
       });
       return { user, dailyWorkload };
     });
@@ -153,7 +157,7 @@ export default function WorkloadHeatmap() {
                           />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{load}h / {user.capacity}h allocated</p>
+                          <p>{load.toFixed(1)}h / {user.capacity}h allocated</p>
                         </TooltipContent>
                       </Tooltip>
                     ))}

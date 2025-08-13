@@ -26,19 +26,22 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Project, Task, User } from '@/lib/data';
 import { useStore } from '@/lib/store';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+import { Checkbox } from '../ui/checkbox';
 
 const taskSchema = z.object({
   name: z.string().min(1, 'Task name is required'),
-  assigneeId: z.string().nullable(),
+  assigneeIds: z.array(z.string()).min(1, 'At least one assignee is required'),
   startDate: z.date(),
   endDate: z.date(),
+  hours: z.coerce.number().min(0, "Hours must be positive"),
 }).refine(data => !data.name || data.endDate >= data.startDate, {
   message: "End date must be after start date",
   path: ["endDate"],
@@ -61,9 +64,10 @@ interface AddProjectDialogProps {
 
 const defaultTaskValues = {
   name: '',
-  assigneeId: null,
+  assigneeIds: [],
   startDate: new Date(),
   endDate: new Date(),
+  hours: 8,
 };
 
 export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddProjectDialogProps) {
@@ -163,31 +167,74 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                               )}
                               />
                           </div>
-                          <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                           <div className="col-span-12 sm:col-span-6 md:col-span-4">
+                               <FormField
+                                control={form.control}
+                                name={`tasks.${index}.assigneeIds`}
+                                render={({ field: selectField }) => (
+                                    <FormItem>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className={cn("w-full justify-between", !selectField.value?.length && "text-muted-foreground")}
+                                            >
+                                            <span className="truncate">
+                                                {selectField.value?.length ? `${selectField.value.length} selected` : "Select members"}
+                                            </span>
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                            <Command>
+                                            <CommandInput placeholder="Search members..." />
+                                            <CommandEmpty>No members found.</CommandEmpty>
+                                            <CommandGroup>
+                                                <ScrollArea className="h-48">
+                                                    {users.map((user) => (
+                                                        <CommandItem
+                                                        key={user.id}
+                                                        onSelect={() => {
+                                                            const selected = selectField.value || [];
+                                                            const isSelected = selected.includes(user.id);
+                                                            form.setValue(
+                                                            `tasks.${index}.assigneeIds`,
+                                                            isSelected ? selected.filter(id => id !== user.id) : [...selected, user.id]
+                                                            );
+                                                        }}
+                                                        >
+                                                        <Checkbox className="mr-2" checked={selectField.value?.includes(user.id)} />
+                                                        {user.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </ScrollArea>
+                                            </CommandGroup>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                            </div>
+                           <div className="col-span-12 sm:col-span-6 md:col-span-3">
                               <FormField
                                   control={form.control}
-                                  name={`tasks.${index}.assigneeId`}
-                                  render={({ field: selectField }) => (
+                                  name={`tasks.${index}.hours`}
+                                  render={({ field }) => (
                                       <FormItem>
-                                      <Select onValueChange={selectField.onChange} value={selectField.value || "unassigned"}>
-                                          <FormControl>
-                                          <SelectTrigger>
-                                              <SelectValue placeholder="Assignee" />
-                                          </SelectTrigger>
-                                          </FormControl>
-                                          <SelectContent>
-                                          <SelectItem value="unassigned">Unassigned</SelectItem>
-                                          {users.map(user => (
-                                              <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
-                                          ))}
-                                          </SelectContent>
-                                      </Select>
+                                      <FormControl>
+                                          <Input type="number" placeholder="Hours" {...field} />
+                                      </FormControl>
                                       <FormMessage />
                                       </FormItem>
                                   )}
                               />
                           </div>
-                          <div className="col-span-6 sm:col-span-6 md:col-span-3">
+                          <div className="col-span-6">
                               <Controller
                                   control={form.control}
                                   name={`tasks.${index}.startDate`}
@@ -214,7 +261,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                   )}
                               />
                           </div>
-                          <div className="col-span-6 sm:col-span-6 md:col-span-3">
+                          <div className="col-span-6">
                               <Controller
                                   control={form.control}
                                   name={`tasks.${index}.endDate`}
@@ -241,7 +288,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                   )}
                               />
                           </div>
-                          <div className="col-span-12 md:col-span-1 flex items-center">
+                          <div className="col-span-12 flex justify-end">
                               <Button
                               type="button"
                               variant="destructive"

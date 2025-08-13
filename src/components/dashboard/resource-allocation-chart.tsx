@@ -7,7 +7,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { useStore } from '@/lib/store';
-import { eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { eachDayOfInterval, startOfWeek, endOfWeek, differenceInBusinessDays } from 'date-fns';
 import { useMemo } from 'react';
 
 export default function ResourceAllocationChart() {
@@ -23,10 +23,14 @@ export default function ResourceAllocationChart() {
       const dailyWorkload = weekDays.map((day) => {
           const tasksOnDay = tasks.filter(
             (task) =>
-              task.assigneeId === user.id &&
+              task.assigneeIds.includes(user.id) &&
               day >= task.startDate && day <= task.endDate
           );
-          return tasksOnDay.reduce((acc) => acc + 2, 0); // Simplified: 2 hours per task
+           return tasksOnDay.reduce((acc, task) => {
+              const taskDuration = differenceInBusinessDays(task.endDate, task.startDate) + 1;
+              const dailyHours = task.hours > 0 && taskDuration > 0 ? task.hours / taskDuration : 0;
+              return acc + dailyHours;
+          }, 0);
         });
         
       const totalWeeklyHours = dailyWorkload.reduce((sum, load) => sum + load, 0);

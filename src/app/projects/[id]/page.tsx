@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { Project, Task } from '@/lib/data';
+import { Project, Task, User } from '@/lib/data';
 import { useStore, store } from '@/lib/store';
 import AppHeader from '@/components/app-header';
 import AppSidebar from '@/components/app-sidebar';
@@ -80,7 +80,7 @@ export default function ProjectDetailsPage() {
     return (
         <div className="flex min-h-screen w-full bg-muted/40">
             <AppSidebar />
-            <div className="flex flex-1 flex-col items-center justify-center">
+            <div className="flex flex-1 flex-col items-center justify-center p-6">
                 <p>Project not found.</p>
                 <Button onClick={() => router.push('/projects')} className="mt-4">Back to Projects</Button>
             </div>
@@ -88,7 +88,10 @@ export default function ProjectDetailsPage() {
     );
   }
 
-  const getAssignee = (assigneeId: string | null) => users.find(u => u.id === assigneeId);
+  const getAssignees = (assigneeIds: string[]): User[] => {
+    if (!assigneeIds) return [];
+    return users.filter(u => assigneeIds.includes(u.id));
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
@@ -136,7 +139,8 @@ export default function ProjectDetailsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Task Name</TableHead>
-                    <TableHead>Assignee</TableHead>
+                    <TableHead>Assignees</TableHead>
+                    <TableHead>Est. Hours</TableHead>
                     <TableHead>Start Date</TableHead>
                     <TableHead>End Date</TableHead>
                     <TableHead>
@@ -146,21 +150,23 @@ export default function ProjectDetailsPage() {
                 </TableHeader>
                 <TableBody>
                   {tasks.map((task) => {
-                    const assignee = getAssignee(task.assigneeId);
+                    const assignees = getAssignees(task.assigneeIds);
                     return (
                         <TableRow key={task.id}>
                             <TableCell className="font-medium">{task.name}</TableCell>
                             <TableCell>
-                                {assignee ? (
-                                     <div className="flex items-center gap-2">
-                                        <Avatar className="h-6 w-6">
-                                            <AvatarImage src={assignee.avatar} />
-                                            <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="text-sm">{assignee.name}</span>
+                                {assignees.length > 0 ? (
+                                     <div className="flex items-center -space-x-2">
+                                        {assignees.map(assignee => (
+                                            <Avatar key={assignee.id} className="h-7 w-7 border-2 border-background">
+                                                <AvatarImage src={assignee.avatar} />
+                                                <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                        ))}
                                     </div>
                                 ) : 'Unassigned'}
                             </TableCell>
+                            <TableCell>{task.hours}h</TableCell>
                             <TableCell>{format(task.startDate, 'MMM d, yyyy')}</TableCell>
                             <TableCell>{format(task.endDate, 'MMM d, yyyy')}</TableCell>
                             <TableCell>

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A portfolio-level project, task, and resource analysis AI agent.
@@ -9,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { differenceInBusinessDays } from 'date-fns';
 
 // Define Zod schemas that match the data structures
 const UserSchema = z.object({
@@ -22,9 +24,10 @@ const TaskSchema = z.object({
   id: z.string(),
   name: z.string(),
   projectId: z.string(),
-  assigneeId: z.string().nullable(),
+  assigneeIds: z.array(z.string()),
   startDate: z.string().describe('The start date of the task in ISO format.'),
   endDate: z.string().describe('The end date of the task in ISO format.'),
+  hours: z.number().describe('The total estimated hours for the task.'),
 });
 
 const ProjectSchema = z.object({
@@ -66,7 +69,7 @@ const prompt = ai.definePrompt({
   output: { schema: PortfolioHealthOutputSchema },
   prompt: `You are an expert Program Manager overseeing a portfolio of complex engineering projects. Your task is to conduct a holistic risk and health assessment of the entire portfolio based on the provided data. The current date is ${new Date().toISOString()}.
 
-Analyze the projects, tasks, and team members to identify systemic risks, resource contention, and potential bottlenecks. Assume each task assigned to a person consumes 2 hours of their daily capacity for the duration of the task. Dates are provided in ISO 8601 format.
+Analyze the projects, tasks, and team members to identify systemic risks, resource contention, and potential bottlenecks. The daily hour commitment for a task is its total hours divided by the number of business days in its duration. Dates are provided in ISO 8601 format.
 
 - Project Data: {{{json projects}}}
 - Task Data: {{{json tasks}}}
@@ -74,7 +77,7 @@ Analyze the projects, tasks, and team members to identify systemic risks, resour
 
 Your analysis should focus on the following areas:
 
-1.  **Resource Hotspots:** Identify team members who are overloaded (assigned work exceeds their daily capacity) or who represent a single point of failure (critical path for multiple high-priority projects).
+1.  **Resource Hotspots:** Identify team members who are overloaded (their total daily hour commitment from all assigned tasks exceeds their daily capacity) or who represent a single point of failure (critical path for multiple high-priority projects).
 2.  **Schedule Conflicts:** Look for cross-project dependencies, tasks that are likely to be delayed due to resource constraints, and potential bottlenecks that could impact the entire portfolio.
 3.  **Overall Summary:** Provide a high-level executive summary of the portfolio's health.
 4.  **Strategic Recommendations:** Offer concrete, actionable advice for the project manager to de-risk the portfolio and improve overall health.
@@ -90,6 +93,18 @@ const portfolioHealthFlow = ai.defineFlow(
     outputSchema: PortfolioHealthOutputSchema,
   },
   async (input) => {
+
+    const augmentedInput = {
+        ...input,
+        tasks: input.tasks.map(task => {
+            const startDate = new Date(task.startDate);
+            const endDate = new Date(task.endDate);
+            const duration = differenceInBusinessDays(endDate, startDate) + 1;
+            const dailyHours = duration > 0 ? task.hours / duration : task.hours;
+            return {...task, dailyHours};
+        })
+    };
+
     const { output } = await prompt(input);
     return output!;
   }
