@@ -22,20 +22,17 @@ export function useUsers() {
     const q = query(collection(db, `users/${user.uid}/team`));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userTeam: User[] = [];
-      let currentUserInTeam: User | undefined;
-
       querySnapshot.forEach((doc) => {
-        const userData = { id: doc.id, ...doc.data() } as User;
-        if (doc.id === user.uid) {
-            currentUserInTeam = userData;
-        } else {
-            userTeam.push(userData);
-        }
+        userTeam.push({ id: doc.id, ...doc.data() } as User);
       });
       
+      const currentUserInTeam = userTeam.find(u => u.id === user.uid);
+
       if (currentUserInTeam) {
-        setUsers([currentUserInTeam, ...userTeam]);
-      } else {
+        // Ensure current user is always first in the list
+        setUsers([currentUserInTeam, ...userTeam.filter(u => u.id !== user.uid)]);
+      } else if (querySnapshot.docs.length > 0 || userTeam.length > 0) {
+        // Data exists, but not for the current user, so add them.
          const newUser: User = {
             id: user.uid,
             name: user.displayName || 'Me',
@@ -43,9 +40,22 @@ export function useUsers() {
             team: 'Unassigned',
             capacity: 8,
         };
-        // Add the new user to the database
         const userRef = doc(db, `users/${user.uid}/team`, user.uid);
-        setDoc(userRef, Omit<User, 'id'>(newUser));
+        // setDoc doesn't need Omit, it just needs the data payload.
+        const { id, ...userData } = newUser;
+        setDoc(userRef, userData);
+      } else if (querySnapshot.empty) {
+        // Collection is empty, create the first user (me)
+        const newUser: User = {
+            id: user.uid,
+            name: user.displayName || 'Me',
+            avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+            team: 'Unassigned',
+            capacity: 8,
+        };
+        const userRef = doc(db, `users/${user.uid}/team`, user.uid);
+        const { id, ...userData } = newUser;
+        setDoc(userRef, userData);
       }
 
       setLoading(false);
