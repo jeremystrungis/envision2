@@ -231,7 +231,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     defaultValues: {
       name: '',
       status: 'On Track',
-      tasks: Array(1).fill(defaultTaskValues),
+      tasks: [defaultTaskValues],
     },
   });
 
