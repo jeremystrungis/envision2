@@ -74,7 +74,7 @@ export default function WorkloadHeatmap() {
         start = startOfWeek(currentDate, { weekStartsOn: 1 });
         end = endOfWeek(currentDate, { weekStartsOn: 1 });
         title = `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
-        const weekDays = eachDayOfInterval({start, end}).filter(day => getDay(day) >= 1 && getDay(day) <= 5);
+        const weekDays = eachDayOfInterval({start, end});
         return { dateInterval: weekDays, columns: [], title};
     }
   }, [currentDate, viewMode]);
