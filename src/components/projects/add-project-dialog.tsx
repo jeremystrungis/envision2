@@ -146,7 +146,8 @@ function AssigneePopover({ taskIndex, form, users }: { taskIndex: number, form: 
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command>
                     <CommandInput placeholder="Search members..." />
-                    <CommandList className="max-h-[200px] overflow-y-auto overflow-x-hidden">
+                    <CommandList>
+                      <ScrollArea className="h-[200px]">
                         <CommandEmpty>No members found.</CommandEmpty>
                         <CommandGroup>
                             {users.map(user => {
@@ -214,6 +215,7 @@ function AssigneePopover({ taskIndex, form, users }: { taskIndex: number, form: 
                                 )
                             })}
                         </CommandGroup>
+                       </ScrollArea>
                     </CommandList>
                     <div className="p-1 border-t">
                         <Button className="w-full" size="sm" onClick={() => setOpen(false)}>Done</Button>
@@ -330,7 +332,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                   name={`tasks.${index}.hours`}
                                   render={({ field }) => (
                                       <FormItem>
-                                      <FormLabel>Estimated # of hours per person</FormLabel>
+                                      <FormLabel>Estimated Hours</FormLabel>
                                       <FormControl>
                                           <Input type="number" placeholder="Hours" {...field} />
                                       </FormControl>
