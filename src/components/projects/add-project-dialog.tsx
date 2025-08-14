@@ -146,77 +146,75 @@ function AssigneePopover({ taskIndex, form, users }: { taskIndex: number, form: 
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command>
                     <CommandInput placeholder="Search members..." />
-                    <ScrollArea className="h-[200px]">
-                        <CommandList>
-                            <CommandEmpty>No members found.</CommandEmpty>
-                            <CommandGroup>
-                                {users.map(user => {
-                                    const assignmentIndex = assignmentsField.findIndex((a: any) => a.assigneeId === user.id);
-                                    const isSelected = assignmentIndex > -1;
-                                    
-                                    return (
-                                        <React.Fragment key={user.id}>
-                                            <CommandItem
-                                                onSelect={() => {
-                                                    const currentAssignments = assignmentsField || [];
-                                                    if (isSelected) {
-                                                        form.setValue(`tasks.${taskIndex}.assignments`, currentAssignments.filter((a: any) => a.assigneeId !== user.id));
-                                                    } else {
-                                                        form.setValue(`tasks.${taskIndex}.assignments`, [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5], effort: 0 }]);
-                                                    }
-                                                    redistributeEffort(taskIndex);
-                                                }}
-                                            >
-                                                <Checkbox className="mr-2" checked={isSelected} />
-                                                {user.name}
-                                            </CommandItem>
-                                            {isSelected && (
-                                                <div className="pl-8 pr-2 pb-2 space-y-2">
-                                                    <div className="flex items-center gap-1.5">
-                                                        {weekDays.map(day => (
-                                                            <FormField
-                                                                key={day.id}
-                                                                control={form.control}
-                                                                name={`tasks.${taskIndex}.assignments.${assignmentIndex}.workingDays`}
-                                                                render={({ field: daysField }) => (
-                                                                    <FormItem className="flex flex-col items-center space-y-1">
-                                                                        <FormLabel htmlFor={`day-${taskIndex}-${assignmentIndex}-${day.id}`} className="text-xs">{day.label}</FormLabel>
-                                                                        <FormControl>
-                                                                            <Checkbox
-                                                                                id={`day-${taskIndex}-${assignmentIndex}-${day.id}`}
-                                                                                checked={daysField.value?.includes(day.id)}
-                                                                                onCheckedChange={(checked) => {
-                                                                                    const currentDays = daysField.value || [];
-                                                                                    return checked
-                                                                                        ? daysField.onChange([...currentDays, day.id])
-                                                                                        : daysField.onChange(currentDays.filter((value) => value !== day.id));
-                                                                                }}
-                                                                            />
-                                                                        </FormControl>
-                                                                    </FormItem>
-                                                                )}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Slider
-                                                            value={[assignmentsField[assignmentIndex]?.effort || 0]}
-                                                            onValueChange={([val]) => handleSliderChange(taskIndex, assignmentIndex, val)}
-                                                            max={100}
-                                                            step={5}
+                    <CommandList className="max-h-[200px] overflow-y-auto overflow-x-hidden">
+                        <CommandEmpty>No members found.</CommandEmpty>
+                        <CommandGroup>
+                            {users.map(user => {
+                                const assignmentIndex = assignmentsField.findIndex((a: any) => a.assigneeId === user.id);
+                                const isSelected = assignmentIndex > -1;
+                                
+                                return (
+                                    <React.Fragment key={user.id}>
+                                        <CommandItem
+                                            onSelect={() => {
+                                                const currentAssignments = assignmentsField || [];
+                                                if (isSelected) {
+                                                    form.setValue(`tasks.${taskIndex}.assignments`, currentAssignments.filter((a: any) => a.assigneeId !== user.id));
+                                                } else {
+                                                    form.setValue(`tasks.${taskIndex}.assignments`, [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5], effort: 0 }]);
+                                                }
+                                                redistributeEffort(taskIndex);
+                                            }}
+                                        >
+                                            <Checkbox className="mr-2" checked={isSelected} />
+                                            {user.name}
+                                        </CommandItem>
+                                        {isSelected && (
+                                            <div className="pl-8 pr-2 pb-2 space-y-2">
+                                                <div className="flex items-center gap-1.5">
+                                                    {weekDays.map(day => (
+                                                        <FormField
+                                                            key={day.id}
+                                                            control={form.control}
+                                                            name={`tasks.${taskIndex}.assignments.${assignmentIndex}.workingDays`}
+                                                            render={({ field: daysField }) => (
+                                                                <FormItem className="flex flex-col items-center space-y-1">
+                                                                    <FormLabel htmlFor={`day-${taskIndex}-${assignmentIndex}-${day.id}`} className="text-xs">{day.label}</FormLabel>
+                                                                    <FormControl>
+                                                                        <Checkbox
+                                                                            id={`day-${taskIndex}-${assignmentIndex}-${day.id}`}
+                                                                            checked={daysField.value?.includes(day.id)}
+                                                                            onCheckedChange={(checked) => {
+                                                                                const currentDays = daysField.value || [];
+                                                                                return checked
+                                                                                    ? daysField.onChange([...currentDays, day.id])
+                                                                                    : daysField.onChange(currentDays.filter((value) => value !== day.id));
+                                                                            }}
+                                                                        />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
                                                         />
-                                                        <span className="text-xs text-muted-foreground w-16 text-right">
-                                                            {Math.round(assignmentsField[assignmentIndex]?.effort || 0)}%
-                                                        </span>
-                                                    </div>
+                                                    ))}
                                                 </div>
-                                            )}
-                                        </React.Fragment>
-                                    )
-                                })}
-                            </CommandGroup>
-                        </CommandList>
-                    </ScrollArea>
+                                                <div className="flex items-center gap-2">
+                                                    <Slider
+                                                        value={[assignmentsField[assignmentIndex]?.effort || 0]}
+                                                        onValueChange={([val]) => handleSliderChange(taskIndex, assignmentIndex, val)}
+                                                        max={100}
+                                                        step={5}
+                                                    />
+                                                    <span className="text-xs text-muted-foreground w-16 text-right">
+                                                        {Math.round(assignmentsField[assignmentIndex]?.effort || 0)}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </React.Fragment>
+                                )
+                            })}
+                        </CommandGroup>
+                    </CommandList>
                     <div className="p-1 border-t">
                         <Button className="w-full" size="sm" onClick={() => setOpen(false)}>Done</Button>
                     </div>
