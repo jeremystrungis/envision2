@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A project risk assessment AI agent.
@@ -15,7 +16,7 @@ const ProjectRiskInputSchema = z.object({
   projectPlanDataUri: z
     .string()
     .describe(
-      "The project plan file, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "The text content of a project plan file, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
 export type ProjectRiskInput = z.infer<typeof ProjectRiskInputSchema>;
@@ -42,13 +43,13 @@ const prompt = ai.definePrompt({
   name: 'riskAssessmentPrompt',
   input: { schema: ProjectRiskInputSchema },
   output: { schema: ProjectRiskOutputSchema },
-  prompt: `You are an expert project manager with 20 years of experience in the power engineering industry. Your task is to conduct a detailed risk assessment based on the provided project description and project plan.
+  prompt: `You are an expert project manager with 20 years of experience in the power engineering industry. Your task is to conduct a detailed risk assessment based on the provided project description and the text from a project plan.
 
 Analyze the following project information:
 - Description: {{{projectDescription}}}
-- Plan Document: {{media url=projectPlanDataUri}}
+- Plan Document Text: {{media url=projectPlanDataUri}}
 
-Identify potential risks related to schedule, budget, resources, technical challenges, and external dependencies. For each risk you identify, provide its likelihood, its potential impact, and a concrete, actionable mitigation strategy.
+From the description and the plan's text content, identify potential risks related to schedule, budget, resources, technical challenges, and external dependencies. For each risk you identify, provide its likelihood, its potential impact, and a concrete, actionable mitigation strategy.
 
 Finally, provide a high-level summary of the project's overall risk profile. Structure your entire response according to the output schema.
 `,

@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/chart';
 import { useUsers } from '@/hooks/use-users';
 import { useTasks } from '@/hooks/use-tasks';
-import { eachDayOfInterval, startOfWeek, endOfWeek, getDay } from 'date-fns';
+import { getDay, isWithinInterval } from 'date-fns';
 import { useMemo } from 'react';
 
 export default function ResourceAllocationChart() {
@@ -16,54 +16,48 @@ export default function ResourceAllocationChart() {
   const { tasks } = useTasks();
 
   const allocationData = useMemo(() => {
+    const today = new Date();
+    const todayDay = getDay(today);
+
     return users.map((user) => {
-      const today = new Date();
-      const start = startOfWeek(today, { weekStartsOn: 1 });
-      const end = endOfWeek(today, { weekStartsOn: 1 });
-      const weekDays = eachDayOfInterval({start, end});
-
-      let totalWeeklyHours = 0;
-      let workingDaysCount = 0;
-
-      weekDays.forEach(day => {
-        const dayOfWeek = getDay(day);
-        const tasksOnDay = tasks.filter(task =>
-          task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek)) &&
-          day >= task.startDate.toDate() && day <= task.endDate.toDate()
-        );
-
-        if (tasksOnDay.length > 0) {
-            workingDaysCount++;
-        }
-        
-        const dailyLoad = tasksOnDay.reduce((acc, task) => {
-            const assignment = task.assignments.find(a => a.assigneeId === user.id)!;
-            const taskWorkDays = assignment.workingDays.length;
-            const assignedHours = task.hours * (assignment.effort / 100);
-            const dailyHours = taskWorkDays > 0 ? assignedHours / taskWorkDays : 0;
-            return acc + dailyHours;
-        }, 0);
-        
-        totalWeeklyHours += dailyLoad;
+      // Find all tasks assigned to this user that are active today.
+      const tasksToday = tasks.filter(task => {
+          const startDate = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+          const endDate = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
+          const isTaskActive = isWithinInterval(today, { start: startDate, end: endDate });
+          if (!isTaskActive) return false;
+          
+          const isAssigned = task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(todayDay));
+          return isAssigned;
       });
-      
-      const allocatedHours = workingDaysCount > 0 ? totalWeeklyHours / workingDaysCount : 0;
+
+      // Calculate the total allocated hours for today from all assigned tasks.
+      const allocatedHoursToday = tasksToday.reduce((total, task) => {
+          const assignment = task.assignments.find(a => a.assigneeId === user.id);
+          if (!assignment) return total;
+          
+          const individualDuration = assignment.workingDays.length;
+          const assignedHours = task.hours * (assignment.effort / 100);
+          const dailyHours = individualDuration > 0 ? assignedHours / individualDuration : 0;
+          
+          return total + dailyHours;
+      }, 0);
 
       return {
         name: user.name.split(' ')[0], // Use first name for brevity
         capacity: user.capacity,
-        allocated: allocatedHours,
+        allocated: allocatedHoursToday,
       };
     });
   }, [users, tasks]);
 
   const chartConfig = {
     allocated: {
-      label: 'Allocated',
+      label: 'Allocated Today',
       color: 'hsl(var(--primary))',
     },
     capacity: {
-      label: 'Capacity',
+      label: 'Daily Capacity',
       color: 'hsl(var(--muted))',
     },
   };

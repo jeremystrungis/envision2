@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, ChevronsUpDown } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Task } from '@/lib/firebase-types';
@@ -34,6 +34,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '../ui/checkbox';
 import { Slider } from '../ui/slider';
 import { useUsers } from '@/hooks/use-users';
+import { ScrollArea } from '../ui/scroll-area';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
@@ -130,76 +131,78 @@ function AssigneePopover({ form, users }: { form: any, users: any[] }) {
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command>
                     <CommandInput placeholder="Search members..." />
-                    <CommandList>
-                        <CommandEmpty>No members found.</CommandEmpty>
-                        <CommandGroup>
-                            {users.map(user => {
-                                const assignmentIndex = assignmentsField.findIndex((a: any) => a.assigneeId === user.id);
-                                const isSelected = assignmentIndex > -1;
-                                
-                                return (
-                                    <React.Fragment key={user.id}>
-                                        <CommandItem
-                                            onSelect={() => {
-                                                const currentAssignments = assignmentsField || [];
-                                                if (isSelected) {
-                                                    form.setValue('assignments', currentAssignments.filter((a: any) => a.assigneeId !== user.id));
-                                                } else {
-                                                    form.setValue('assignments', [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5], effort: 0 }]);
-                                                }
-                                                redistributeEffort();
-                                            }}
-                                        >
-                                            <Checkbox className="mr-2" checked={isSelected} />
-                                            {user.name}
-                                        </CommandItem>
-                                        {isSelected && (
-                                            <div className="pl-8 pr-2 pb-2 space-y-2">
-                                                <div className="flex items-center gap-1.5">
-                                                    {weekDays.map(day => (
-                                                        <FormField
-                                                            key={day.id}
-                                                            control={form.control}
-                                                            name={`assignments.${assignmentIndex}.workingDays`}
-                                                            render={({ field: daysField }) => (
-                                                                <FormItem className="flex flex-col items-center space-y-1">
-                                                                    <FormLabel htmlFor={`day-add-${assignmentIndex}-${day.id}`} className="text-xs">{day.label}</FormLabel>
-                                                                    <FormControl>
-                                                                        <Checkbox
-                                                                            id={`day-add-${assignmentIndex}-${day.id}`}
-                                                                            checked={daysField.value?.includes(day.id)}
-                                                                            onCheckedChange={(checked) => {
-                                                                                const currentDays = daysField.value || [];
-                                                                                return checked
-                                                                                    ? daysField.onChange([...currentDays, day.id])
-                                                                                    : daysField.onChange(currentDays.filter((value) => value !== day.id));
-                                                                            }}
-                                                                        />
-                                                                    </FormControl>
-                                                                </FormItem>
-                                                            )}
+                    <ScrollArea className="h-[200px]">
+                        <CommandList>
+                            <CommandEmpty>No members found.</CommandEmpty>
+                            <CommandGroup>
+                                {users.map(user => {
+                                    const assignmentIndex = assignmentsField.findIndex((a: any) => a.assigneeId === user.id);
+                                    const isSelected = assignmentIndex > -1;
+                                    
+                                    return (
+                                        <React.Fragment key={user.id}>
+                                            <CommandItem
+                                                onSelect={() => {
+                                                    const currentAssignments = assignmentsField || [];
+                                                    if (isSelected) {
+                                                        form.setValue('assignments', currentAssignments.filter((a: any) => a.assigneeId !== user.id));
+                                                    } else {
+                                                        form.setValue('assignments', [...currentAssignments, { assigneeId: user.id, workingDays: [1, 2, 3, 4, 5], effort: 0 }]);
+                                                    }
+                                                    redistributeEffort();
+                                                }}
+                                            >
+                                                <Checkbox className="mr-2" checked={isSelected} />
+                                                {user.name}
+                                            </CommandItem>
+                                            {isSelected && (
+                                                <div className="pl-8 pr-2 pb-2 space-y-2">
+                                                    <div className="flex items-center gap-1.5">
+                                                        {weekDays.map(day => (
+                                                            <FormField
+                                                                key={day.id}
+                                                                control={form.control}
+                                                                name={`assignments.${assignmentIndex}.workingDays`}
+                                                                render={({ field: daysField }) => (
+                                                                    <FormItem className="flex flex-col items-center space-y-1">
+                                                                        <FormLabel htmlFor={`day-add-${assignmentIndex}-${day.id}`} className="text-xs">{day.label}</FormLabel>
+                                                                        <FormControl>
+                                                                            <Checkbox
+                                                                                id={`day-add-${assignmentIndex}-${day.id}`}
+                                                                                checked={daysField.value?.includes(day.id)}
+                                                                                onCheckedChange={(checked) => {
+                                                                                    const currentDays = daysField.value || [];
+                                                                                    return checked
+                                                                                        ? daysField.onChange([...currentDays, day.id])
+                                                                                        : daysField.onChange(currentDays.filter((value) => value !== day.id));
+                                                                                }}
+                                                                            />
+                                                                        </FormControl>
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Slider
+                                                            value={[assignmentsField[assignmentIndex]?.effort || 0]}
+                                                            onValueChange={([val]) => handleSliderChange(assignmentIndex, val)}
+                                                            max={100}
+                                                            step={5}
                                                         />
-                                                    ))}
+                                                        <span className="text-xs text-muted-foreground w-16 text-right">
+                                                            {Math.round(assignmentsField[assignmentIndex]?.effort || 0)}%
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Slider
-                                                        value={[assignmentsField[assignmentIndex]?.effort || 0]}
-                                                        onValueChange={([val]) => handleSliderChange(assignmentIndex, val)}
-                                                        max={100}
-                                                        step={5}
-                                                    />
-                                                    <span className="text-xs text-muted-foreground w-16 text-right">
-                                                        {Math.round(assignmentsField[assignmentIndex]?.effort || 0)}%
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </React.Fragment>
-                                )
-                            })}
-                        </CommandGroup>
-                    </CommandList>
-                    <div className="p-1">
+                                            )}
+                                        </React.Fragment>
+                                    )
+                                })}
+                            </CommandGroup>
+                        </CommandList>
+                    </ScrollArea>
+                    <div className="p-1 border-t">
                         <Button className="w-full" size="sm" onClick={() => setOpen(false)}>Done</Button>
                     </div>
                 </Command>
@@ -226,14 +229,17 @@ export default function AddTaskDialog({ isOpen, onClose, onAddTask }: AddTaskDia
     form.reset();
   };
 
-  useEffect(() => {
-    if (isOpen) {
+  if(isOpen && form.formState.isSubmitSuccessful) {
       form.reset();
-    }
-  }, [isOpen, form]);
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        if(!open) {
+            form.reset();
+        }
+        onClose();
+    }}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add New Task</DialogTitle>
