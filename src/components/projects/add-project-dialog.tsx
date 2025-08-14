@@ -96,7 +96,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     defaultValues: {
       name: '',
       status: 'On Track',
-      tasks: Array(4).fill(defaultTaskValues),
+      tasks: Array(1).fill(defaultTaskValues),
     },
   });
 
@@ -332,6 +332,9 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                                             })}
                                                         </CommandGroup>
                                                     </CommandList>
+                                                    <div className="p-1">
+                                                        <Button className="w-full" size="sm">Done</Button>
+                                                    </div>
                                                 </Command>
                                             </PopoverContent>
                                         </Popover>
