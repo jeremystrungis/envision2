@@ -32,7 +32,6 @@ export default function AppHeader() {
   const { user, logout } = useAuth();
   const { users } = useUsers();
   const { tasks } = useTasks();
-  const currentUser = users[0];
 
   const getOverloadedUsers = () => {
         const today = new Date();
@@ -152,10 +151,10 @@ export default function AppHeader() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
             <Avatar>
-              {currentUser ? (
+              {user ? (
                 <>
-                  <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                  <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
+                  <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
                 </>
               ) : (
                 <AvatarFallback>

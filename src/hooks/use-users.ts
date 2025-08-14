@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { User } from '@/lib/firebase-types';
 import { useAuth } from './use-auth';
@@ -22,32 +22,36 @@ export function useUsers() {
     const q = query(collection(db, `users/${user.uid}/team`));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userTeam: User[] = [];
+      let currentUserInTeam: User | undefined;
+
       querySnapshot.forEach((doc) => {
-        userTeam.push({ id: doc.id, ...doc.data() } as User);
+        const userData = { id: doc.id, ...doc.data() } as User;
+        if (doc.id === user.uid) {
+            currentUserInTeam = userData;
+        } else {
+            userTeam.push(userData);
+        }
       });
       
-      // Ensure the logged-in user is first if they exist, or create them
-      const currentUserInTeam = userTeam.find(u => u.id === user.uid);
       if (currentUserInTeam) {
-        // Move current user to the front
-        const otherUsers = userTeam.filter(u => u.id !== user.uid);
-        setUsers([currentUserInTeam, ...otherUsers]);
+        setUsers([currentUserInTeam, ...userTeam]);
       } else {
-        // If the user is not in the team collection, add them.
-        // This can happen for a new account.
-        const newUser = {
+         const newUser: User = {
             id: user.uid,
             name: user.displayName || 'Me',
-            email: user.email,
             avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
             team: 'Unassigned',
             capacity: 8,
-        }
-        addDoc(collection(db, `users/${user.uid}/team`), newUser);
-        setUsers([newUser as any, ...userTeam]);
+        };
+        // Add the new user to the database
+        const userRef = doc(db, `users/${user.uid}/team`, user.uid);
+        setDoc(userRef, Omit<User, 'id'>(newUser));
       }
 
       setLoading(false);
+    }, (error) => {
+        console.error("Error fetching team:", error);
+        setLoading(false);
     });
 
     return () => unsubscribe();

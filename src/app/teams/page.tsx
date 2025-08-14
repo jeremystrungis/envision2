@@ -64,7 +64,7 @@ export default function TeamsPage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle>Team Members</CardTitle>
-                        <CardDescription>Manage your team members. The first member is considered "Me".</CardDescription>
+                        <CardDescription>Manage your team members.</CardDescription>
                     </div>
                     <Button onClick={() => setIsAddMemberOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
