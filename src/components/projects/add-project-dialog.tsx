@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Project, Task, Assignment } from '@/lib/firebase-types';
@@ -37,6 +37,7 @@ import { Checkbox } from '../ui/checkbox';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Slider } from '../ui/slider';
 import { useUsers } from '@/hooks/use-users';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
@@ -89,9 +90,8 @@ const weekDays = [
     { id: 4, label: 'T' }, { id: 5, label: 'F' }, { id: 6, label: 'S' }, { id: 0, label: 'S' }
 ];
 
-function AssigneePopover({ taskIndex, form, users }: { taskIndex: number, form: any, users: any[] }) {
-    const [open, setOpen] = useState(false);
-
+function AssigneeSelection({ taskIndex, form, users }: { taskIndex: number, form: any, users: any[] }) {
+    
     const redistributeEffort = useCallback((taskIndex: number) => {
         const assignments = form.getValues(`tasks.${taskIndex}.assignments`);
         if (assignments.length > 0) {
@@ -137,14 +137,15 @@ function AssigneePopover({ taskIndex, form, users }: { taskIndex: number, form: 
     const assignmentsField = form.watch(`tasks.${taskIndex}.assignments`);
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                    {assignmentsField.length > 0 ? `${assignmentsField.length} selected` : 'Select members'}
+        <Collapsible>
+            <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                    <span>{assignmentsField.length > 0 ? `${assignmentsField.length} selected` : 'Assign Members'}</span>
+                    <ChevronDown className="h-4 w-4" />
                 </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                <Command>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="w-full">
+                <Command className="mt-2 border rounded-md">
                     <CommandInput placeholder="Search members..." />
                     <CommandList>
                       <ScrollArea className="h-[200px]">
@@ -217,12 +218,9 @@ function AssigneePopover({ taskIndex, form, users }: { taskIndex: number, form: 
                         </CommandGroup>
                        </ScrollArea>
                     </CommandList>
-                    <div className="p-1 border-t">
-                        <Button className="w-full" size="sm" onClick={() => setOpen(false)}>Done</Button>
-                    </div>
                 </Command>
-            </PopoverContent>
-        </Popover>
+            </CollapsibleContent>
+        </Collapsible>
     )
 }
 
@@ -349,7 +347,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Assignees, Work Days & Effort</FormLabel>
-                                        <AssigneePopover taskIndex={index} form={form} users={users} />
+                                        <AssigneeSelection taskIndex={index} form={form} users={users} />
                                         <FormMessage>{form.formState.errors.tasks?.[index]?.assignments?.message}</FormMessage>
                                     </FormItem>
                                 )}

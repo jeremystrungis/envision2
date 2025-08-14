@@ -26,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Task } from '@/lib/firebase-types';
@@ -35,6 +35,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Slider } from '../ui/slider';
 import { useUsers } from '@/hooks/use-users';
 import { ScrollArea } from '../ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
@@ -74,8 +75,7 @@ const weekDays = [
     { id: 4, label: 'T' }, { id: 5, label: 'F' }, { id: 6, label: 'S' }, { id: 0, label: 'S' }
 ];
 
-function AssigneePopover({ form, users }: { form: any, users: any[] }) {
-    const [open, setOpen] = useState(false);
+function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
 
     const redistributeEffort = useCallback(() => {
         const assignments = form.getValues('assignments');
@@ -122,14 +122,15 @@ function AssigneePopover({ form, users }: { form: any, users: any[] }) {
     const assignmentsField = form.watch('assignments');
 
     return (
-         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                    {assignmentsField.length > 0 ? `${assignmentsField.length} selected` : 'Select members'}
+        <Collapsible>
+            <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                    <span>{assignmentsField.length > 0 ? `${assignmentsField.length} selected` : 'Assign Members'}</span>
+                    <ChevronDown className="h-4 w-4" />
                 </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                <Command>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="w-full">
+                <Command className="mt-2 border rounded-md">
                     <CommandInput placeholder="Search members..." />
                     <CommandList>
                         <ScrollArea className="h-[200px]">
@@ -202,12 +203,9 @@ function AssigneePopover({ form, users }: { form: any, users: any[] }) {
                         </CommandGroup>
                         </ScrollArea>
                     </CommandList>
-                     <div className="p-1 border-t">
-                        <Button className="w-full" size="sm" onClick={() => setOpen(false)}>Done</Button>
-                    </div>
                 </Command>
-            </PopoverContent>
-        </Popover>
+            </CollapsibleContent>
+        </Collapsible>
     )
 }
 
@@ -269,7 +267,7 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Assignees, Work Days & Effort</FormLabel>
-                        <AssigneePopover form={form} users={users} />
+                        <AssigneeSelection form={form} users={users} />
                         <FormMessage />
                     </FormItem>
                 )}
