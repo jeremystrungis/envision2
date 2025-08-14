@@ -16,8 +16,7 @@ import {
   isSameDay,
   isSameMonth,
 } from 'date-fns';
-import { User, Task } from '@/lib/data';
-import { useStore } from '@/lib/store';
+import { User, Task } from '@/lib/firebase-types';
 import {
   Tooltip,
   TooltipContent,
@@ -31,7 +30,8 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-
+import { useUsers } from '@/hooks/use-users';
+import { useTasks } from '@/hooks/use-tasks';
 
 const workloadLevels = [
     { level: 'Light', color: 'bg-sky-500/20 border-sky-500/30', description: '< 50%' },
@@ -44,7 +44,8 @@ const workloadLevels = [
 type ViewMode = 'week' | 'month' | '3-month' | '12-month';
 
 export default function WorkloadHeatmap() {
-  const { users, tasks } = useStore();
+  const { users } = useUsers();
+  const { tasks } = useTasks();
   const [selectedTeam, setSelectedTeam] = useState('All');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -92,7 +93,7 @@ export default function WorkloadHeatmap() {
       const dayOfWeek = getDay(date);
       const tasksOnDay = tasks.filter(task =>
           task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek)) &&
-          date >= task.startDate && date <= task.endDate
+          date >= task.startDate.toDate() && date <= task.endDate.toDate()
       );
 
       return tasksOnDay.reduce((acc, task) => {
@@ -276,4 +277,3 @@ export default function WorkloadHeatmap() {
     </Card>
   );
 }
-

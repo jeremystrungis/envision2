@@ -2,21 +2,26 @@
 'use client';
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { eachDayOfInterval, differenceInDays, format, isWithinInterval, startOfToday } from 'date-fns';
-import { useStore, store } from '@/lib/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
-import type { Task, User } from '@/lib/data';
+import type { Task, User } from '@/lib/firebase-types';
 import EditTaskDialog from '@/components/projects/edit-task-dialog';
+import { useProjects } from '@/hooks/use-projects';
+import { useTasks } from '@/hooks/use-tasks';
+import { useUsers } from '@/hooks/use-users';
 
 const GANTT_ROW_HEIGHT = 40; // in pixels
 const GANTT_DAY_WIDTH = 36; // in pixels
 const GANTT_CONTAINER_HEIGHT = 400; // in pixels
 
 export default function GanttChart() {
-  const { projects, tasks: allTasks, users } = useStore();
+  const { projects } = useProjects();
   const [selectedProjectId, setSelectedProjectId] = useState(projects.length > 0 ? projects[0].id : '');
+  const { tasks, updateTask } = useTasks(selectedProjectId);
+  const { users } = useUsers();
+  
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
@@ -24,16 +29,15 @@ export default function GanttChart() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // If there are projects but none is selected (e.g., after projects load)
     if (projects.length > 0 && !selectedProjectId) {
       setSelectedProjectId(projects[0].id);
     }
   }, [projects, selectedProjectId]);
 
-
-  const tasks = useMemo(() => {
-    return allTasks.filter(task => task.projectId === selectedProjectId);
-  }, [allTasks, selectedProjectId]);
+  const getTaskDate = (date: any) => {
+      if (!date) return new Date();
+      return date.toDate ? date.toDate() : new Date(date);
+  }
 
   const { startDate, endDate, dateInterval, totalDays, monthIntervals } = useMemo(() => {
     if (tasks.length === 0) {
@@ -45,8 +49,11 @@ export default function GanttChart() {
       const interval = eachDayOfInterval({ start, end });
       return { startDate: start, endDate: end, dateInterval: interval, totalDays: interval.length, monthIntervals: [] };
     }
-    const start = tasks.reduce((min, t) => t.startDate < min ? t.startDate : min, tasks[0].startDate);
-    const end = tasks.reduce((max, t) => t.endDate > max ? t.endDate : max, tasks[0].endDate);
+    
+    const taskDates = tasks.flatMap(t => [getTaskDate(t.startDate), getTaskDate(t.endDate)]);
+    const start = taskDates.reduce((min, d) => d < min ? d : min, taskDates[0]);
+    const end = taskDates.reduce((max, d) => d > max ? d : max, taskDates[0]);
+
     const interval = eachDayOfInterval({ start, end });
 
     const months: { name: string; days: number }[] = [];
@@ -70,15 +77,17 @@ export default function GanttChart() {
 
   const handleUpdateTask = (updatedTask: Omit<Task, 'id' | 'projectId' | 'dependencies'>) => {
     if(selectedTask) {
-        store.updateTask(selectedTask.id, updatedTask);
+        updateTask(selectedTask.id, updatedTask);
     }
     setIsEditDialogOpen(false);
     setSelectedTask(null);
   };
 
   const getTaskStyle = (task: Task) => {
-    const left = differenceInDays(task.startDate, startDate) * GANTT_DAY_WIDTH;
-    const width = differenceInDays(task.endDate, task.startDate) * GANTT_DAY_WIDTH;
+    const sDate = getTaskDate(task.startDate);
+    const eDate = getTaskDate(task.endDate);
+    const left = differenceInDays(sDate, startDate) * GANTT_DAY_WIDTH;
+    const width = differenceInDays(eDate, sDate) * GANTT_DAY_WIDTH;
     return {
       left: `${left}px`,
       width: `${width}px`,
@@ -196,6 +205,9 @@ export default function GanttChart() {
                   {/* Task Rows and Bars (rendered second to be on top) */}
                   {tasks.map((task, index) => {
                       const assignees = getAssignees(task.assignments);
+                      const sDate = getTaskDate(task.startDate);
+                      const eDate = getTaskDate(task.endDate);
+
                       return (
                       <div key={task.id} className="flex items-center border-t relative" style={{ height: `${GANTT_ROW_HEIGHT}px` }}>
                       <Tooltip>
@@ -203,7 +215,7 @@ export default function GanttChart() {
                           <div
                               ref={el => taskRefs.current[task.id] = el}
                               className={cn("absolute z-10 flex items-center h-[30px] rounded text-primary-foreground text-xs px-2 cursor-pointer transition-colors",
-                              isWithinInterval(new Date(), {start: task.startDate, end: task.endDate}) 
+                              isWithinInterval(new Date(), {start: sDate, end: eDate}) 
                                   ? "bg-accent hover:bg-accent/90 border-2 border-primary" 
                                   : "bg-primary/80 hover:bg-primary"
                               )}
@@ -224,7 +236,7 @@ export default function GanttChart() {
                           <TooltipContent>
                           <p className="font-bold">{task.name}</p>
                           <p>Assignees: {assignees.length > 0 ? assignees.map(a => a.name).join(', ') : 'Unassigned'}</p>
-                          <p>Dates: {format(task.startDate, 'MMM d')} - {format(task.endDate, 'MMM d')}</p>
+                          <p>Dates: {format(sDate, 'MMM d')} - {format(eDate, 'MMM d')}</p>
                           <p className="text-muted-foreground text-xs mt-1">Click to edit this task.</p>
                           </TooltipContent>
                       </Tooltip>

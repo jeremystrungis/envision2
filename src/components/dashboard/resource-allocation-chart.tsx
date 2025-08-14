@@ -6,12 +6,14 @@ import {
   ChartContainer,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { useStore } from '@/lib/store';
-import { eachDayOfInterval, startOfWeek, endOfWeek, differenceInBusinessDays, getDay } from 'date-fns';
+import { useUsers } from '@/hooks/use-users';
+import { useTasks } from '@/hooks/use-tasks';
+import { eachDayOfInterval, startOfWeek, endOfWeek, getDay } from 'date-fns';
 import { useMemo } from 'react';
 
 export default function ResourceAllocationChart() {
-  const { users, tasks } = useStore();
+  const { users } = useUsers();
+  const { tasks } = useTasks();
 
   const allocationData = useMemo(() => {
     return users.map((user) => {
@@ -27,7 +29,7 @@ export default function ResourceAllocationChart() {
         const dayOfWeek = getDay(day);
         const tasksOnDay = tasks.filter(task =>
           task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek)) &&
-          day >= task.startDate && day <= task.endDate
+          day >= task.startDate.toDate() && day <= task.endDate.toDate()
         );
 
         if (tasksOnDay.length > 0) {

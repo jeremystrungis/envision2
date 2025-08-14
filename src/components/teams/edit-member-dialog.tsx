@@ -24,9 +24,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User } from '@/lib/data';
+import { User } from '@/lib/firebase-types';
 import { useEffect, useState, useMemo } from 'react';
-import { useStore } from '@/lib/store';
+import { useUsers } from '@/hooks/use-users';
 
 const memberSchema = z.object({
   name: z.string().min(1, 'Member name is required'),
@@ -46,7 +46,7 @@ interface EditMemberDialogProps {
 }
 
 export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }: EditMemberDialogProps) {
-  const { users } = useStore();
+  const { users } = useUsers();
   const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
 
   const existingTeams = useMemo(() => {

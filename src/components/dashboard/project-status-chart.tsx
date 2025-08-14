@@ -5,14 +5,14 @@ import { Bar, BarChart, Tooltip, XAxis, YAxis, ResponsiveContainer } from 'recha
 import {
   ChartContainer,
 } from '@/components/ui/chart';
-import { useStore } from '@/lib/store';
+import { useProjects } from '@/hooks/use-projects';
 import { useMemo } from 'react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { CardDescription } from '../ui/card';
 
 export default function ProjectStatusChart() {
-  const { projects } = useStore();
+  const { projects } = useProjects();
   
   const { chartData, totalProjects } = useMemo(() => {
     if (!projects) return { chartData: [], totalProjects: 0 };

@@ -7,23 +7,36 @@ import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Project, Task } from '@/lib/data';
-import { useStore, store } from '@/lib/store';
+import { Project, Task } from '@/lib/firebase-types';
+import { useProjects } from '@/hooks/use-projects';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import AddProjectDialog from '@/components/projects/add-project-dialog';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 export default function ProjectsPage() {
-  const { projects } = useStore();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { projects, addProject } = useProjects();
   const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
 
   const handleAddProject = (newProject: Omit<Project, 'id'>, tasks: Omit<Task, 'id' | 'projectId' | 'dependencies'>[]) => {
-    store.addProject(newProject, tasks);
+    addProject(newProject, tasks);
     setIsAddProjectDialogOpen(false);
   };
+  
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">

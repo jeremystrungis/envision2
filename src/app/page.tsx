@@ -8,8 +8,22 @@ import GanttChart from '@/components/dashboard/gantt-chart';
 import ResourceAllocationChart from '@/components/dashboard/resource-allocation-chart';
 import ProjectStatusChart from '@/components/dashboard/project-status-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+
   return (
     <>
       <div className="flex min-h-screen w-full bg-muted/40">

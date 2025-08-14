@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Project } from '@/lib/data';
+import { Project } from '@/lib/firebase-types';
 import { useEffect } from 'react';
 
 const projectSchema = z.object({

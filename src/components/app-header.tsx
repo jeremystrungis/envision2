@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Bell, Menu, Search, User, PlayCircle, Settings } from 'lucide-react';
+import { Bell, Menu, Search, User, PlayCircle, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,16 +18,51 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useStore } from '@/lib/store';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import AppSidebar from './app-sidebar';
 import Image from 'next/image';
+import { useAuth } from '@/hooks/use-auth';
+import { useUsers } from '@/hooks/use-users';
+import { useTasks } from '@/hooks/use-tasks';
+import { getDay } from 'date-fns';
+import { isWithinInterval } from 'date-fns';
 
 export default function AppHeader() {
-  const { users, getOverloadedUsers } = useStore();
-  const overloadedUsers = getOverloadedUsers();
+  const { user, logout } = useAuth();
+  const { users } = useUsers();
+  const { tasks } = useTasks();
   const currentUser = users[0];
+
+  const getOverloadedUsers = () => {
+        const today = new Date();
+        const todayDay = getDay(today);
+        const allocation: Record<string, { workHours: number }> = {};
+        users.forEach(u => allocation[u.id] = { workHours: 0 });
+
+        tasks.forEach(task => {
+            const startDate = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+            const endDate = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
+
+            if (isWithinInterval(today, { start: startDate, end: endDate })) {
+                task.assignments.forEach(assignment => {
+                    if (assignment.workingDays.includes(todayDay)) {
+                        const individualDuration = assignment.workingDays.length;
+                        const assignedHours = task.hours * (assignment.effort / 100);
+                        const dailyHours = individualDuration > 0 ? assignedHours / individualDuration : 0;
+                        
+                        if (allocation[assignment.assigneeId]) {
+                            allocation[assignment.assigneeId].workHours += dailyHours;
+                        }
+                    }
+                });
+            }
+        });
+
+        return users.filter(user => (allocation[user.id]?.workHours || 0) > user.capacity);
+  }
+
+  const overloadedUsers = getOverloadedUsers();
 
   return (
     <>
@@ -142,7 +176,10 @@ export default function AppHeader() {
           </DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem onClick={logout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

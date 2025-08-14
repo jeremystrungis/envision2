@@ -7,17 +7,21 @@ import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { User } from '@/lib/data';
-import { useStore, store } from '@/lib/store';
+import { User } from '@/lib/firebase-types';
+import { useUsers } from '@/hooks/use-users';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import EditMemberDialog from '@/components/teams/edit-member-dialog';
 import AddMemberDialog from '@/components/teams/add-member-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 export default function TeamsPage() {
-  const { users } = useStore();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { users, addUser, updateUser } = useUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -29,15 +33,24 @@ export default function TeamsPage() {
 
   const handleUpdateUser = (updatedUser: Omit<User, 'id'>) => {
     if (selectedUser) {
-      store.updateUser(selectedUser.id, updatedUser);
+      updateUser(selectedUser.id, updatedUser);
     }
     setIsEditMemberOpen(false);
     setSelectedUser(null);
   };
   
   const handleAddUser = (newUser: Omit<User, 'id'>) => {
-    store.addUser(newUser);
+    addUser(newUser);
     setIsAddMemberOpen(false);
+  }
+  
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
   }
 
   return (

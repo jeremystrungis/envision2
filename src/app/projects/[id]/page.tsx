@@ -4,8 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { Project, Task, User, Assignment } from '@/lib/data';
-import { useStore, store } from '@/lib/store';
+import { Project, Task, User, Assignment } from '@/lib/firebase-types';
 import AppHeader from '@/components/app-header';
 import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
@@ -20,14 +19,20 @@ import EditTaskDialog from '@/components/projects/edit-task-dialog';
 import EditProjectDialog from '@/components/projects/edit-project-dialog';
 import AddTaskDialog from '@/components/projects/add-task-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-
+import { useAuth } from '@/hooks/use-auth';
+import { useProjects } from '@/hooks/use-projects';
+import { useTasks } from '@/hooks/use-tasks';
+import { useUsers } from '@/hooks/use-users';
 
 export default function ProjectDetailsPage() {
+  const { user, loading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const projectId = params.id as string;
 
-  const { projects, tasks: allTasks, users } = useStore();
+  const { projects, updateProject } = useProjects();
+  const { tasks: allTasks, addTask, updateTask, deleteTask } = useTasks(projectId);
+  const { users } = useUsers();
   
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
@@ -36,23 +41,22 @@ export default function ProjectDetailsPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const project = useMemo(() => projects.find(p => p.id === projectId), [projects, projectId]);
-  const tasks = useMemo(() => allTasks.filter(t => t.projectId === projectId), [allTasks, projectId]);
 
   const handleUpdateProject = (updatedProject: Omit<Project, 'id'>) => {
     if (project) {
-        store.updateProject(project.id, updatedProject);
+        updateProject(project.id, updatedProject);
     }
     setIsEditProjectOpen(false);
   };
 
   const handleAddTask = (newTask: Omit<Task, 'id' | 'projectId' | 'dependencies'>) => {
-    store.addTask({ ...newTask, projectId });
+    addTask(newTask);
     setIsAddTaskOpen(false);
   };
   
   const handleUpdateTask = (updatedTask: Omit<Task, 'id' | 'projectId' | 'dependencies'>) => {
     if(selectedTask) {
-        store.updateTask(selectedTask.id, updatedTask);
+        updateTask(selectedTask.id, updatedTask);
     }
     setIsEditTaskOpen(false);
     setSelectedTask(null);
@@ -70,10 +74,19 @@ export default function ProjectDetailsPage() {
 
   const confirmDeleteTask = () => {
     if (selectedTask) {
-      store.deleteTask(selectedTask.id);
+      deleteTask(selectedTask.id);
     }
     setIsDeleteAlertOpen(false);
     setSelectedTask(null);
+  }
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
   }
 
   if (!project) {
@@ -92,6 +105,11 @@ export default function ProjectDetailsPage() {
     if (!assignments) return [];
     const assigneeIds = assignments.map(a => a.assigneeId);
     return users.filter(u => assigneeIds.includes(u.id));
+  }
+  
+  const getTaskDate = (date: any) => {
+      if (!date) return new Date();
+      return date.toDate ? date.toDate() : new Date(date);
   }
 
   return (
@@ -150,7 +168,7 @@ export default function ProjectDetailsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tasks.map((task) => {
+                  {allTasks.map((task) => {
                     const assignees = getAssignees(task.assignments);
                     return (
                         <TableRow key={task.id}>
@@ -168,8 +186,8 @@ export default function ProjectDetailsPage() {
                                 ) : 'Unassigned'}
                             </TableCell>
                             <TableCell>{task.hours}h</TableCell>
-                            <TableCell>{format(task.startDate, 'MMM d, yyyy')}</TableCell>
-                            <TableCell>{format(task.endDate, 'MMM d, yyyy')}</TableCell>
+                            <TableCell>{format(getTaskDate(task.startDate), 'MMM d, yyyy')}</TableCell>
+                            <TableCell>{format(getTaskDate(task.endDate), 'MMM d, yyyy')}</TableCell>
                             <TableCell>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -213,6 +231,7 @@ export default function ProjectDetailsPage() {
         isOpen={isAddTaskOpen}
         onClose={() => setIsAddTaskOpen(false)}
         onAddTask={handleAddTask}
+        projectId={projectId}
       />
       {selectedTask && (
         <EditTaskDialog

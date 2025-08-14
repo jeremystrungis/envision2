@@ -29,11 +29,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Task } from '@/lib/data';
-import { useStore } from '@/lib/store';
+import { Task } from '@/lib/firebase-types';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Checkbox } from '../ui/checkbox';
 import { Slider } from '../ui/slider';
+import { useUsers } from '@/hooks/use-users';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
@@ -74,14 +74,14 @@ const weekDays = [
 ];
 
 export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: EditTaskDialogProps) {
-  const { users } = useStore();
+  const { users } = useUsers();
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       name: task.name,
       assignments: task.assignments,
-      startDate: task.startDate,
-      endDate: task.endDate,
+      startDate: task.startDate.toDate(),
+      endDate: task.endDate.toDate(),
       hours: task.hours,
     },
   });
@@ -133,8 +133,8 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
     form.reset({
         name: task.name,
         assignments: task.assignments,
-        startDate: new Date(task.startDate),
-        endDate: new Date(task.endDate),
+        startDate: task.startDate.toDate(),
+        endDate: task.endDate.toDate(),
         hours: task.hours,
     })
   }, [task, form, isOpen]);
@@ -265,7 +265,7 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
               name="hours"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Total Estimated Hours</FormLabel>
+                  <FormLabel>Estimated # of hours per person</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="8" {...field} />
                   </FormControl>

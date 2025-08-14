@@ -17,9 +17,10 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
-import { useStore, store } from '@/lib/store'
+import { useUsers } from '@/hooks/use-users'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { User } from 'lucide-react'
+import { useEffect } from 'react'
 
 const profileFormSchema = z.object({
   name: z
@@ -37,29 +38,34 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 
 export function ProfileForm() {
-  const { users } = useStore();
+  const { users, updateUser } = useUsers();
   const { toast } = useToast();
 
-  // For this prototype, we'll edit the first user in the list.
-  // In a real app, this would be the logged-in user.
   const currentUser = users[0];
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: currentUser?.name || '',
-      avatar: currentUser?.avatar || '',
+      name: '',
+      avatar: '',
     },
     mode: 'onChange',
   })
+  
+  useEffect(() => {
+      if (currentUser) {
+          form.reset({
+              name: currentUser.name,
+              avatar: currentUser.avatar,
+          });
+      }
+  }, [currentUser, form])
 
   function onSubmit(data: ProfileFormValues) {
     if (!currentUser) return;
     
-    // We only need name and avatar for the profile form.
-    // Preserve other user properties.
     const { team, capacity } = currentUser;
-    store.updateUser(currentUser.id, { ...data, team, capacity });
+    updateUser(currentUser.id, { ...data, team, capacity });
 
     toast({
       title: 'Profile updated',
@@ -73,7 +79,7 @@ export function ProfileForm() {
             <User className="h-4 w-4" />
             <AlertTitle>No User Profile Found</AlertTitle>
             <AlertDescription>
-                To manage profile settings, please first add a team member on the Teams page.
+                To manage profile settings, please first add a team member on the Teams page. The first member is considered "you".
             </AlertDescription>
         </Alert>
     )
@@ -108,7 +114,7 @@ export function ProfileForm() {
                 <Input placeholder="https://example.com/avatar.png" {...field} />
               </FormControl>
               <FormDescription>
-                Enter a URL for your profile picture.
+                Enter a URL for your profile picture. You can use a service like Pravatar.
               </FormDescription>
               <FormMessage />
             </FormItem>

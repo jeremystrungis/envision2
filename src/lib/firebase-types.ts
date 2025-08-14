@@ -1,5 +1,5 @@
 
-import { subDays, addDays, isWithinInterval, startOfWeek, endOfWeek, isSameDay } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 
 export interface User {
   id: string;
@@ -16,12 +16,12 @@ export interface Assignment {
 }
 
 export interface Task {
-  id:string;
+  id: string;
   name: string;
   projectId: string;
   assignments: Assignment[];
-  startDate: Date;
-  endDate: Date;
+  startDate: Timestamp;
+  endDate: Timestamp;
   dependencies: string[];
   hours: number;
 }
@@ -31,11 +31,3 @@ export interface Project {
   name: string;
   status: 'On Track' | 'At Risk' | 'Off Track';
 }
-
-export const users: User[] = [];
-
-export const projects: Project[] = [];
-
-const today = new Date();
-
-export const tasks: Task[] = [];

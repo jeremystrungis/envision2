@@ -29,14 +29,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Project, Task, Assignment } from '@/lib/data';
-import { useStore } from '@/lib/store';
+import { Project, Task, Assignment } from '@/lib/firebase-types';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Checkbox } from '../ui/checkbox';
 import React, { useCallback, useEffect } from 'react';
 import { Slider } from '../ui/slider';
+import { useUsers } from '@/hooks/use-users';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
@@ -55,7 +55,6 @@ const taskSchema = z.object({
   path: ["endDate"],
 }).refine(data => {
     const totalEffort = data.assignments.reduce((sum, a) => sum + a.effort, 0);
-    // Allow for small floating point inaccuracies
     return Math.abs(totalEffort - 100) < 0.01;
 }, {
     message: "Total effort must sum to 100%",
@@ -91,7 +90,7 @@ const weekDays = [
 ];
 
 export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddProjectDialogProps) {
-  const { users } = useStore();
+  const { users } = useUsers();
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
@@ -127,15 +126,13 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
         updatedAssignments[assignmentIndex].effort = newEffort;
 
         if (totalPreviousEffort > 0) {
-            // Distribute remaining effort proportionally
             otherAssignments.forEach((ass, i) => {
                 const originalProportion = ass.effort / totalPreviousEffort;
                 const otherIndex = assignments.findIndex(a => a.assigneeId === ass.assigneeId);
                 updatedAssignments[otherIndex].effort = remainingEffort * originalProportion;
             });
         } else {
-             // Distribute remaining effort equally
-            const evenSplit = remainingEffort / otherAssignments.length;
+             const evenSplit = remainingEffort / otherAssignments.length;
             otherAssignments.forEach((ass, i) => {
                 const otherIndex = assignments.findIndex(a => a.assigneeId === ass.assigneeId);
                 updatedAssignments[otherIndex].effort = evenSplit;
@@ -144,7 +141,6 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
         
         form.setValue(`tasks.${taskIndex}.assignments`, updatedAssignments, { shouldValidate: true });
     } else {
-        // Only one assignee, they get 100%
         const updatedAssignments = [...assignments];
         updatedAssignments[assignmentIndex].effort = 100;
         form.setValue(`tasks.${taskIndex}.assignments`, updatedAssignments, { shouldValidate: true });
@@ -241,7 +237,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                   name={`tasks.${index}.hours`}
                                   render={({ field }) => (
                                       <FormItem>
-                                      <FormLabel>Total Est. Hours</FormLabel>
+                                      <FormLabel>Estimated # of hours per person</FormLabel>
                                       <FormControl>
                                           <Input type="number" placeholder="Hours" {...field} />
                                       </FormControl>

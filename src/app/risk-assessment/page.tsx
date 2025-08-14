@@ -18,8 +18,12 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStore } from '@/lib/store';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { useProjects } from '@/hooks/use-projects';
+import { useTasks } from '@/hooks/use-tasks';
+import { useUsers } from '@/hooks/use-users';
 
 function ProjectPlanAnalyzer() {
   const [projectDescription, setProjectDescription] = useState('');
@@ -180,7 +184,9 @@ function ProjectPlanAnalyzer() {
 }
 
 function PortfolioHealthAnalyzer() {
-  const { projects, tasks, users } = useStore();
+  const { projects } = useProjects();
+  const { tasks } = useTasks();
+  const { users } = useUsers();
   const [isLoading, setIsLoading] = useState(true);
   const [result, setResult] = useState<PortfolioHealthOutput | null>(null);
   const { toast } = useToast();
@@ -193,8 +199,8 @@ function PortfolioHealthAnalyzer() {
             projects: projects.map(p => ({...p})),
             tasks: tasks.map(t => ({
                 ...t,
-                startDate: new Date(t.startDate).toISOString(), // Ensure dates are ISO strings
-                endDate: new Date(t.endDate).toISOString(),
+                startDate: t.startDate.toDate().toISOString(),
+                endDate: t.endDate.toDate().toISOString(),
             })),
             users: users.map(u => ({...u}))
         };
@@ -212,7 +218,11 @@ function PortfolioHealthAnalyzer() {
         setIsLoading(false);
       }
     };
-    analyze();
+    if(projects.length > 0 || tasks.length > 0 || users.length > 0) {
+        analyze();
+    } else {
+        setIsLoading(false);
+    }
   }, [projects, tasks, users, toast]);
 
   if (isLoading) {
@@ -233,10 +243,10 @@ function PortfolioHealthAnalyzer() {
 
   if (!result) {
     return (
-        <Alert variant="destructive">
+        <Alert variant="default">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Analysis Error</AlertTitle>
-            <AlertDescription>Could not load portfolio analysis. Please try refreshing the page.</AlertDescription>
+            <AlertTitle>No Data for Analysis</AlertTitle>
+            <AlertDescription>Add projects, tasks, and users to enable the portfolio health analysis.</AlertDescription>
         </Alert>
     )
   }
@@ -303,6 +313,18 @@ function PortfolioHealthAnalyzer() {
 
 
 export default function RiskAssessmentPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <AppSidebar />

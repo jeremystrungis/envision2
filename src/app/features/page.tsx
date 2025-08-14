@@ -12,6 +12,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Progress } from '@/components/ui/progress';
 import OnboardingAnimation from '@/components/onboarding-animation';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 const features = [
   {
@@ -148,6 +150,18 @@ const OnboardingGuide = () => {
 
 
 export default function FeaturesPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <AppSidebar />
