@@ -33,6 +33,7 @@ import { Task, Assignment, User } from '@/lib/firebase-types';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { useUsers } from '@/hooks/use-users';
 import { ScrollArea } from '../ui/scroll-area';
+import { Checkbox } from '../ui/checkbox';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
@@ -123,14 +124,15 @@ function AssigneePopover({ form }: { form: any }) {
                                         key={user.id}
                                         value={user.name}
                                         onSelect={() => handleUserSelect(user.id)}
+                                        className="flex items-center"
                                     >
-                                        <Check
-                                            className={cn(
-                                                "mr-2 h-4 w-4",
-                                                selectedUsers.includes(user.id) ? "opacity-100" : "opacity-0"
-                                            )}
+                                        <Checkbox
+                                            id={`user-edit-task-${user.id}`}
+                                            checked={selectedUsers.includes(user.id)}
+                                            onCheckedChange={() => handleUserSelect(user.id)}
+                                            className="mr-2"
                                         />
-                                        {user.name}
+                                        <label htmlFor={`user-edit-task-${user.id}`} className="flex-1 cursor-pointer">{user.name}</label>
                                     </CommandItem>
                                 ))}
                             </ScrollArea>
@@ -313,3 +315,5 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
     </Dialog>
   );
 }
+
+    

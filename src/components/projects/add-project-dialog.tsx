@@ -141,14 +141,15 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
                                         key={user.id}
                                         value={user.name}
                                         onSelect={() => handleUserSelect(user.id)}
+                                        className="flex items-center"
                                     >
-                                        <Check
-                                            className={cn(
-                                                "mr-2 h-4 w-4",
-                                                selectedUsers.includes(user.id) ? "opacity-100" : "opacity-0"
-                                            )}
+                                        <Checkbox
+                                            id={`user-${user.id}`}
+                                            checked={selectedUsers.includes(user.id)}
+                                            onCheckedChange={() => handleUserSelect(user.id)}
+                                            className="mr-2"
                                         />
-                                        {user.name}
+                                        <label htmlFor={`user-${user.id}`} className="flex-1 cursor-pointer">{user.name}</label>
                                     </CommandItem>
                                 ))}
                             </ScrollArea>
@@ -410,3 +411,5 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     </Dialog>
   );
 }
+
+    
