@@ -12,7 +12,7 @@ import { useUsers } from '@/hooks/use-users';
 import { useTeams } from '@/hooks/use-teams';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import EditMemberDialog from '@/components/teams/edit-member-dialog';
 import AddMemberDialog from '@/components/teams/add-member-dialog';
