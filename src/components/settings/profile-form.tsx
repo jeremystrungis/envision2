@@ -64,8 +64,8 @@ export function ProfileForm() {
   function onSubmit(data: ProfileFormValues) {
     if (!currentUser) return;
     
-    const { team, capacity } = currentUser;
-    updateUser(currentUser.id, { ...data, team, capacity });
+    const { teams, capacity } = currentUser;
+    updateUser(currentUser.id, { ...data, teams, capacity });
 
     toast({
       title: 'Profile updated',

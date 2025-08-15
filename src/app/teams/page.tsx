@@ -7,16 +7,93 @@ import AppSidebar from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { User } from '@/lib/firebase-types';
+import { User, Team } from '@/lib/firebase-types';
 import { useUsers } from '@/hooks/use-users';
+import { useTeams } from '@/hooks/use-teams';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import EditMemberDialog from '@/components/teams/edit-member-dialog';
 import AddMemberDialog from '@/components/teams/add-member-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
+import AddTeamDialog from '@/components/teams/add-team-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
+function ManageTeamsCard() {
+  const { teams, addTeam, deleteTeam } = useTeams();
+  const [isAddTeamOpen, setIsAddTeamOpen] = useState(false);
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Manage Teams</CardTitle>
+              <CardDescription>Add, or remove team names available for assignment.</CardDescription>
+            </div>
+            <Button onClick={() => setIsAddTeamOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add New Team
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {teams.length > 0 ? (
+              teams.map((team) => (
+                <AlertDialog key={team.id}>
+                   <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Badge variant="outline" className="text-lg py-1 px-4 cursor-pointer hover:bg-muted">
+                            {team.name}
+                        </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuLabel>{team.name}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Team
+                            </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the "{team.name}" team. This action cannot be undone and may affect existing team member assignments.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteTeam(team.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+               </AlertDialog>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No teams created yet. Add a new team to get started.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      <AddTeamDialog
+        isOpen={isAddTeamOpen}
+        onClose={() => setIsAddTeamOpen(false)}
+        onAddTeam={(name) => {
+          addTeam({ name });
+          setIsAddTeamOpen(false);
+        }}
+      />
+    </>
+  );
+}
+
 
 export default function TeamsPage() {
   const { user, loading } = useAuth();
@@ -58,13 +135,14 @@ export default function TeamsPage() {
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 space-y-6">
+          <ManageTeamsCard />
           <Card>
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle>Team Members</CardTitle>
-                        <CardDescription>Manage your team members.</CardDescription>
+                        <CardDescription>Manage your team members and their assigned teams.</CardDescription>
                     </div>
                     <Button onClick={() => setIsAddMemberOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
@@ -77,7 +155,7 @@ export default function TeamsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Member</TableHead>
-                    <TableHead>Team</TableHead>
+                    <TableHead>Team(s)</TableHead>
                     <TableHead>Daily Capacity</TableHead>
                     <TableHead>
                       <span className="sr-only">Actions</span>
@@ -102,7 +180,15 @@ export default function TeamsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{user.team}</Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {user.teams && user.teams.length > 0 ? (
+                            user.teams.map(teamName => (
+                                <Badge key={teamName} variant="outline">{teamName}</Badge>
+                            ))
+                          ) : (
+                            <Badge variant="secondary">Unassigned</Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>{user.capacity}h</TableCell>
                       <TableCell>

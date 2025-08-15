@@ -33,6 +33,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useUsers } from '@/hooks/use-users';
 import { useTasks } from '@/hooks/use-tasks';
+import { useTeams } from '@/hooks/use-teams';
 
 const workloadLevels = [
     { level: 'Light', color: 'bg-sky-500/20 border-sky-500/30', description: '< 50%' },
@@ -47,6 +48,7 @@ type ViewMode = 'week' | 'month' | '3-month' | '12-month';
 export default function WorkloadHeatmap() {
   const { users } = useUsers();
   const { tasks } = useTasks();
+  const { teams } = useTeams();
   const [selectedTeam, setSelectedTeam] = useState('All');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -80,14 +82,11 @@ export default function WorkloadHeatmap() {
     }
   }, [currentDate, viewMode]);
 
-  const teams = useMemo(() => {
-    const allTeams = new Set(users.map(user => user.team));
-    return ['All', ...Array.from(allTeams)];
-  }, [users]);
+  const teamNames = useMemo(() => ['All', ...teams.map(t => t.name)], [teams]);
 
   const filteredUsers = useMemo(() => {
     if (selectedTeam === 'All') return users;
-    return users.filter((user) => user.team === selectedTeam);
+    return users.filter((user) => user.teams?.includes(selectedTeam));
   }, [selectedTeam, users]);
 
   const getWorkloadForDate = (user: User, date: Date): number => {
@@ -183,7 +182,7 @@ export default function WorkloadHeatmap() {
                 <SelectValue placeholder="Select Team" />
               </SelectTrigger>
               <SelectContent>
-                {teams.map(team => (
+                {teamNames.map(team => (
                   <SelectItem key={team} value={team}>
                     {team === 'All' ? 'All Teams' : team}
                   </SelectItem>

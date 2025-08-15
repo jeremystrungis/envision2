@@ -1,10 +1,15 @@
 
 import { Timestamp } from "firebase/firestore";
 
+export interface Team {
+  id: string;
+  name: string;
+}
+
 export interface User {
   id: string;
   name: string;
-  team: 'System Planning' | 'Protection & Control' | 'Substation Engineering' | 'Transmission Line Design';
+  teams: string[];
   avatar: string;
   capacity: number; // hours per day
 }

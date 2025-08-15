@@ -23,17 +23,20 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User } from '@/lib/firebase-types';
-import { useEffect, useState, useMemo } from 'react';
-import { useUsers } from '@/hooks/use-users';
+import { useEffect } from 'react';
+import { useTeams } from '@/hooks/use-teams';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
+
 
 const memberSchema = z.object({
   name: z.string().min(1, 'Member name is required'),
-  team: z.string().min(1, 'Team name cannot be empty'),
+  teams: z.array(z.string()).optional(),
   capacity: z.coerce.number().min(1, 'Capacity must be at least 1 hour').max(12, 'Capacity cannot exceed 12 hours'),
   avatar: z.string().url('Please enter a valid URL for the avatar.'),
-  newTeamName: z.string().optional(),
 });
 
 type MemberFormValues = z.infer<typeof memberSchema>;
@@ -46,52 +49,31 @@ interface EditMemberDialogProps {
 }
 
 export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }: EditMemberDialogProps) {
-  const { users } = useUsers();
-  const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
-
-  const existingTeams = useMemo(() => {
-    const teams = new Set(users.map(u => u.team));
-    return Array.from(teams);
-  }, [users]);
+  const { teams: availableTeams } = useTeams();
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
     defaultValues: {
       name: user.name,
-      team: user.team,
+      teams: user.teams || [],
       capacity: user.capacity,
       avatar: user.avatar,
-      newTeamName: '',
     },
   });
 
   useEffect(() => {
     form.reset({
         name: user.name,
-        team: user.team,
+        teams: user.teams || [],
         capacity: user.capacity,
         avatar: user.avatar,
-        newTeamName: '',
     });
-    setIsAddingNewTeam(false);
   }, [user, form, isOpen]);
 
   const onSubmit = (data: MemberFormValues) => {
-    const finalTeam = isAddingNewTeam ? data.newTeamName : data.team;
-    const { newTeamName, ...userData } = data;
-    onUpdateUser({ ...userData, team: finalTeam as any });
+    onUpdateUser({ ...data, teams: data.teams || [] });
   };
   
-  const handleTeamChange = (value: string) => {
-    if (value === 'add_new_team') {
-        setIsAddingNewTeam(true);
-        form.setValue('team', 'add_new_team');
-    } else {
-        setIsAddingNewTeam(false);
-        form.setValue('team', value);
-    }
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -129,38 +111,64 @@ export default function EditMemberDialog({ isOpen, onClose, onUpdateUser, user }
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
-              name="team"
+              name="teams"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Team</FormLabel>
-                    {!isAddingNewTeam ? (
-                        <Select onValueChange={handleTeamChange} defaultValue={field.value}>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Team(s)</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
                             <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a team" />
-                            </SelectTrigger>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                        "w-full justify-between",
+                                        !field.value?.length && "text-muted-foreground"
+                                    )}
+                                >
+                                    {field.value && field.value.length > 0
+                                        ? `${field.value.length} team(s) selected`
+                                        : "Select teams"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
                             </FormControl>
-                            <SelectContent>
-                                {existingTeams.map(teamName => (
-                                    <SelectItem key={teamName} value={teamName}>{teamName}</SelectItem>
-                                ))}
-                                <SelectItem value="add_new_team">Add New Team...</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    ) : (
-                        <FormField
-                            control={form.control}
-                            name="newTeamName"
-                            render={({ field: newTeamField }) => (
-                                <div className="flex items-center gap-2">
-                                    <Input placeholder="Enter new team name" {...newTeamField} />
-                                    <Button type="button" variant="ghost" onClick={() => setIsAddingNewTeam(false)}>Cancel</Button>
-                                </div>
-                            )}
-                        />
-                    )}
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search teams..." />
+                                <CommandList>
+                                <CommandEmpty>No teams found.</CommandEmpty>
+                                <CommandGroup>
+                                    {availableTeams.map((team) => (
+                                        <CommandItem
+                                            value={team.name}
+                                            key={team.id}
+                                            onSelect={() => {
+                                                const currentTeams = field.value || [];
+                                                const newTeams = currentTeams.includes(team.name)
+                                                    ? currentTeams.filter(t => t !== team.name)
+                                                    : [...currentTeams, team.name];
+                                                form.setValue("teams", newTeams);
+                                            }}
+                                        >
+                                            <Check
+                                                className={cn(
+                                                "mr-2 h-4 w-4",
+                                                field.value?.includes(team.name)
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                                )}
+                                            />
+                                            {team.name}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                   <FormMessage />
                 </FormItem>
               )}
