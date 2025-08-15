@@ -94,14 +94,14 @@ const weekDays = [
 function AssigneeSelection({ taskIndex, form, users }: { taskIndex: number, form: any, users: any[] }) {
     const [isOpen, setIsOpen] = useState(false);
     
-    const redistributeEffort = useCallback((taskIndex: number) => {
+    const redistributeEffort = useCallback(() => {
         const assignments = form.getValues(`tasks.${taskIndex}.assignments`);
         if (assignments.length > 0) {
-        const evenSplit = 100 / assignments.length;
-        const updatedAssignments = assignments.map((a:any) => ({...a, effort: evenSplit}));
-        form.setValue(`tasks.${taskIndex}.assignments`, updatedAssignments, { shouldValidate: true });
+            const evenSplit = 100 / assignments.length;
+            const updatedAssignments = assignments.map((a:any) => ({...a, effort: evenSplit}));
+            form.setValue(`tasks.${taskIndex}.assignments`, updatedAssignments, { shouldValidate: true });
         }
-    }, [form]);
+    }, [form, taskIndex]);
 
     const handleSliderChange = (taskIndex: number, assignmentIndex: number, newEffort: number) => {
         const assignments = form.getValues(`tasks.${taskIndex}.assignments`);
@@ -139,7 +139,7 @@ function AssigneeSelection({ taskIndex, form, users }: { taskIndex: number, form
     const assignmentsField = form.watch(`tasks.${taskIndex}.assignments`);
 
     const handleCheckedChange = (checked: boolean, userId: string) => {
-        const currentAssignments = assignmentsField || [];
+        const currentAssignments = form.getValues(`tasks.${taskIndex}.assignments`) || [];
         const isCurrentlySelected = currentAssignments.some((a: any) => a.assigneeId === userId);
 
         let newAssignments;
@@ -151,15 +151,14 @@ function AssigneeSelection({ taskIndex, form, users }: { taskIndex: number, form
             return; 
         }
         
-        form.setValue(`tasks.${taskIndex}.assignments`, newAssignments);
-        redistributeEffort(taskIndex);
+        form.setValue(`tasks.${taskIndex}.assignments`, newAssignments, { shouldValidate: false });
     };
 
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
-                    <span>{assignmentsField.length > 0 ? `${assignmentsField.length} selected` : 'Assign Members'}</span>
+                    <span>{assignmentsField?.length > 0 ? `${assignmentsField.length} selected` : 'Assign Members'}</span>
                     <ChevronDown className="h-4 w-4" />
                 </Button>
             </CollapsibleTrigger>
@@ -171,22 +170,27 @@ function AssigneeSelection({ taskIndex, form, users }: { taskIndex: number, form
                             <CommandEmpty>No members found.</CommandEmpty>
                             <CommandGroup>
                                 {users.map(user => {
-                                    const assignmentIndex = assignmentsField.findIndex((a: any) => a.assigneeId === user.id);
+                                    const assignmentIndex = assignmentsField?.findIndex((a: any) => a.assigneeId === user.id) ?? -1;
                                     const isSelected = assignmentIndex > -1;
                                     
                                     return (
                                         <React.Fragment key={user.id}>
                                             <CommandItem
-                                                onSelect={() => handleCheckedChange(!isSelected, user.id)}
+                                                onSelect={(currentValue) => {
+                                                    handleCheckedChange(!isSelected, user.id);
+                                                    const currentTarget = document.querySelector(`[value="${currentValue}"]`);
+                                                    currentTarget?.blur();
+                                                }}
                                                 className="flex items-center gap-2 cursor-pointer"
                                             >
                                                 <Checkbox 
                                                     checked={isSelected}
                                                     onCheckedChange={(checked) => handleCheckedChange(!!checked, user.id)}
+                                                    className="mr-2"
                                                 />
                                                 {user.name}
                                             </CommandItem>
-                                            {isSelected && (
+                                            {isSelected && assignmentsField?.[assignmentIndex] && (
                                                 <div className="pl-8 pr-2 pb-2 space-y-2">
                                                     <div className="flex items-center gap-1.5">
                                                         {weekDays.map(day => (
@@ -233,8 +237,9 @@ function AssigneeSelection({ taskIndex, form, users }: { taskIndex: number, form
                             </CommandGroup>
                         </ScrollArea>
                     </CommandList>
-                     <div className="p-2 border-t">
-                        <Button onClick={() => setIsOpen(false)} className="w-full">Done</Button>
+                    <div className="p-2 border-t flex justify-between items-center">
+                        <Button variant="ghost" type="button" onClick={redistributeEffort}>Evenly Distribute Effort</Button>
+                        <Button onClick={() => setIsOpen(false)} type="button">Done</Button>
                     </div>
                 </Command>
             </CollapsibleContent>
@@ -366,7 +371,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                     <FormItem>
                                         <FormLabel>Assignees, Work Days & Effort</FormLabel>
                                         <AssigneeSelection taskIndex={index} form={form} users={users} />
-                                        <FormMessage>{form.formState.errors.tasks?.[index]?.assignments?.message}</FormMessage>
+                                        <FormMessage>{form.formState.errors.tasks?.[index]?.assignments?.message || form.formState.errors.tasks?.[index]?.assignments?.root?.message}</FormMessage>
                                     </FormItem>
                                 )}
                             />
@@ -489,3 +494,5 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     </Dialog>
   );
 }
+
+    

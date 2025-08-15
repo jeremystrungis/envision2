@@ -124,7 +124,7 @@ function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
     const assignmentsField = form.watch('assignments');
 
     const handleCheckedChange = (checked: boolean, userId: string) => {
-        const currentAssignments = assignmentsField || [];
+        const currentAssignments = form.getValues('assignments') || [];
         const isCurrentlySelected = currentAssignments.some((a: any) => a.assigneeId === userId);
 
         let newAssignments;
@@ -136,15 +136,14 @@ function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
             return; 
         }
         
-        form.setValue('assignments', newAssignments);
-        redistributeEffort();
+        form.setValue('assignments', newAssignments, { shouldValidate: false });
     };
 
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                    <span>{assignmentsField.length > 0 ? `${assignmentsField.length} selected` : 'Assign Members'}</span>
+                <Button variant="outline" className="w-full justify-between" type="button">
+                    <span>{assignmentsField?.length > 0 ? `${assignmentsField.length} selected` : 'Assign Members'}</span>
                     <ChevronDown className="h-4 w-4" />
                 </Button>
             </CollapsibleTrigger>
@@ -156,22 +155,27 @@ function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
                             <CommandEmpty>No members found.</CommandEmpty>
                             <CommandGroup>
                                 {users.map(user => {
-                                    const assignmentIndex = assignmentsField.findIndex((a: any) => a.assigneeId === user.id);
+                                    const assignmentIndex = assignmentsField?.findIndex((a: any) => a.assigneeId === user.id) ?? -1;
                                     const isSelected = assignmentIndex > -1;
                                     
                                     return (
                                         <React.Fragment key={user.id}>
                                             <CommandItem
-                                                onSelect={() => handleCheckedChange(!isSelected, user.id)}
+                                                onSelect={(currentValue) => {
+                                                    handleCheckedChange(!isSelected, user.id);
+                                                    const currentTarget = document.querySelector(`[value="${currentValue}"]`);
+                                                    currentTarget?.blur();
+                                                }}
                                                 className="flex items-center gap-2 cursor-pointer"
                                             >
                                                 <Checkbox 
                                                     checked={isSelected}
                                                     onCheckedChange={(checked) => handleCheckedChange(!!checked, user.id)}
+                                                    className="mr-2"
                                                 />
                                                 {user.name}
                                             </CommandItem>
-                                            {isSelected && (
+                                            {isSelected && assignmentsField?.[assignmentIndex] && (
                                                 <div className="pl-8 pr-2 pb-2 space-y-2">
                                                     <div className="flex items-center gap-1.5">
                                                         {weekDays.map(day => (
@@ -218,8 +222,9 @@ function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
                             </CommandGroup>
                         </ScrollArea>
                     </CommandList>
-                     <div className="p-2 border-t">
-                        <Button onClick={() => setIsOpen(false)} className="w-full">Done</Button>
+                     <div className="p-2 border-t flex justify-between items-center">
+                        <Button variant="ghost" type="button" onClick={redistributeEffort}>Evenly Distribute Effort</Button>
+                        <Button onClick={() => setIsOpen(false)} type="button">Done</Button>
                     </div>
                 </Command>
             </CollapsibleContent>
@@ -286,7 +291,7 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
                     <FormItem>
                         <FormLabel>Assignees, Work Days & Effort</FormLabel>
                         <AssigneeSelection form={form} users={users} />
-                        <FormMessage />
+                        <FormMessage>{form.formState.errors.assignments?.message || form.formState.errors.assignments?.root?.message}</FormMessage>
                     </FormItem>
                 )}
             />
@@ -396,3 +401,5 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
     </Dialog>
   );
 }
+
+    
