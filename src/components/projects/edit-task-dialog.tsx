@@ -77,6 +77,7 @@ const weekDays = [
 ];
 
 function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
+    const [isOpen, setIsOpen] = useState(false);
 
     const redistributeEffort = useCallback(() => {
         const assignments = form.getValues('assignments');
@@ -124,16 +125,23 @@ function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
 
     const handleCheckedChange = (checked: boolean, userId: string) => {
         const currentAssignments = assignmentsField || [];
-        if (!checked) {
-            form.setValue('assignments', currentAssignments.filter((a: any) => a.assigneeId !== userId));
+        const isCurrentlySelected = currentAssignments.some((a: any) => a.assigneeId === userId);
+
+        let newAssignments;
+        if (checked && !isCurrentlySelected) {
+            newAssignments = [...currentAssignments, { assigneeId: userId, workingDays: [1, 2, 3, 4, 5], effort: 0 }];
+        } else if (!checked && isCurrentlySelected) {
+            newAssignments = currentAssignments.filter((a: any) => a.assigneeId !== userId);
         } else {
-            form.setValue('assignments', [...currentAssignments, { assigneeId: userId, workingDays: [1, 2, 3, 4, 5], effort: 0 }]);
+            return; 
         }
+        
+        form.setValue('assignments', newAssignments);
         redistributeEffort();
     };
 
     return (
-        <Collapsible>
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
                     <span>{assignmentsField.length > 0 ? `${assignmentsField.length} selected` : 'Assign Members'}</span>
@@ -154,17 +162,12 @@ function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
                                     return (
                                         <React.Fragment key={user.id}>
                                             <CommandItem
-                                                onSelect={() => {
-                                                    handleCheckedChange(!isSelected, user.id);
-                                                }}
+                                                onSelect={() => handleCheckedChange(!isSelected, user.id)}
                                                 className="flex items-center gap-2 cursor-pointer"
                                             >
                                                 <Checkbox 
                                                     checked={isSelected}
-                                                    onCheckedChange={(checked) => {
-                                                        handleCheckedChange(!!checked, user.id);
-                                                    }}
-                                                    onClick={(e) => e.stopPropagation()} // prevent double-triggering
+                                                    onCheckedChange={(checked) => handleCheckedChange(!!checked, user.id)}
                                                 />
                                                 {user.name}
                                             </CommandItem>
@@ -215,6 +218,9 @@ function AssigneeSelection({ form, users }: { form: any, users: any[] }) {
                             </CommandGroup>
                         </ScrollArea>
                     </CommandList>
+                     <div className="p-2 border-t">
+                        <Button onClick={() => setIsOpen(false)} className="w-full">Done</Button>
+                    </div>
                 </Command>
             </CollapsibleContent>
         </Collapsible>
