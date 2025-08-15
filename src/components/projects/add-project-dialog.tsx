@@ -34,7 +34,7 @@ import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Checkbox } from '../ui/checkbox';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Slider } from '../ui/slider';
 import { useUsers } from '@/hooks/use-users';
 import { Check } from 'lucide-react';
@@ -94,12 +94,15 @@ const weekDays = [
 function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) {
     const { users } = useUsers();
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedUsers, setSelectedUsers] = useState<string[]>(() => {
-        const existingAssignees = form.getValues(`tasks.${taskIndex}.assignments`) || [];
-        return existingAssignees.map((a: Assignment) => a.assigneeId);
-    });
+    
+    const currentAssignments = form.watch(`tasks.${taskIndex}.assignments`) || [];
+    const [selectedUsers, setSelectedUsers] = useState<string[]>(currentAssignments.map((a: Assignment) => a.assigneeId));
 
-    const assignmentsField = form.watch(`tasks.${taskIndex}.assignments`);
+    useEffect(() => {
+        const assignments = form.getValues(`tasks.${taskIndex}.assignments`) || [];
+        setSelectedUsers(assignments.map((a: Assignment) => a.assigneeId));
+    }, [currentAssignments, form, taskIndex]);
+
 
     const handleDone = () => {
         const currentAssignments = form.getValues(`tasks.${taskIndex}.assignments`) || [];
@@ -108,8 +111,11 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
             return existing || { assigneeId: userId, workingDays: [1, 2, 3, 4, 5], effort: 0 };
         });
 
-        const evenSplit = newAssignments.length > 0 ? 100 / newAssignments.length : 0;
-        const finalAssignments = newAssignments.map(a => ({...a, effort: evenSplit }));
+        // Filter out assignments for users that are no longer selected
+        const finalAssignmentsPre = newAssignments.filter(a => selectedUsers.includes(a.assigneeId));
+
+        const evenSplit = finalAssignmentsPre.length > 0 ? 100 / finalAssignmentsPre.length : 0;
+        const finalAssignments = finalAssignmentsPre.map(a => ({...a, effort: evenSplit }));
 
         form.setValue(`tasks.${taskIndex}.assignments`, finalAssignments, { shouldValidate: true });
         setIsOpen(false);
@@ -125,7 +131,7 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
                  <Button variant="outline" role="combobox" aria-expanded={isOpen} className="w-full justify-between">
-                    {assignmentsField?.length > 0 ? `${assignmentsField.length} selected` : "Assign Members"}
+                    {currentAssignments?.length > 0 ? `${currentAssignments.length} selected` : "Assign Members"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -411,5 +417,3 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     </Dialog>
   );
 }
-
-    

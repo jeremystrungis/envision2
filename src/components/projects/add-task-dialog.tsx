@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -72,12 +72,15 @@ interface AddTaskDialogProps {
 function AssigneePopover({ form }: { form: any }) {
     const { users } = useUsers();
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedUsers, setSelectedUsers] = useState<string[]>(() => {
-        const existingAssignees = form.getValues('assignments') || [];
-        return existingAssignees.map((a: Assignment) => a.assigneeId);
-    });
 
-    const assignmentsField = form.watch('assignments');
+    const currentAssignments = form.watch('assignments') || [];
+    const [selectedUsers, setSelectedUsers] = useState<string[]>(currentAssignments.map((a: Assignment) => a.assigneeId));
+    
+    useEffect(() => {
+        const assignments = form.getValues('assignments') || [];
+        setSelectedUsers(assignments.map((a: Assignment) => a.assigneeId));
+    }, [currentAssignments, form]);
+
 
     const handleDone = () => {
         const currentAssignments = form.getValues('assignments') || [];
@@ -86,8 +89,11 @@ function AssigneePopover({ form }: { form: any }) {
             return existing || { assigneeId: userId, workingDays: [1, 2, 3, 4, 5], effort: 0 };
         });
 
-        const evenSplit = newAssignments.length > 0 ? 100 / newAssignments.length : 0;
-        const finalAssignments = newAssignments.map(a => ({...a, effort: evenSplit }));
+        // Filter out assignments for users that are no longer selected
+        const finalAssignmentsPre = newAssignments.filter(a => selectedUsers.includes(a.assigneeId));
+
+        const evenSplit = finalAssignmentsPre.length > 0 ? 100 / finalAssignmentsPre.length : 0;
+        const finalAssignments = finalAssignmentsPre.map(a => ({...a, effort: evenSplit }));
 
         form.setValue('assignments', finalAssignments, { shouldValidate: true });
         setIsOpen(false);
@@ -103,7 +109,7 @@ function AssigneePopover({ form }: { form: any }) {
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
                  <Button variant="outline" role="combobox" aria-expanded={isOpen} className="w-full justify-between">
-                    {assignmentsField?.length > 0 ? `${assignmentsField.length} selected` : "Assign Members"}
+                    {currentAssignments?.length > 0 ? `${currentAssignments.length} selected` : "Assign Members"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -310,5 +316,3 @@ export default function AddTaskDialog({ isOpen, onClose, onAddTask }: AddTaskDia
     </Dialog>
   );
 }
-
-    
