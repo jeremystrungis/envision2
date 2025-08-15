@@ -15,6 +15,7 @@ import {
   eachWeekOfInterval,
   isSameDay,
   isSameMonth,
+  startOfDay,
 } from 'date-fns';
 import { User, Task } from '@/lib/firebase-types';
 import {
@@ -90,11 +91,20 @@ export default function WorkloadHeatmap() {
   }, [selectedTeam, users]);
 
   const getWorkloadForDate = (user: User, date: Date): number => {
-      const dayOfWeek = getDay(date);
-      const tasksOnDay = tasks.filter(task =>
-          task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek)) &&
-          date >= task.startDate.toDate() && date <= task.endDate.toDate()
-      );
+      if(!user || !date) return 0;
+      const dayOfWeek = getDay(date); // Sunday is 0, Monday is 1...
+      
+      const startOfDayDate = startOfDay(date);
+      
+      const tasksOnDay = tasks.filter(task => {
+        if (!task.startDate?.toDate || !task.endDate?.toDate) return false;
+        
+        const taskStart = startOfDay(task.startDate.toDate());
+        const taskEnd = startOfDay(task.endDate.toDate());
+
+        return date >= taskStart && date <= taskEnd &&
+               task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek));
+      });
 
       return tasksOnDay.reduce((acc, task) => {
           const assignment = task.assignments.find(a => a.assigneeId === user.id)!;
@@ -124,7 +134,8 @@ export default function WorkloadHeatmap() {
   }, [filteredUsers, dateInterval, columns, tasks, viewMode]);
 
   const getWorkloadColor = (workload: number, capacity: number) => {
-    if (workload === 0) return 'bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30';
+    if (capacity === 0 && workload > 0) return 'bg-red-500/20 hover:bg-red-500/30 border border-red-500/30';
+    if (workload === 0) return 'bg-muted/50';
     const ratio = capacity > 0 ? workload / capacity : 0;
     if (ratio < 0.5) return 'bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30';
     if (ratio < 0.9) return 'bg-green-500/20 hover:bg-green-500/30 border border-green-500/30';
@@ -202,17 +213,30 @@ export default function WorkloadHeatmap() {
                 <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
                 
                 {(viewMode === 'week' || viewMode === 'month') ? (
-                    dateInterval.map((day) => (
-                      <div key={day.toISOString()} className="p-2 text-center text-sm font-semibold bg-muted/50">
+                  <>
+                    {viewMode === 'month' &&
+                      Array.from({ length: 7 }).map((_, i) => {
+                        const day = dateInterval[i] ?? new Date(2000,0,i+1); // Handle cases with fewer than 7 days
+                        return (
+                           <div key={`month-header-${i}`} className="p-2 text-center text-sm font-semibold bg-muted/50">
+                              <div className="text-xs text-muted-foreground">{format(day, 'E')}</div>
+                           </div>
+                        )
+                      }).slice(0, dateInterval.length) // Ensure we don't have more headers than days
+                    }
+
+                    {dateInterval.map((day) => (
+                      <div key={day.toISOString()} className={cn("p-2 text-center text-sm font-semibold bg-muted/50", viewMode === 'month' && 'border-t')}>
                         {viewMode === 'week' ? <div>{format(day, 'E')}</div> : null}
                         <div className={cn("text-xs", viewMode === 'week' ? "text-muted-foreground" : "font-medium")}>
-                            {viewMode === 'month' && isSameDay(day, new Date()) ? 
+                            {isSameDay(day, new Date()) ? 
                                 <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center mx-auto">{format(day, 'd')}</span> :
                                 format(day, 'd')
                             }
                         </div>
                       </div>
-                    ))
+                    ))}
+                   </>
                 ) : (
                     columns.map((week, index) => (
                       <div key={index} className="p-2 text-center text-sm font-semibold bg-muted/50">

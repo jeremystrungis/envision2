@@ -22,6 +22,7 @@ export default function ResourceAllocationChart() {
     return users.map((user) => {
       // Find all tasks assigned to this user that are active today.
       const tasksToday = tasks.filter(task => {
+          if (!task.startDate || !task.endDate) return false;
           const startDate = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
           const endDate = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
           const isTaskActive = isWithinInterval(today, { start: startDate, end: endDate });
@@ -58,13 +59,13 @@ export default function ResourceAllocationChart() {
     },
     capacity: {
       label: 'Daily Capacity',
-      color: 'hsl(var(--muted))',
+      color: 'hsl(var(--chart-2))',
     },
   };
 
   return (
     <ChartContainer config={chartConfig} className="h-[250px] w-full">
-      <BarChart data={allocationData} accessibilityLayer>
+      <BarChart data={allocationData} accessibilityLayer barGap={4}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="name"
