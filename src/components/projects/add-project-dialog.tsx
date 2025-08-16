@@ -38,6 +38,7 @@ import React, { useState, useEffect } from 'react';
 import { Slider } from '../ui/slider';
 import { useUsers } from '@/hooks/use-users';
 import { Check } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
@@ -55,7 +56,7 @@ const taskSchema = z.object({
   message: "End date must be after start date",
   path: ["endDate"],
 }).refine(data => {
-    if (data.assignments.length === 0) return true;
+    if (!data.name || data.assignments.length === 0) return true;
     const totalEffort = data.assignments.reduce((sum, a) => sum + a.effort, 0);
     return Math.abs(totalEffort - 100) < 0.01;
 }, {
@@ -111,7 +112,6 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
             return existing || { assigneeId: userId, workingDays: [1, 2, 3, 4, 5], effort: 0 };
         });
 
-        // Filter out assignments for users that are no longer selected
         const finalAssignmentsPre = newAssignments.filter(a => selectedUsers.includes(a.assigneeId));
 
         const evenSplit = finalAssignmentsPre.length > 0 ? 100 / finalAssignmentsPre.length : 0;
@@ -172,6 +172,7 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
 
 
 export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddProjectDialogProps) {
+  const { users } = useUsers();
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
@@ -185,6 +186,8 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     control: form.control,
     name: 'tasks',
   });
+  
+  const watchTasks = form.watch('tasks');
 
   const onSubmit = (data: ProjectFormValues) => {
     const { tasks, ...projectData } = data;
@@ -192,6 +195,9 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     form.reset();
     onClose();
   };
+  
+  const getUserById = (id: string) => users.find(u => u.id === id);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -249,31 +255,37 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                 <div>
                   <h3 className="text-lg font-medium mb-2">Tasks</h3>
                   <div className="space-y-4">
-                      {fields.map((field, index) => (
-                      <div key={field.id} className="grid grid-cols-12 gap-x-4 gap-y-2 p-4 border rounded-lg relative">
-                          <div className="col-span-12">
-                              <FormLabel>Task #{index + 1}</FormLabel>
-                          </div>
+                      {fields.map((field, taskIndex) => (
+                      <div key={field.id} className="p-4 border rounded-lg relative space-y-4">
+                        <div className="flex justify-between items-start">
+                           <h4 className="font-semibold text-base pt-2">Task #{taskIndex + 1}</h4>
+                           <Button type="button" variant="ghost" size="icon" onClick={() => remove(taskIndex)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="sr-only">Remove Task</span>
+                           </Button>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-x-4 gap-y-4">
                           <div className="col-span-12 sm:col-span-6 md:col-span-8">
                               <FormField
-                              control={form.control}
-                              name={`tasks.${index}.name`}
-                              render={({ field }) => (
-                                  <FormItem>
-                                  <FormLabel>Task Name</FormLabel>
-                                  <FormControl>
-                                      <Input placeholder="Task name" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                  </FormItem>
-                              )}
+                                control={form.control}
+                                name={`tasks.${taskIndex}.name`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Task Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Task name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
                               />
                           </div>
                           
                            <div className="col-span-12 sm:col-span-6 md:col-span-4">
                               <FormField
                                   control={form.control}
-                                  name={`tasks.${index}.hours`}
+                                  name={`tasks.${taskIndex}.hours`}
                                   render={({ field }) => (
                                       <FormItem>
                                       <FormLabel>Estimated Hours</FormLabel>
@@ -287,23 +299,105 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                           </div>
 
                            <div className="col-span-12">
-                            <FormField
-                                control={form.control}
-                                name={`tasks.${index}.assignments`}
-                                render={() => (
-                                    <FormItem>
-                                        <FormLabel>Assignees</FormLabel>
-                                        <AssigneePopover taskIndex={index} form={form} />
-                                        <FormMessage>{form.formState.errors.tasks?.[index]?.assignments?.message || form.formState.errors.tasks?.[index]?.assignments?.root?.message}</FormMessage>
-                                    </FormItem>
-                                )}
-                            />
+                                <FormField
+                                    control={form.control}
+                                    name={`tasks.${taskIndex}.assignments`}
+                                    render={() => (
+                                        <FormItem>
+                                            <FormLabel>Assignees</FormLabel>
+                                            <AssigneePopover taskIndex={taskIndex} form={form} />
+                                            <FormMessage>{form.formState.errors.tasks?.[taskIndex]?.assignments?.message || form.formState.errors.tasks?.[taskIndex]?.assignments?.root?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
                            </div>
+
+                            {watchTasks[taskIndex]?.assignments?.map((assignment, assignmentIndex) => {
+                                const user = getUserById(assignment.assigneeId);
+                                const totalEffort = watchTasks[taskIndex].assignments.reduce((sum, a) => sum + a.effort, 0);
+
+                                return (
+                                    <div key={assignment.assigneeId} className="col-span-12 p-3 border rounded-md bg-muted/30">
+                                       <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-6 w-6">
+                                                    <AvatarImage src={user?.avatar} />
+                                                    <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="font-medium text-sm">{user?.name}</span>
+                                            </div>
+                                            <div className="text-sm font-semibold">{assignment.effort.toFixed(0)}%</div>
+                                        </div>
+
+                                        <FormField
+                                            control={form.control}
+                                            name={`tasks.${taskIndex}.assignments.${assignmentIndex}.effort`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs">Effort</FormLabel>
+                                                    <FormControl>
+                                                        <Slider
+                                                            min={0}
+                                                            max={100}
+                                                            step={5}
+                                                            value={[field.value]}
+                                                            onValueChange={(value) => field.onChange(value[0])}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        
+                                        <div className="mt-3">
+                                            <FormField
+                                                control={form.control}
+                                                name={`tasks.${taskIndex}.assignments.${assignmentIndex}.workingDays`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-xs">Working Days</FormLabel>
+                                                        <div className="flex gap-2 items-center">
+                                                            {weekDays.map(day => (
+                                                                <FormField
+                                                                    key={day.id}
+                                                                    control={form.control}
+                                                                    name={`tasks.${taskIndex}.assignments.${assignmentIndex}.workingDays`}
+                                                                    render={({ field }) => (
+                                                                        <FormItem key={day.id} className="flex flex-col items-center space-y-1">
+                                                                             <FormControl>
+                                                                                <Checkbox
+                                                                                    checked={field.value?.includes(day.id)}
+                                                                                    onCheckedChange={(checked) => {
+                                                                                        return checked
+                                                                                        ? field.onChange([...(field.value || []), day.id])
+                                                                                        : field.onChange(field.value?.filter((value) => value !== day.id))
+                                                                                    }}
+                                                                                />
+                                                                            </FormControl>
+                                                                            <FormLabel className="text-xs">{day.label}</FormLabel>
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                         {assignmentIndex === watchTasks[taskIndex].assignments.length - 1 && Math.abs(totalEffort - 100) > 0.01 && (
+                                            <div className="text-xs font-medium text-destructive text-right mt-2">
+                                                Total effort must be 100%. Current: {totalEffort.toFixed(0)}%
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                            
                            <div className="col-span-6">
                              <FormField
                                 control={form.control}
-                                name={`tasks.${index}.startDate`}
+                                name={`tasks.${taskIndex}.startDate`}
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                     <FormLabel>Start Date</FormLabel>
@@ -339,7 +433,7 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                           <div className="col-span-6">
                               <FormField
                                 control={form.control}
-                                name={`tasks.${index}.endDate`}
+                                name={`tasks.${taskIndex}.endDate`}
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                     <FormLabel>End Date</FormLabel>
@@ -372,20 +466,11 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
                                 )}
                                 />
                           </div>
-                          <div className="col-span-12 flex justify-end">
-                              <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => remove(index)}
-                              >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Remove Task</span>
-                              </Button>
-                          </div>
+                          
                           <div className="col-span-12">
-                              <FormMessage>{form.formState.errors.tasks?.[index]?.endDate?.message}</FormMessage>
+                              <FormMessage>{form.formState.errors.tasks?.[taskIndex]?.endDate?.message}</FormMessage>
                           </div>
+                      </div>
                       </div>
                       ))}
                   </div>

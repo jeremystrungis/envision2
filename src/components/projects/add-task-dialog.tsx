@@ -34,6 +34,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useUsers } from '@/hooks/use-users';
 import { ScrollArea } from '../ui/scroll-area';
 import { Checkbox } from '../ui/checkbox';
+import { Slider } from '../ui/slider';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+
 
 const assignmentSchema = z.object({
     assigneeId: z.string(),
@@ -69,6 +72,11 @@ interface AddTaskDialogProps {
   projectId: string;
 }
 
+const weekDays = [
+    { id: 1, label: 'M' }, { id: 2, label: 'T' }, { id: 3, label: 'W' },
+    { id: 4, label: 'T' }, { id: 5, label: 'F' }, { id: 6, label: 'S' }, { id: 0, label: 'S' }
+];
+
 function AssigneePopover({ form }: { form: any }) {
     const { users } = useUsers();
     const [isOpen, setIsOpen] = useState(false);
@@ -89,7 +97,6 @@ function AssigneePopover({ form }: { form: any }) {
             return existing || { assigneeId: userId, workingDays: [1, 2, 3, 4, 5], effort: 0 };
         });
 
-        // Filter out assignments for users that are no longer selected
         const finalAssignmentsPre = newAssignments.filter(a => selectedUsers.includes(a.assigneeId));
 
         const evenSplit = finalAssignmentsPre.length > 0 ? 100 / finalAssignmentsPre.length : 0;
@@ -149,6 +156,7 @@ function AssigneePopover({ form }: { form: any }) {
 }
 
 export default function AddTaskDialog({ isOpen, onClose, onAddTask }: AddTaskDialogProps) {
+  const { users } = useUsers();
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -159,11 +167,15 @@ export default function AddTaskDialog({ isOpen, onClose, onAddTask }: AddTaskDia
       hours: 0,
     },
   });
+  
+  const watchAssignments = form.watch('assignments');
 
   const onSubmit = (data: TaskFormValues) => {
     onAddTask(data);
     form.reset();
   };
+  
+  const getUserById = (id: string) => users.find(u => u.id === id);
 
   if(isOpen && form.formState.isSubmitSuccessful) {
       form.reset();
@@ -210,6 +222,89 @@ export default function AddTaskDialog({ isOpen, onClose, onAddTask }: AddTaskDia
                     </FormItem>
                 )}
             />
+
+            {watchAssignments?.map((assignment, index) => {
+                const user = getUserById(assignment.assigneeId);
+                const totalEffort = watchAssignments.reduce((sum, a) => sum + a.effort, 0);
+
+                return (
+                    <div key={assignment.assigneeId} className="p-3 border rounded-md bg-muted/30">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <Avatar className="h-6 w-6">
+                                    <AvatarImage src={user?.avatar} />
+                                    <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-sm">{user?.name}</span>
+                            </div>
+                            <div className="text-sm font-semibold">{assignment.effort.toFixed(0)}%</div>
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name={`assignments.${index}.effort`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs">Effort</FormLabel>
+                                    <FormControl>
+                                        <Slider
+                                            min={0}
+                                            max={100}
+                                            step={5}
+                                            value={[field.value]}
+                                            onValueChange={(value) => field.onChange(value[0])}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        
+                        <div className="mt-3">
+                            <FormField
+                                control={form.control}
+                                name={`assignments.${index}.workingDays`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-xs">Working Days</FormLabel>
+                                        <div className="flex gap-2 items-center">
+                                            {weekDays.map(day => (
+                                                <FormField
+                                                    key={day.id}
+                                                    control={form.control}
+                                                    name={`assignments.${index}.workingDays`}
+                                                    render={({ field }) => (
+                                                        <FormItem key={day.id} className="flex flex-col items-center space-y-1">
+                                                                <FormControl>
+                                                                <Checkbox
+                                                                    checked={field.value?.includes(day.id)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        return checked
+                                                                        ? field.onChange([...(field.value || []), day.id])
+                                                                        : field.onChange(field.value?.filter((value) => value !== day.id))
+                                                                    }}
+                                                                />
+                                                            </FormControl>
+                                                            <FormLabel className="text-xs">{day.label}</FormLabel>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            ))}
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                         {index === watchAssignments.length - 1 && Math.abs(totalEffort - 100) > 0.01 && (
+                            <div className="text-xs font-medium text-destructive text-right mt-2">
+                                Total effort must be 100%. Current: {totalEffort.toFixed(0)}%
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
+
 
             <FormField
               control={form.control}
