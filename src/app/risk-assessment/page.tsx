@@ -187,7 +187,7 @@ function PortfolioHealthAnalyzer() {
   const { projects } = useProjects();
   const { tasks } = useTasks();
   const { users } = useUsers();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PortfolioHealthOutput | null>(null);
   const { toast } = useToast();
 
