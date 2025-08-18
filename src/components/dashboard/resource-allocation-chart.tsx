@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/chart';
 import { useUsers } from '@/hooks/use-users';
 import { useTasks } from '@/hooks/use-tasks';
-import { getDay, isWithinInterval } from 'date-fns';
+import { getDay, isWithinInterval, eachDayOfInterval } from 'date-fns';
 import { useMemo } from 'react';
 
 export default function ResourceAllocationChart() {
@@ -22,9 +22,9 @@ export default function ResourceAllocationChart() {
     return users.map((user) => {
       // Find all tasks assigned to this user that are active today.
       const tasksToday = tasks.filter(task => {
-          if (!task.startDate || !task.endDate) return false;
-          const startDate = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
-          const endDate = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
+          if (!task.startDate?.toDate || !task.endDate?.toDate) return false;
+          const startDate = task.startDate.toDate();
+          const endDate = task.endDate.toDate();
           const isTaskActive = isWithinInterval(today, { start: startDate, end: endDate });
           if (!isTaskActive) return false;
           
@@ -37,9 +37,13 @@ export default function ResourceAllocationChart() {
           const assignment = task.assignments.find(a => a.assigneeId === user.id);
           if (!assignment) return total;
           
-          const individualDuration = assignment.workingDays.length;
+          const startDate = task.startDate.toDate();
+          const endDate = task.endDate.toDate();
+          const allDaysInInterval = eachDayOfInterval({ start: startDate, end: endDate });
+          const workingDaysInInterval = allDaysInInterval.filter(day => assignment.workingDays.includes(getDay(day))).length;
+          
           const assignedHours = task.hours * (assignment.effort / 100);
-          const dailyHours = individualDuration > 0 ? assignedHours / individualDuration : 0;
+          const dailyHours = workingDaysInInterval > 0 ? assignedHours / workingDaysInInterval : 0;
           
           return total + dailyHours;
       }, 0);
