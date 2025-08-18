@@ -7,6 +7,9 @@ import { db } from '@/lib/firebase';
 import { Task } from '@/lib/firebase-types';
 import { useAuth } from './use-auth';
 
+// All data will be stored under a single workspace for all users.
+const WORKSPACE_ID = 'main';
+
 export function useTasks(projectId?: string) {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -20,10 +23,11 @@ export function useTasks(projectId?: string) {
     }
 
     let q;
+    const tasksCollection = collection(db, `workspaces/${WORKSPACE_ID}/tasks`);
     if (projectId) {
-        q = query(collection(db, `users/${user.uid}/tasks`), where('projectId', '==', projectId));
+        q = query(tasksCollection, where('projectId', '==', projectId));
     } else {
-        q = query(collection(db, `users/${user.uid}/tasks`));
+        q = query(tasksCollection);
     }
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -40,7 +44,7 @@ export function useTasks(projectId?: string) {
 
   const addTask = async (task: Omit<Task, 'id' | 'dependencies'>) => {
     if (!user || !projectId) return;
-    await addDoc(collection(db, `users/${user.uid}/tasks`), {
+    await addDoc(collection(db, `workspaces/${WORKSPACE_ID}/tasks`), {
         ...task,
         projectId,
         dependencies: [],
@@ -51,7 +55,7 @@ export function useTasks(projectId?: string) {
 
   const updateTask = async (taskId: string, data: Partial<Omit<Task, 'id'>>) => {
       if (!user) return;
-      const taskRef = doc(db, `users/${user.uid}/tasks`, taskId);
+      const taskRef = doc(db, `workspaces/${WORKSPACE_ID}/tasks`, taskId);
       const dataToUpdate = {...data};
       if (data.startDate) {
           dataToUpdate.startDate = Timestamp.fromDate(data.startDate as any);
@@ -64,7 +68,7 @@ export function useTasks(projectId?: string) {
 
   const deleteTask = async (taskId: string) => {
     if (!user) return;
-    const taskRef = doc(db, `users/${user.uid}/tasks`, taskId);
+    const taskRef = doc(db, `workspaces/${WORKSPACE_ID}/tasks`, taskId);
     await deleteDoc(taskRef);
     // Note: dependency cleanup on other tasks would be more complex and is omitted here.
   }

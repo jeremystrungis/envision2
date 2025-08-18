@@ -7,6 +7,9 @@ import { db } from '@/lib/firebase';
 import { Project, Task } from '@/lib/firebase-types';
 import { useAuth } from './use-auth';
 
+// All data will be stored under a single workspace for all users.
+const WORKSPACE_ID = 'main';
+
 export function useProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -19,7 +22,7 @@ export function useProjects() {
       return;
     };
 
-    const q = query(collection(db, `users/${user.uid}/projects`));
+    const q = query(collection(db, `workspaces/${WORKSPACE_ID}/projects`));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userProjects: Project[] = [];
       querySnapshot.forEach((doc) => {
@@ -37,7 +40,7 @@ export function useProjects() {
     try {
       const batch = writeBatch(db);
       
-      const projectRef = doc(collection(db, `users/${user.uid}/projects`));
+      const projectRef = doc(collection(db, `workspaces/${WORKSPACE_ID}/projects`));
       batch.set(projectRef, project);
 
       const tasksToAdd: Omit<Task, 'id'>[] = newTasks
@@ -51,7 +54,7 @@ export function useProjects() {
         }));
 
       tasksToAdd.forEach(task => {
-        const taskRef = doc(collection(db, `users/${user.uid}/tasks`));
+        const taskRef = doc(collection(db, `workspaces/${WORKSPACE_ID}/tasks`));
         batch.set(taskRef, task);
       });
 
@@ -63,7 +66,7 @@ export function useProjects() {
 
   const updateProject = async (projectId: string, data: Partial<Omit<Project, 'id'>>) => {
       if (!user) return;
-      const projectRef = doc(db, `users/${user.uid}/projects`, projectId);
+      const projectRef = doc(db, `workspaces/${WORKSPACE_ID}/projects`, projectId);
       await setDoc(projectRef, data, { merge: true });
   }
 

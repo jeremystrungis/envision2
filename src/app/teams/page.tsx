@@ -96,7 +96,7 @@ function ManageTeamsCard() {
 
 
 export default function TeamsPage() {
-  const { user, loading } = useAuth();
+  const { user: authUser, loading } = useAuth();
   const router = useRouter();
   const { users, addUser, updateUser } = useUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -125,7 +125,7 @@ export default function TeamsPage() {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  if (!user) {
+  if (!authUser) {
     router.push('/login');
     return null;
   }
@@ -163,7 +163,7 @@ export default function TeamsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user, index) => (
+                  {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-4">
@@ -174,7 +174,7 @@ export default function TeamsPage() {
                           <div className="grid gap-1">
                             <p className="text-sm font-medium leading-none flex items-center gap-2">
                               {user.name}
-                              {index === 0 && <Badge variant="secondary">(Me)</Badge>}
+                              {user.authUid === authUser.uid && <Badge variant="secondary">(Me)</Badge>}
                             </p>
                           </div>
                         </div>

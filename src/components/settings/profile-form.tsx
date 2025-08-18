@@ -19,8 +19,9 @@ import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import { useUsers } from '@/hooks/use-users'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
-import { User } from 'lucide-react'
+import { User as UserIcon } from 'lucide-react'
 import { useEffect } from 'react'
+import { useAuth } from '@/hooks/use-auth'
 
 const profileFormSchema = z.object({
   name: z
@@ -38,10 +39,12 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 
 export function ProfileForm() {
+  const { user: authUser } = useAuth();
   const { users, updateUser } = useUsers();
   const { toast } = useToast();
 
-  const currentUser = users[0];
+  // The current user is the one whose authUid matches the logged-in user's uid.
+  const currentUser = users.find(u => u.authUid === authUser?.uid);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -64,8 +67,9 @@ export function ProfileForm() {
   function onSubmit(data: ProfileFormValues) {
     if (!currentUser) return;
     
-    const { teams, capacity } = currentUser;
-    updateUser(currentUser.id, { ...data, teams, capacity });
+    // Preserve existing fields not in the form
+    const { teams, capacity, authUid } = currentUser;
+    updateUser(currentUser.id, { ...data, teams, capacity, authUid });
 
     toast({
       title: 'Profile updated',
@@ -76,10 +80,10 @@ export function ProfileForm() {
   if (!currentUser) {
     return (
         <Alert>
-            <User className="h-4 w-4" />
+            <UserIcon className="h-4 w-4" />
             <AlertTitle>No User Profile Found</AlertTitle>
             <AlertDescription>
-                To manage profile settings, please first add a team member on the Teams page. The first member is considered "you".
+                To manage profile settings, please first add yourself as a team member on the Teams page. Your account will be automatically linked.
             </AlertDescription>
         </Alert>
     )

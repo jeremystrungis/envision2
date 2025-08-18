@@ -8,6 +8,7 @@ export interface Team {
 
 export interface User {
   id: string;
+  authUid?: string; // Firebase Auth User ID, to link member to a login
   name: string;
   teams: string[];
   avatar: string;

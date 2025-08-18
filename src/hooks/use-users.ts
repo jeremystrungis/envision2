@@ -7,6 +7,9 @@ import { db } from '@/lib/firebase';
 import { User } from '@/lib/firebase-types';
 import { useAuth } from './use-auth';
 
+// All data will be stored under a single workspace for all users.
+const WORKSPACE_ID = 'main';
+
 export function useUsers() {
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -19,26 +22,25 @@ export function useUsers() {
         return;
     };
 
-    const q = query(collection(db, `users/${user.uid}/members`));
+    const q = query(collection(db, `workspaces/${WORKSPACE_ID}/members`));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userTeam: User[] = [];
+      const workspaceMembers: User[] = [];
       querySnapshot.forEach((doc) => {
-        userTeam.push({ id: doc.id, ...doc.data() } as User);
+        workspaceMembers.push({ id: doc.id, ...doc.data() } as User);
       });
       
-      const currentUserInTeam = userTeam.find(u => u.id === user.uid);
+      const currentUserInTeam = workspaceMembers.find(u => u.authUid === user.uid);
 
       if (currentUserInTeam) {
-        // Ensure current user is always first in the list
-        setUsers([currentUserInTeam, ...userTeam.filter(u => u.id !== user.uid)]);
+        // Ensure current user is always first in the list for UI purposes (e.g., "(Me)" badge)
+        setUsers([currentUserInTeam, ...workspaceMembers.filter(u => u.authUid !== user.uid)]);
       } else {
-        // Data exists, but not for the current user, just set the team
-         setUsers(userTeam);
+         setUsers(workspaceMembers);
       }
 
       setLoading(false);
     }, (error) => {
-        console.error("Error fetching team:", error);
+        console.error("Error fetching team members:", error);
         setLoading(false);
     });
 
@@ -47,12 +49,18 @@ export function useUsers() {
 
   const addUser = async (newUser: Omit<User, 'id'>) => {
     if (!user) return;
-    await addDoc(collection(db, `users/${user.uid}/members`), newUser);
+    // If this is the very first user being added, associate them with the logged-in auth user.
+    const isFirstUser = users.length === 0;
+    const userData = {
+        ...newUser,
+        ...(isFirstUser && { authUid: user.uid })
+    };
+    await addDoc(collection(db, `workspaces/${WORKSPACE_ID}/members`), userData);
   };
   
   const updateUser = async (userId: string, data: Partial<Omit<User, 'id'>>) => {
       if (!user) return;
-      const userRef = doc(db, `users/${user.uid}/members`, userId);
+      const userRef = doc(db, `workspaces/${WORKSPACE_ID}/members`, userId);
       await updateDoc(userRef, data);
   }
 
