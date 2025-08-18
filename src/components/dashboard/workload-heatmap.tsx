@@ -157,7 +157,7 @@ export default function WorkloadHeatmap() {
 
   const gridTemplateColumns = useMemo(() => {
     const length = viewMode === 'week' || viewMode === 'month' ? dateInterval.length : columns.length;
-    return `110px repeat(${length}, minmax(32px, 1fr))`;
+    return `minmax(110px, 1.5fr) repeat(${length}, minmax(40px, 1fr))`;
   }, [viewMode, dateInterval, columns]);
 
   return (
@@ -212,30 +212,17 @@ export default function WorkloadHeatmap() {
                 <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
                 
                 {(viewMode === 'week' || viewMode === 'month') ? (
-                  <>
-                    {viewMode === 'month' &&
-                      Array.from({ length: 7 }).map((_, i) => {
-                        const day = dateInterval[i] ?? new Date(2000,0,i+1); // Handle cases with fewer than 7 days
-                        return (
-                           <div key={`month-header-${i}`} className="p-2 text-center text-sm font-semibold bg-muted/50">
-                              <div className="text-xs text-muted-foreground">{format(day, 'E')}</div>
-                           </div>
-                        )
-                      }).slice(0, dateInterval.length) // Ensure we don't have more headers than days
-                    }
-
-                    {dateInterval.map((day) => (
-                      <div key={day.toISOString()} className={cn("p-2 text-center text-sm font-semibold bg-muted/50", viewMode === 'month' && 'border-t')}>
-                        {viewMode === 'week' ? <div>{format(day, 'E')}</div> : null}
-                        <div className={cn("text-xs", viewMode === 'week' ? "text-muted-foreground" : "font-medium")}>
-                            {isSameDay(day, new Date()) ? 
-                                <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center mx-auto">{format(day, 'd')}</span> :
-                                format(day, 'd')
-                            }
-                        </div>
+                  dateInterval.map((day) => (
+                    <div key={day.toISOString()} className="p-2 text-center text-sm font-semibold bg-muted/50">
+                      <div className="text-xs text-muted-foreground">{format(day, 'E')}</div>
+                      <div className={cn("mt-1 font-medium", isSameDay(day, new Date()) ? 'text-primary' : '')}>
+                          {isSameDay(day, new Date()) ? 
+                              <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center mx-auto">{format(day, 'd')}</span> :
+                              format(day, 'd')
+                          }
                       </div>
-                    ))}
-                   </>
+                    </div>
+                  ))
                 ) : (
                     columns.map((week, index) => (
                       <div key={index} className="p-2 text-center text-sm font-semibold bg-muted/50">
