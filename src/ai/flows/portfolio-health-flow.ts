@@ -105,7 +105,7 @@ const portfolioHealthFlow = ai.defineFlow(
         })
     };
 
-    const { output } = await prompt(input);
+    const { output } = await prompt(augmentedInput);
     return output!;
   }
 );

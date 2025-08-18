@@ -193,6 +193,13 @@ function PortfolioHealthAnalyzer() {
 
   useEffect(() => {
     const analyze = async () => {
+      // Only run analysis if we have all data points.
+      if (projects.length === 0 || tasks.length === 0 || users.length === 0) {
+        setIsLoading(false);
+        setResult(null);
+        return;
+      }
+
       setIsLoading(true);
       try {
         const input: PortfolioHealthInput = {
@@ -201,8 +208,9 @@ function PortfolioHealthAnalyzer() {
                 ...t,
                 startDate: t.startDate.toDate().toISOString(),
                 endDate: t.endDate.toDate().toISOString(),
+                assigneeIds: t.assignments.map(a => a.assigneeId)
             })),
-            users: users.map(u => ({...u}))
+            users: users.map(u => ({...u, team: u.teams ? u.teams.join(', ') : ''}))
         };
         const analysisResult = await assessPortfolioHealth(input);
         setResult(analysisResult);
@@ -218,11 +226,9 @@ function PortfolioHealthAnalyzer() {
         setIsLoading(false);
       }
     };
-    if(projects.length > 0 || tasks.length > 0 || users.length > 0) {
-        analyze();
-    } else {
-        setIsLoading(false);
-    }
+    
+    analyze();
+
   }, [projects, tasks, users, toast]);
 
   if (isLoading) {
