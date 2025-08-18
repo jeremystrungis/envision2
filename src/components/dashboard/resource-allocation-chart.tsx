@@ -23,8 +23,10 @@ export default function ResourceAllocationChart() {
       // Find all tasks assigned to this user that are active today.
       const tasksToday = tasks.filter(task => {
           if (!task.startDate?.toDate || !task.endDate?.toDate) return false;
+          
           const startDate = task.startDate.toDate();
           const endDate = task.endDate.toDate();
+
           const isTaskActive = isWithinInterval(today, { start: startDate, end: endDate });
           if (!isTaskActive) return false;
           
@@ -39,11 +41,18 @@ export default function ResourceAllocationChart() {
           
           const startDate = task.startDate.toDate();
           const endDate = task.endDate.toDate();
+          
+          // Get all days in the task's date range
           const allDaysInInterval = eachDayOfInterval({ start: startDate, end: endDate });
+          
+          // Filter to get only the days the user is scheduled to work
           const workingDaysInInterval = allDaysInInterval.filter(day => assignment.workingDays.includes(getDay(day))).length;
           
-          const assignedHours = task.hours * (assignment.effort / 100);
-          const dailyHours = workingDaysInInterval > 0 ? assignedHours / workingDaysInInterval : 0;
+          // Calculate the total hours assigned to this user for this task
+          const assignedHoursForTask = task.hours * (assignment.effort / 100);
+
+          // Calculate the average daily hours based on their specific working days
+          const dailyHours = workingDaysInInterval > 0 ? assignedHoursForTask / workingDaysInInterval : 0;
           
           return total + dailyHours;
       }, 0);
