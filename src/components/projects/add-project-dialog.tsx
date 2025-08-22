@@ -162,7 +162,7 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
                         </CommandGroup>
                     </CommandList>
                      <div className="p-2 border-t flex justify-end">
-                        <Button onClick={handleDone}>Done</Button>
+                        <Button onClick={handleDone}>Save</Button>
                     </div>
                 </Command>
             </PopoverContent>
@@ -502,3 +502,5 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
     </Dialog>
   );
 }
+
+    
