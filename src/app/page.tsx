@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import AppHeader from '@/components/app-header';
 import WorkloadHeatmap from '@/components/dashboard/workload-heatmap';
@@ -15,13 +16,14 @@ export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [loading, user, router]);
 
-  if (!user) {
-    router.push('/login');
-    return null;
+  if (loading || !user) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
