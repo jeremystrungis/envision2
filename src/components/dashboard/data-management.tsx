@@ -11,8 +11,10 @@ import { useTasks } from '@/hooks/use-tasks';
 import { useTeams } from '@/hooks/use-teams';
 import { useMembers } from '@/hooks/use-members';
 import { importWorkspaceData } from '@/ai/flows/import-workspace-flow';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function DataManagement() {
+  const { user } = useAuth();
   const { projects } = useProjects();
   const { tasks } = useTasks();
   const { teams } = useTeams();
@@ -64,7 +66,7 @@ export default function DataManagement() {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -82,7 +84,8 @@ export default function DataManagement() {
         
         toast({ title: 'Importing Data...', description: 'Please wait while your data is being added.' });
 
-        await importWorkspaceData(data);
+        // Pass the user ID to the flow
+        await importWorkspaceData({ ...data, userId: user.uid });
 
         toast({
           title: 'Import Successful',
@@ -93,7 +96,7 @@ export default function DataManagement() {
         console.error('Import failed:', error);
         toast({
           title: 'Import Failed',
-          description: error.message || 'Could not import data from the file.',
+          description: error.message || 'Could not import data from the file. Check server logs for details.',
           variant: 'destructive',
         });
       } finally {
