@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/use-projects';
 import { useTasks } from '@/hooks/use-tasks';
 import { useTeams } from '@/hooks/use-teams';
-import { useMembers } from '@/hooks/use-members';
+import { useUsers } from '@/hooks/use-users';
 import { importWorkspaceData } from '@/ai/flows/import-workspace-flow';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -18,7 +18,7 @@ export default function DataManagement() {
   const { projects } = useProjects();
   const { tasks } = useTasks();
   const { teams } = useTeams();
-  const { members } = useMembers();
+  const { users: members } = useUsers(); // useUsers is the correct hook for members
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -85,12 +85,17 @@ export default function DataManagement() {
         toast({ title: 'Importing Data...', description: 'Please wait while your data is being added.' });
 
         // Pass the user ID to the flow
-        await importWorkspaceData({ ...data, userId: user.uid });
+        const result = await importWorkspaceData({ ...data, userId: user.uid });
 
-        toast({
-          title: 'Import Successful',
-          description: 'Your workspace data has been added successfully.',
-        });
+        if (result.success) {
+          toast({
+            title: 'Import Successful',
+            description: 'Your workspace data has been added successfully.',
+          });
+        } else {
+           throw new Error('The import process failed on the server. Check logs.');
+        }
+
 
       } catch (error: any) {
         console.error('Import failed:', error);
