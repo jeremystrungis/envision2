@@ -79,7 +79,7 @@ const importWorkspaceDataFlow = ai.defineFlow(
     }
     
     // Determine if this is an old or new format based on presence of IDs
-    const isNewFormat = input.projects.every(p => p.id) && input.members.every(m => m.id);
+    const isNewFormat = input.projects.every(p => p.id) && input.members.every(m => m.id) && input.tasks.every(t => t.id);
 
     const batch = writeBatch(db);
     const workspaceId = 'main';
@@ -120,11 +120,13 @@ const importWorkspaceDataFlow = ai.defineFlow(
         }
     }
 
-    // First pass for tasks: create task references for dependency mapping
-    for (const task of input.tasks) {
-        if (isNewFormat && task.id) {
-            const newTaskRef = doc(collection(db, `workspaces/${workspaceId}/tasks`));
-            idMaps.tasks[task.id] = newTaskRef.id;
+    // First pass for tasks: create task references for dependency mapping (only for new format)
+    if (isNewFormat) {
+        for (const task of input.tasks) {
+            if (task.id) {
+                const newTaskRef = doc(collection(db, `workspaces/${workspaceId}/tasks`));
+                idMaps.tasks[task.id] = newTaskRef.id;
+            }
         }
     }
 
@@ -136,14 +138,21 @@ const importWorkspaceDataFlow = ai.defineFlow(
             
         const newTaskRef = doc(db, `workspaces/${workspaceId}/tasks`, newTaskId);
         
-        const newProjectId = idMaps.projects[task.projectId];
+        // Use the correct mapping based on format
+        const newProjectId = isNewFormat 
+            ? idMaps.projects[task.projectId] 
+            : idMaps.projects[task.projectId]; // Old format used name, which we mapped to new ID
+
         if (!newProjectId) {
             console.warn(`Could not find new project ID for: ${task.projectId}. Skipping task: ${task.name}`);
             continue;
         }
         
         const newAssignments = task.assignments.map(a => {
-            const newAssigneeId = idMaps.members[a.assigneeId];
+            // Use correct mapping based on format
+            const newAssigneeId = isNewFormat 
+                ? idMaps.members[a.assigneeId] 
+                : idMaps.members[a.assigneeId]; // Old format used name
             if (!newAssigneeId) {
                  console.warn(`Could not find new member ID for: ${a.assigneeId}. Skipping assignment for task: ${task.name}`);
                  return null;
@@ -153,6 +162,8 @@ const importWorkspaceDataFlow = ai.defineFlow(
 
 
         const newDependencies = (task.dependencies || []).map(depId => {
+            // Dependencies only supported in new format
+            if (!isNewFormat) return null;
             const newDepId = idMaps.tasks[depId];
              if (!newDepId) {
                  console.warn(`Could not find new dependency ID for old ID: ${depId}. Skipping dependency for task: ${task.name}`);
