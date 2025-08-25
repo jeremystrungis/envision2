@@ -42,7 +42,7 @@ export default function Dashboard2() {
     addFileInputRef.current?.click();
   };
 
-  const processFile = (file: File, mode: 'replace' | 'add') => {
+  const processFile = (file: File | undefined, mode: 'replace' | 'add') => {
      if (!file) return;
 
     const reader = new FileReader();
