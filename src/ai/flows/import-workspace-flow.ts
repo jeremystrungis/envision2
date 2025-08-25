@@ -9,8 +9,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getFirestore, writeBatch, collection, doc, Timestamp, getDocs, query, where } from 'firebase/firestore';
-import { User, Assignment } from '@/lib/firebase-types';
+import { getFirestore, writeBatch, collection, doc, Timestamp } from 'firebase/firestore';
+import { Assignment } from '@/lib/firebase-types';
 import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
