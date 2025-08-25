@@ -25,10 +25,10 @@ export default function DataManagement() {
   const handleExport = () => {
     try {
       const exportData = {
-        teams: teams.map(({ id, ...rest }) => rest), // Omit id from export
-        members: members.map(({ id, ...rest }) => rest),
-        projects: projects.map(({ id, ...rest }) => rest),
-        tasks: tasks.map(({ id, startDate, endDate, ...rest }) => ({
+        teams: teams.map(({ id, ...rest }) => rest), // Omit id from export on teams
+        members: members.map(({ ...rest }) => rest), // Keep all member data, including ID
+        projects: projects.map(({ ...rest }) => rest), // Keep all project data, including ID
+        tasks: tasks.map(({ startDate, endDate, ...rest }) => ({
           ...rest,
           startDate: startDate.toDate().toISOString(),
           endDate: endDate.toDate().toISOString(),

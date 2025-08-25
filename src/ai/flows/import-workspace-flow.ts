@@ -20,6 +20,7 @@ const TeamSchema = z.object({
 });
 
 const MemberSchema = z.object({
+  id: z.string(), // Keep ID for mapping
   name: z.string(),
   teams: z.array(z.string()),
   avatar: z.string().url(),
@@ -28,6 +29,7 @@ const MemberSchema = z.object({
 });
 
 const ProjectSchema = z.object({
+  id: z.string(), // Keep ID for mapping
   name: z.string(),
   status: z.enum(['On Track', 'At Risk', 'Off Track']),
 });
@@ -39,6 +41,7 @@ const AssignmentSchema = z.object({
 });
 
 const TaskSchema = z.object({
+  id: z.string(), // Keep ID for mapping
   name: z.string(),
   projectId: z.string(),
   assignments: z.array(AssignmentSchema),
@@ -76,52 +79,80 @@ const importWorkspaceDataFlow = ai.defineFlow(
     }
     const batch = writeBatch(db);
 
-    const oldToNewIdMapping: Record<string, string> = {};
+    const oldToNewIdMap = {
+        members: {} as Record<string, string>,
+        projects: {} as Record<string, string>,
+        tasks: {} as Record<string, string>,
+    };
 
     // Import Teams
     for (const team of input.teams) {
-        const newTeamRef = doc(collection(db, `workspaces/main/teams`));
+        const newTeamRef = doc(collection(db, `workspaces/${userId}/teams`));
         batch.set(newTeamRef, team);
     }
     
     // Import Members
     for (const member of input.members) {
-        const newMemberRef = doc(collection(db, `workspaces/main/members`));
-        batch.set(newMemberRef, member);
+        const newMemberRef = doc(collection(db, `workspaces/${userId}/members`));
+        const { id, ...memberData } = member;
+        batch.set(newMemberRef, memberData);
+        oldToNewIdMap.members[id] = newMemberRef.id;
     }
     
     // Import Projects
     for (const project of input.projects) {
-        const newProjectRef = doc(collection(db, `workspaces/main/projects`));
-        batch.set(newProjectRef, { ...project });
-        oldToNewIdMapping[project.name] = newProjectRef.id;
+        const newProjectRef = doc(collection(db, `workspaces/${userId}/projects`));
+        const { id, ...projectData } = project;
+        batch.set(newProjectRef, projectData);
+        oldToNewIdMap.projects[id] = newProjectRef.id;
     }
 
-    // Import Tasks
-    const membersSnapshot = await getDocs(query(collection(db, `workspaces/main/members`)));
-    const memberNameIdMap: Record<string, string> = {};
-    membersSnapshot.forEach(doc => {
-        const member = doc.data() as Omit<User, 'id'>;
-        memberNameIdMap[member.name] = doc.id;
-    });
-
+    // First pass for tasks: create tasks with new IDs and map old to new
     for (const task of input.tasks) {
-        const newProjectId = oldToNewIdMapping[task.projectId];
+        const newTaskRef = doc(collection(db, `workspaces/${userId}/tasks`));
+        oldToNewIdMap.tasks[task.id] = newTaskRef.id;
+    }
 
-        const newTaskRef = doc(collection(db, `workspaces/main/tasks`));
+    // Second pass for tasks: set data with correct new foreign keys
+    for (const task of input.tasks) {
+        const newTaskId = oldToNewIdMap.tasks[task.id];
+        const newTaskRef = doc(db, `workspaces/${userId}/tasks`, newTaskId);
         
-        const newAssignments = task.assignments.map(a => ({
-            ...a,
-            assigneeId: memberNameIdMap[a.assigneeId] || a.assigneeId,
-        })).filter(a => Object.values(memberNameIdMap).includes(a.assigneeId));
+        const newProjectId = oldToNewIdMap.projects[task.projectId];
+        if (!newProjectId) {
+            console.warn(`Could not find new project ID for old project ID: ${task.projectId}. Skipping task: ${task.name}`);
+            continue; // or handle error appropriately
+        }
+
+        const newAssignments = task.assignments.map(a => {
+            const newAssigneeId = oldToNewIdMap.members[a.assigneeId];
+            if (!newAssigneeId) {
+                 console.warn(`Could not find new member ID for old member ID: ${a.assigneeId}. Skipping assignment for task: ${task.name}`);
+                 return null;
+            }
+            return {
+                ...a,
+                assigneeId: newAssigneeId,
+            };
+        }).filter(Boolean) as Assignment[];
+
+        const newDependencies = task.dependencies.map(depId => {
+            const newDepId = oldToNewIdMap.tasks[depId];
+             if (!newDepId) {
+                 console.warn(`Could not find new dependency ID for old ID: ${depId}. Skipping dependency for task: ${task.name}`);
+                 return null;
+            }
+            return newDepId;
+        }).filter(Boolean) as string[];
 
         batch.set(newTaskRef, {
-            ...task,
-            projectId: newProjectId || task.projectId,
+            name: task.name,
+            projectId: newProjectId,
+            assignments: newAssignments,
             startDate: Timestamp.fromDate(new Date(task.startDate)),
             endDate: Timestamp.fromDate(new Date(task.endDate)),
-            dependencies: [], // Reset dependencies
-            assignments: newAssignments
+            dependencies: newDependencies,
+            hours: task.hours,
         });
     }
 
