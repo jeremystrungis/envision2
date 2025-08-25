@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getFirestore, writeBatch, collection, doc, Timestamp, getDocs, query, where } from 'firebase/firestore';
-import { User } from '@/lib/firebase-types';
+import { User, Assignment } from '@/lib/firebase-types';
 import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
@@ -20,7 +20,7 @@ const TeamSchema = z.object({
 });
 
 const MemberSchema = z.object({
-  id: z.string(), // Keep ID for mapping
+  id: z.string(), // This is the OLD ID from the source workspace
   name: z.string(),
   teams: z.array(z.string()),
   avatar: z.string().url(),
@@ -29,7 +29,7 @@ const MemberSchema = z.object({
 });
 
 const ProjectSchema = z.object({
-  id: z.string(), // Keep ID for mapping
+  id: z.string(), // This is the OLD ID from the source workspace
   name: z.string(),
   status: z.enum(['On Track', 'At Risk', 'Off Track']),
 });
@@ -41,7 +41,7 @@ const AssignmentSchema = z.object({
 });
 
 const TaskSchema = z.object({
-  id: z.string(), // Keep ID for mapping
+  id: z.string(), // This is the OLD ID from the source workspace
   name: z.string(),
   projectId: z.string(),
   assignments: z.array(AssignmentSchema),
@@ -52,7 +52,7 @@ const TaskSchema = z.object({
 });
 
 const WorkspaceInputSchema = z.object({
-  userId: z.string(), // Added userId to the input
+  userId: z.string(),
   teams: z.array(TeamSchema),
   members: z.array(MemberSchema),
   projects: z.array(ProjectSchema),
@@ -78,6 +78,7 @@ const importWorkspaceDataFlow = ai.defineFlow(
         throw new Error("User ID must be provided to import data.");
     }
     const batch = writeBatch(db);
+    const workspaceId = 'main'; // Using the global workspace ID
 
     const oldToNewIdMap = {
         members: {} as Record<string, string>,
@@ -85,38 +86,38 @@ const importWorkspaceDataFlow = ai.defineFlow(
         tasks: {} as Record<string, string>,
     };
 
-    // Import Teams
+    // Import Teams - These are global, so we just add them
     for (const team of input.teams) {
-        const newTeamRef = doc(collection(db, `workspaces/${userId}/teams`));
+        const newTeamRef = doc(collection(db, `workspaces/${workspaceId}/teams`));
         batch.set(newTeamRef, team);
     }
     
-    // Import Members
+    // Import Members and map old IDs to new IDs
     for (const member of input.members) {
-        const newMemberRef = doc(collection(db, `workspaces/${userId}/members`));
+        const newMemberRef = doc(collection(db, `workspaces/${workspaceId}/members`));
         const { id, ...memberData } = member;
         batch.set(newMemberRef, memberData);
         oldToNewIdMap.members[id] = newMemberRef.id;
     }
     
-    // Import Projects
+    // Import Projects and map old IDs to new IDs
     for (const project of input.projects) {
-        const newProjectRef = doc(collection(db, `workspaces/${userId}/projects`));
+        const newProjectRef = doc(collection(db, `workspaces/${workspaceId}/projects`));
         const { id, ...projectData } = project;
         batch.set(newProjectRef, projectData);
         oldToNewIdMap.projects[id] = newProjectRef.id;
     }
 
-    // First pass for tasks: create tasks with new IDs and map old to new
+    // First pass for tasks: create task references and map old IDs to new IDs
     for (const task of input.tasks) {
-        const newTaskRef = doc(collection(db, `workspaces/${userId}/tasks`));
+        const newTaskRef = doc(collection(db, `workspaces/${workspaceId}/tasks`));
         oldToNewIdMap.tasks[task.id] = newTaskRef.id;
     }
 
     // Second pass for tasks: set data with correct new foreign keys
     for (const task of input.tasks) {
         const newTaskId = oldToNewIdMap.tasks[task.id];
-        const newTaskRef = doc(db, `workspaces/${userId}/tasks`, newTaskId);
+        const newTaskRef = doc(db, `workspaces/${workspaceId}/tasks`, newTaskId);
         
         const newProjectId = oldToNewIdMap.projects[task.projectId];
         if (!newProjectId) {
@@ -134,7 +135,8 @@ const importWorkspaceDataFlow = ai.defineFlow(
                 ...a,
                 assigneeId: newAssigneeId,
             };
-        }).filter(Boolean) as Assignment[];
+        }).filter((a): a is Assignment => a !== null);
+
 
         const newDependencies = task.dependencies.map(depId => {
             const newDepId = oldToNewIdMap.tasks[depId];
@@ -143,7 +145,7 @@ const importWorkspaceDataFlow = ai.defineFlow(
                  return null;
             }
             return newDepId;
-        }).filter(Boolean) as string[];
+        }).filter((d): d is string => d !== null);
 
         batch.set(newTaskRef, {
             name: task.name,

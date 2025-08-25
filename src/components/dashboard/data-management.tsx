@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef } from 'react';
@@ -26,8 +25,8 @@ export default function DataManagement() {
     try {
       const exportData = {
         teams: teams.map(({ id, ...rest }) => rest), // Omit id from export on teams
-        members: members.map(({ ...rest }) => rest), // Keep all member data, including ID
-        projects: projects.map(({ ...rest }) => rest), // Keep all project data, including ID
+        members: members.map(member => ({ ...member })), // Keep all member data, including ID
+        projects: projects.map(project => ({ ...project })), // Keep all project data, including ID
         tasks: tasks.map(({ startDate, endDate, ...rest }) => ({
           ...rest,
           startDate: startDate.toDate().toISOString(),
