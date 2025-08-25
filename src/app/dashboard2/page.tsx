@@ -12,25 +12,38 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Upload } from 'lucide-react';
+import { Upload, PlusCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useWorkspace } from '@/context/workspace-context';
+import type { Team, User, Project, Task } from '@/lib/firebase-types';
+
+interface RawWorkspaceData {
+    teams: Team[];
+    members: User[];
+    projects: Project[];
+    tasks: any[];
+}
+
 
 export default function Dashboard2() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
+  const addFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { workspaceData, setWorkspaceData } = useWorkspace();
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
+  const handleImportReplaceClick = () => {
+    replaceFileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleAddDataClick = () => {
+    addFileInputRef.current?.click();
+  };
+
+  const processFile = (file: File, mode: 'replace' | 'add') => {
+     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -39,24 +52,51 @@ export default function Dashboard2() {
         if (typeof content !== 'string') {
           throw new Error('File content is not valid.');
         }
-        const data = JSON.parse(content);
+        const newData: RawWorkspaceData = JSON.parse(content);
         
-        if (!data.teams || !data.members || !data.projects || !data.tasks) {
+        if (!newData.teams || !newData.members || !newData.projects || !newData.tasks) {
           throw new Error('Invalid JSON structure. Missing required fields.');
         }
+        
+        const hydratedNewData = {
+            ...newData,
+            tasks: newData.tasks.map((task: any) => ({
+                ...task,
+                startDate: new Date(task.startDate),
+                endDate: new Date(task.endDate)
+            }))
+        };
 
-        const hydratedTasks = data.tasks.map((task: any) => ({
-            ...task,
-            startDate: new Date(task.startDate),
-            endDate: new Date(task.endDate)
-        }));
+        if (mode === 'add' && workspaceData) {
+            // Merge logic
+            const mergedData = {
+                teams: [...workspaceData.teams],
+                members: [...workspaceData.members, ...hydratedNewData.members],
+                projects: [...workspaceData.projects, ...hydratedNewData.projects],
+                tasks: [...workspaceData.tasks, ...hydratedNewData.tasks],
+            };
+            
+            // Add new teams, avoiding duplicates by name
+            hydratedNewData.teams.forEach(newTeam => {
+                if (!mergedData.teams.some(existingTeam => existingTeam.name === newTeam.name)) {
+                    mergedData.teams.push(newTeam);
+                }
+            });
 
-        setWorkspaceData({ ...data, tasks: hydratedTasks });
+            setWorkspaceData(mergedData);
+            toast({
+              title: 'Data Added',
+              description: 'New workspace data has been added to the dashboard.',
+            });
 
-        toast({
-          title: 'Import Successful',
-          description: 'Workspace data has been loaded into the dashboard.',
-        });
+        } else {
+            // Replace logic
+            setWorkspaceData(hydratedNewData);
+            toast({
+              title: 'Import Successful',
+              description: 'Workspace data has been loaded into the dashboard.',
+            });
+        }
 
       } catch (error: any) {
         console.error('Import failed:', error);
@@ -66,12 +106,25 @@ export default function Dashboard2() {
           variant: 'destructive',
         });
       } finally {
-        if(fileInputRef.current) {
-            fileInputRef.current.value = '';
+        if(replaceFileInputRef.current) {
+            replaceFileInputRef.current.value = '';
+        }
+        if(addFileInputRef.current) {
+            addFileInputRef.current.value = '';
         }
       }
     };
     reader.readAsText(file);
+  }
+
+  const handleReplaceFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    processFile(file, 'replace');
+  };
+  
+  const handleAddFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    processFile(file, 'add');
   };
 
 
@@ -91,15 +144,26 @@ export default function Dashboard2() {
                 <CardTitle>Imported Data Dashboard</CardTitle>
                 <CardDescription>Load a workspace from a JSON file to visualize its data here. This is a read-only view and will not affect your live data.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button onClick={handleImportClick}>
+              <CardContent className="flex gap-4">
+                <Button onClick={handleImportReplaceClick}>
                   <Upload className="mr-2 h-4 w-4" />
-                  Import Workspace from JSON
+                  Import & Replace
+                </Button>
+                <Button onClick={handleAddDataClick} variant="outline" disabled={!workspaceData}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Data from File
                 </Button>
                 <input
                   type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
+                  ref={replaceFileInputRef}
+                  onChange={handleReplaceFileChange}
+                  accept=".json"
+                  className="hidden"
+                />
+                 <input
+                  type="file"
+                  ref={addFileInputRef}
+                  onChange={handleAddFileChange}
                   accept=".json"
                   className="hidden"
                 />
