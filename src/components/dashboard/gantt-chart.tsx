@@ -23,6 +23,10 @@ interface GanttChartProps {
     isStatic?: boolean;
 }
 
+interface GroupedTask extends Task {
+  isGroupHeader?: boolean;
+}
+
 export default function GanttChart({ projects: projectsProp, tasks: tasksProp, users: usersProp, isStatic = false }: GanttChartProps) {
   const { projects: projectsFromHook } = useProjectsFromHook();
   const { users: usersFromHook } = useUsersFromHook();
@@ -30,18 +34,41 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
   const projects = projectsProp || projectsFromHook;
   const allUsers = usersProp || usersFromHook;
 
-  const [selectedProjectId, setSelectedProjectId] = useState(projects.length > 0 ? projects[0].id : '');
+  const [selectedProjectId, setSelectedProjectId] = useState(projects.length > 0 ? 'all' : '');
   
   // Conditionally fetch tasks or use props
-  const { tasks: tasksFromHook, updateTask } = useTasks(isStatic ? undefined : selectedProjectId);
+  const { tasks: tasksFromHook, updateTask } = useTasks(isStatic ? undefined : (selectedProjectId !== 'all' ? selectedProjectId : undefined));
   const allTasks = tasksProp || tasksFromHook;
   
   const tasks = useMemo(() => {
-    if (isStatic) {
-        return allTasks.filter(t => t.projectId === selectedProjectId);
+    const tasksForSelectedProject = selectedProjectId === 'all'
+        ? allTasks
+        : allTasks.filter(t => t.projectId === selectedProjectId);
+
+    if (selectedProjectId === 'all' && projects.length > 1) {
+        const grouped: GroupedTask[] = [];
+        projects.forEach(project => {
+            // Add a "header" task for the project
+            grouped.push({ 
+                id: `header-${project.id}`, 
+                name: project.name, 
+                isGroupHeader: true,
+                // These fields are not used for headers but satisfy the type
+                projectId: project.id,
+                assignments: [],
+                startDate: new Date() as any,
+                endDate: new Date() as any,
+                dependencies: [],
+                hours: 0,
+            });
+            const projectTasks = tasksForSelectedProject.filter(t => t.projectId === project.id);
+            grouped.push(...projectTasks);
+        });
+        return grouped;
     }
-    return allTasks;
-  }, [allTasks, selectedProjectId, isStatic]);
+    
+    return tasksForSelectedProject;
+  }, [allTasks, selectedProjectId, isStatic, projects]);
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -50,10 +77,21 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    // If there is no selected project but there are projects available, default to 'all'
     if (projects.length > 0 && !selectedProjectId) {
-      setSelectedProjectId(projects[0].id);
+      setSelectedProjectId('all');
     }
+     // If the selected project is no longer in the list (and it's not 'all'), default back to 'all'
+    if (selectedProjectId !== 'all' && !projects.find(p => p.id === selectedProjectId)) {
+        if (projects.length > 0) {
+            setSelectedProjectId('all');
+        } else {
+            setSelectedProjectId('');
+        }
+    }
+
   }, [projects, selectedProjectId]);
+
 
   const getTaskDate = (date: any) => {
       if (!date) return new Date();
@@ -61,7 +99,8 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
   }
 
   const { startDate, endDate, dateInterval, totalDays, monthIntervals } = useMemo(() => {
-    if (tasks.length === 0) {
+    const tasksWithDates = tasks.filter(t => !t.isGroupHeader);
+    if (tasksWithDates.length === 0) {
       const today = new Date();
       const start = new Date(today);
       start.setDate(today.getDate() - 15);
@@ -71,7 +110,7 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
       return { startDate: start, endDate: end, dateInterval: interval, totalDays: interval.length, monthIntervals: [] };
     }
     
-    const taskDates = tasks.flatMap(t => [getTaskDate(t.startDate), getTaskDate(t.endDate)]);
+    const taskDates = tasksWithDates.flatMap(t => [getTaskDate(t.startDate), getTaskDate(t.endDate)]);
     const start = taskDates.reduce((min, d) => d < min ? d : min, taskDates[0]);
     const end = taskDates.reduce((max, d) => d > max ? d : max, taskDates[0]);
 
@@ -92,7 +131,7 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
   }, [tasks]);
 
   const handleTaskClick = (task: Task) => {
-    if (isStatic) return;
+    if (isStatic || task.isGroupHeader) return;
     setSelectedTask(task);
     setIsEditDialogOpen(true);
   }
@@ -109,7 +148,7 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
     const sDate = getTaskDate(task.startDate);
     const eDate = getTaskDate(task.endDate);
     const left = differenceInDays(sDate, startDate) * GANTT_DAY_WIDTH;
-    const width = differenceInDays(eDate, sDate) * GANTT_DAY_WIDTH;
+    const width = differenceInDays(eDate, sDate) * GANTT_DAY_WIDTH + GANTT_DAY_WIDTH;
     return {
       left: `${left}px`,
       width: `${width}px`,
@@ -140,7 +179,8 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
               <SelectValue placeholder="Select a project" />
             </SelectTrigger>
             <SelectContent>
-              {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                {projects.length > 1 && <SelectItem value="all">All Projects</SelectItem>}
+                {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -226,6 +266,14 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
 
                   {/* Task Rows and Bars (rendered second to be on top) */}
                   {tasks.map((task, index) => {
+                      if (task.isGroupHeader) {
+                          return (
+                              <div key={task.id} className="flex items-center border-t bg-muted font-semibold text-muted-foreground" style={{ height: `${GANTT_ROW_HEIGHT}px` }}>
+                                  <div className="px-2 truncate">{task.name}</div>
+                              </div>
+                          );
+                      }
+
                       const assignees = getAssignees(task.assignments);
                       const sDate = getTaskDate(task.startDate);
                       const eDate = getTaskDate(task.endDate);
@@ -285,3 +333,5 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
     </>
   );
 }
+
+    
