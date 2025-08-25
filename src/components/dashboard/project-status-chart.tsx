@@ -5,14 +5,20 @@ import { Bar, BarChart, Tooltip, XAxis, YAxis, ResponsiveContainer } from 'recha
 import {
   ChartContainer,
 } from '@/components/ui/chart';
-import { useProjects } from '@/hooks/use-projects';
+import { useProjects as useProjectsFromHook } from '@/hooks/use-projects';
 import { useMemo } from 'react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { CardDescription } from '../ui/card';
+import { Project } from '@/lib/firebase-types';
 
-export default function ProjectStatusChart() {
-  const { projects } = useProjects();
+interface ProjectStatusChartProps {
+  projects?: Project[];
+}
+
+export default function ProjectStatusChart({ projects: projectsProp }: ProjectStatusChartProps) {
+  const { projects: projectsFromHook } = useProjectsFromHook();
+  const projects = projectsProp || projectsFromHook;
   
   const { chartData, totalProjects } = useMemo(() => {
     if (!projects) return { chartData: [], totalProjects: 0 };

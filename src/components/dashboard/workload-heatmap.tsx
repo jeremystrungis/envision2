@@ -17,7 +17,7 @@ import {
   isSameMonth,
   startOfDay,
 } from 'date-fns';
-import { User, Task } from '@/lib/firebase-types';
+import { User, Task, Team } from '@/lib/firebase-types';
 import {
   Tooltip,
   TooltipContent,
@@ -31,9 +31,9 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useUsers } from '@/hooks/use-users';
-import { useTasks } from '@/hooks/use-tasks';
-import { useTeams } from '@/hooks/use-teams';
+import { useUsers as useUsersFromHook } from '@/hooks/use-users';
+import { useTasks as useTasksFromHook } from '@/hooks/use-tasks';
+import { useTeams as useTeamsFromHook } from '@/hooks/use-teams';
 
 const workloadLevels = [
     { level: 'Light', color: 'bg-sky-500/20 border-sky-500/30', description: '< 50%' },
@@ -45,10 +45,21 @@ const workloadLevels = [
 
 type ViewMode = 'week' | 'month' | '3-month' | '12-month';
 
-export default function WorkloadHeatmap() {
-  const { users } = useUsers();
-  const { tasks } = useTasks();
-  const { teams } = useTeams();
+interface WorkloadHeatmapProps {
+  users?: User[];
+  tasks?: Task[];
+  teams?: Team[];
+}
+
+export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, teams: teamsProp }: WorkloadHeatmapProps) {
+  const { users: usersFromHook } = useUsersFromHook();
+  const { tasks: tasksFromHook } = useTasksFromHook();
+  const { teams: teamsFromHook } = useTeamsFromHook();
+
+  const users = usersProp || usersFromHook;
+  const tasks = tasksProp || tasksFromHook;
+  const teams = teamsProp || teamsFromHook;
+
   const [selectedTeam, setSelectedTeam] = useState('All');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -89,6 +100,11 @@ export default function WorkloadHeatmap() {
     return users.filter((user) => user.teams?.includes(selectedTeam));
   }, [selectedTeam, users]);
 
+  const getTaskDate = (date: any) => {
+      if (!date) return new Date();
+      return date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
+  }
+
   const getWorkloadForDate = (user: User, date: Date): number => {
       if(!user || !date) return 0;
       const dayOfWeek = getDay(date); // Sunday is 0, Monday is 1...
@@ -96,12 +112,10 @@ export default function WorkloadHeatmap() {
       const startOfDayDate = startOfDay(date);
       
       const tasksOnDay = tasks.filter(task => {
-        if (!task.startDate?.toDate || !task.endDate?.toDate) return false;
-        
-        const taskStart = startOfDay(task.startDate.toDate());
-        const taskEnd = startOfDay(task.endDate.toDate());
+        const taskStart = startOfDay(getTaskDate(task.startDate));
+        const taskEnd = startOfDay(getTaskDate(task.endDate));
 
-        return date >= taskStart && date <= taskEnd &&
+        return startOfDayDate >= taskStart && startOfDayDate <= taskEnd &&
                task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek));
       });
 

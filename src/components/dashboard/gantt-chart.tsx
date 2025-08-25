@@ -6,22 +6,43 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
-import type { Task, User } from '@/lib/firebase-types';
+import type { Project, Task, User } from '@/lib/firebase-types';
 import EditTaskDialog from '@/components/projects/edit-task-dialog';
-import { useProjects } from '@/hooks/use-projects';
-import { useTasks } from '@/hooks/use-tasks';
-import { useUsers } from '@/hooks/use-users';
+import { useProjects as useProjectsFromHook } from '@/hooks/use-projects';
+import { useTasks as useTasksFromHook, useTasks } from '@/hooks/use-tasks';
+import { useUsers as useUsersFromHook } from '@/hooks/use-users';
 
 const GANTT_ROW_HEIGHT = 40; // in pixels
 const GANTT_DAY_WIDTH = 36; // in pixels
 const GANTT_CONTAINER_HEIGHT = 400; // in pixels
 
-export default function GanttChart() {
-  const { projects } = useProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState(projects.length > 0 ? projects[0].id : '');
-  const { tasks, updateTask } = useTasks(selectedProjectId);
-  const { users } = useUsers();
+interface GanttChartProps {
+    projects?: Project[];
+    tasks?: Task[];
+    users?: User[];
+    isStatic?: boolean;
+}
+
+export default function GanttChart({ projects: projectsProp, tasks: tasksProp, users: usersProp, isStatic = false }: GanttChartProps) {
+  const { projects: projectsFromHook } = useProjectsFromHook();
+  const { users: usersFromHook } = useUsersFromHook();
   
+  const projects = projectsProp || projectsFromHook;
+  const allUsers = usersProp || usersFromHook;
+
+  const [selectedProjectId, setSelectedProjectId] = useState(projects.length > 0 ? projects[0].id : '');
+  
+  // Conditionally fetch tasks or use props
+  const { tasks: tasksFromHook, updateTask } = useTasks(isStatic ? undefined : selectedProjectId);
+  const allTasks = tasksProp || tasksFromHook;
+  
+  const tasks = useMemo(() => {
+    if (isStatic) {
+        return allTasks.filter(t => t.projectId === selectedProjectId);
+    }
+    return allTasks;
+  }, [allTasks, selectedProjectId, isStatic]);
+
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
@@ -36,7 +57,7 @@ export default function GanttChart() {
 
   const getTaskDate = (date: any) => {
       if (!date) return new Date();
-      return date.toDate ? date.toDate() : new Date(date);
+      return date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
   }
 
   const { startDate, endDate, dateInterval, totalDays, monthIntervals } = useMemo(() => {
@@ -71,6 +92,7 @@ export default function GanttChart() {
   }, [tasks]);
 
   const handleTaskClick = (task: Task) => {
+    if (isStatic) return;
     setSelectedTask(task);
     setIsEditDialogOpen(true);
   }
@@ -105,7 +127,7 @@ export default function GanttChart() {
   const getAssignees = (assignments: Task['assignments']): User[] => {
     if (!assignments) return [];
     const assigneeIds = assignments.map(a => a.assigneeId);
-    return users.filter(u => assigneeIds.includes(u.id));
+    return allUsers.filter(u => assigneeIds.includes(u.id));
   };
 
 
@@ -113,7 +135,7 @@ export default function GanttChart() {
     <>
       <TooltipProvider>
         <div className="space-y-4">
-          <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+          <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={projects.length === 0}>
             <SelectTrigger className="w-[280px]">
               <SelectValue placeholder="Select a project" />
             </SelectTrigger>
@@ -214,7 +236,8 @@ export default function GanttChart() {
                           <TooltipTrigger asChild>
                           <div
                               ref={el => taskRefs.current[task.id] = el}
-                              className={cn("absolute z-10 flex items-center h-[30px] rounded text-primary-foreground text-xs px-2 cursor-pointer transition-colors",
+                              className={cn("absolute z-10 flex items-center h-[30px] rounded text-primary-foreground text-xs px-2 transition-colors",
+                              !isStatic && 'cursor-pointer',
                               isWithinInterval(new Date(), {start: sDate, end: eDate}) 
                                   ? "bg-accent hover:bg-accent/90 border-2 border-primary" 
                                   : "bg-primary/80 hover:bg-primary"
@@ -237,7 +260,7 @@ export default function GanttChart() {
                           <p className="font-bold">{task.name}</p>
                           <p>Assignees: {assignees.length > 0 ? assignees.map(a => a.name).join(', ') : 'Unassigned'}</p>
                           <p>Dates: {format(sDate, 'MMM d')} - {format(eDate, 'MMM d')}</p>
-                          <p className="text-muted-foreground text-xs mt-1">Click to edit this task.</p>
+                          {!isStatic && <p className="text-muted-foreground text-xs mt-1">Click to edit this task.</p>}
                           </TooltipContent>
                       </Tooltip>
                       </div>
@@ -248,7 +271,7 @@ export default function GanttChart() {
           </div>
         </div>
       </TooltipProvider>
-      {selectedTask && (
+      {selectedTask && !isStatic && (
         <EditTaskDialog
             isOpen={isEditDialogOpen}
             onClose={() => {

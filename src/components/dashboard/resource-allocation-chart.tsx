@@ -6,14 +6,28 @@ import {
   ChartContainer,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { useUsers } from '@/hooks/use-users';
-import { useTasks } from '@/hooks/use-tasks';
+import { useUsers as useUsersFromHook } from '@/hooks/use-users';
+import { useTasks as useTasksFromHook } from '@/hooks/use-tasks';
 import { getDay, isWithinInterval, eachDayOfInterval } from 'date-fns';
 import { useMemo } from 'react';
+import { Task, User } from '@/lib/firebase-types';
 
-export default function ResourceAllocationChart() {
-  const { users } = useUsers();
-  const { tasks } = useTasks();
+interface ResourceAllocationChartProps {
+  users?: User[];
+  tasks?: Task[];
+}
+
+export default function ResourceAllocationChart({ users: usersProp, tasks: tasksProp }: ResourceAllocationChartProps) {
+  const { users: usersFromHook } = useUsersFromHook();
+  const { tasks: tasksFromHook } = useTasksFromHook();
+  
+  const users = usersProp || usersFromHook;
+  const tasks = tasksProp || tasksFromHook;
+
+  const getTaskDate = (date: any) => {
+      if (!date) return new Date();
+      return date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
+  }
 
   const allocationData = useMemo(() => {
     const today = new Date();
@@ -22,10 +36,8 @@ export default function ResourceAllocationChart() {
     return users.map((user) => {
       // Find all tasks assigned to this user that are active today.
       const tasksToday = tasks.filter(task => {
-          if (!task.startDate?.toDate || !task.endDate?.toDate) return false;
-          
-          const startDate = task.startDate.toDate();
-          const endDate = task.endDate.toDate();
+          const startDate = getTaskDate(task.startDate);
+          const endDate = getTaskDate(task.endDate);
 
           const isTaskActive = isWithinInterval(today, { start: startDate, end: endDate });
           if (!isTaskActive) return false;
@@ -39,8 +51,8 @@ export default function ResourceAllocationChart() {
           const assignment = task.assignments.find(a => a.assigneeId === user.id);
           if (!assignment) return total;
           
-          const startDate = task.startDate.toDate();
-          const endDate = task.endDate.toDate();
+          const startDate = getTaskDate(task.startDate);
+          const endDate = getTaskDate(task.endDate);
           
           // Get all days in the task's date range
           const allDaysInInterval = eachDayOfInterval({ start: startDate, end: endDate });
