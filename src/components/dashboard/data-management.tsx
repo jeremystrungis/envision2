@@ -20,14 +20,13 @@ export default function DataManagement() {
   const { teams } = useTeams();
   const { users: members } = useUsers();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
     try {
       const exportData = {
-        teams: teams.map(({ id, ...rest }) => ({ id, ...rest })),
-        members: members.map(({ id, ...rest }) => ({ id, ...rest })),
-        projects: projects.map(({ id, ...rest }) => ({ id, ...rest })),
+        teams: teams.map(({ ...rest }) => ({ ...rest })),
+        members: members.map(({ ...rest }) => ({ ...rest })),
+        projects: projects.map(({ ...rest }) => ({ ...rest })),
         tasks: tasks.map(({ startDate, endDate, ...rest }) => ({
           ...rest,
           startDate: startDate.toDate().toISOString(),
@@ -60,83 +59,18 @@ export default function DataManagement() {
     }
   };
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const content = e.target?.result;
-        if (typeof content !== 'string') {
-          throw new Error('File content is not valid.');
-        }
-        const data = JSON.parse(content);
-
-        // Basic validation can be done here before sending to the flow
-        if (!data.teams || !data.members || !data.projects || !data.tasks) {
-          throw new Error('Invalid JSON structure. Missing required fields.');
-        }
-        
-        toast({ title: 'Importing Data...', description: 'Please wait while your data is being added.' });
-
-        // Pass the user ID to the flow
-        const result = await importWorkspaceData({ ...data, userId: user.uid });
-
-        if (result.success) {
-          toast({
-            title: 'Import Successful',
-            description: 'Your workspace data has been added successfully.',
-          });
-        } else {
-           throw new Error('The import process failed on the server. Check logs.');
-        }
-
-
-      } catch (error: any) {
-        console.error('Import failed:', error);
-        toast({
-          title: 'Import Failed',
-          description: error.message || 'Could not import data from the file. Check server logs for details.',
-          variant: 'destructive',
-        });
-      } finally {
-        // Reset file input
-        if(fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-      }
-    };
-    reader.readAsText(file);
-  };
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Data Management</CardTitle>
-        <CardDescription>Export your current workspace or import data from a JSON file.</CardDescription>
+        <CardDescription>Export your current workspace to a JSON file.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex gap-4">
           <Button onClick={handleExport} variant="outline">
             <Download className="mr-2 h-4 w-4" />
-            Export Data
+            Export to JSON
           </Button>
-          <Button onClick={handleImportClick}>
-            <Upload className="mr-2 h-4 w-4" />
-            Import from JSON
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".json"
-            className="hidden"
-          />
         </div>
       </CardContent>
     </Card>

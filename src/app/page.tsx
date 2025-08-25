@@ -11,6 +11,7 @@ import ProjectStatusChart from '@/components/dashboard/project-status-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
+import DataManagement from '@/components/dashboard/data-management';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ export default function Home() {
         <div className="flex flex-1 flex-col">
           <AppHeader />
           <main className="flex-1 p-6 flex flex-col gap-6">
+            <DataManagement />
             <WorkloadHeatmap />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
