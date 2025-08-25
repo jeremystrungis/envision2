@@ -3,6 +3,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/hooks/use-auth';
+import { WorkspaceProvider } from '@/context/workspace-context';
 
 export const metadata: Metadata = {
   title: 'ENTRUST PMvision',
@@ -23,8 +24,10 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
+          <WorkspaceProvider>
             {children}
             <Toaster />
+          </WorkspaceProvider>
         </AuthProvider>
       </body>
     </html>

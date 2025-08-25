@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import AppHeader from '@/components/app-header';
 import WorkloadHeatmap from '@/components/dashboard/workload-heatmap';
@@ -14,23 +14,15 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Team, User, Project, Task } from '@/lib/firebase-types';
 import { useToast } from '@/hooks/use-toast';
-
-interface WorkspaceData {
-    teams: Team[];
-    members: User[];
-    projects: Project[];
-    tasks: Task[];
-}
+import { useWorkspace } from '@/context/workspace-context';
 
 export default function Dashboard2() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  const [workspaceData, setWorkspaceData] = useState<WorkspaceData | null>(null);
+  const { workspaceData, setWorkspaceData } = useWorkspace();
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -49,12 +41,10 @@ export default function Dashboard2() {
         }
         const data = JSON.parse(content);
         
-        // Basic validation
         if (!data.teams || !data.members || !data.projects || !data.tasks) {
           throw new Error('Invalid JSON structure. Missing required fields.');
         }
 
-        // Convert date strings back to Date objects
         const hydratedTasks = data.tasks.map((task: any) => ({
             ...task,
             startDate: new Date(task.startDate),
@@ -86,7 +76,6 @@ export default function Dashboard2() {
 
 
   if (loading || !user) {
-    // This will be handled by the useAuth hook redirecting to /login
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
