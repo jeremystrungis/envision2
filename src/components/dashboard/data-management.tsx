@@ -18,16 +18,16 @@ export default function DataManagement() {
   const { projects } = useProjects();
   const { tasks } = useTasks();
   const { teams } = useTeams();
-  const { users: members } = useUsers(); // useUsers is the correct hook for members
+  const { users: members } = useUsers();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
     try {
       const exportData = {
-        teams: teams.map(({ ...rest }) => rest),
-        members: members.map(member => ({ ...member })), // Keep all member data, including ID
-        projects: projects.map(project => ({ ...project })), // Keep all project data, including ID
+        teams: teams.map(({ id, ...rest }) => ({ id, ...rest })),
+        members: members.map(({ id, ...rest }) => ({ id, ...rest })),
+        projects: projects.map(({ id, ...rest }) => ({ id, ...rest })),
         tasks: tasks.map(({ startDate, endDate, ...rest }) => ({
           ...rest,
           startDate: startDate.toDate().toISOString(),
