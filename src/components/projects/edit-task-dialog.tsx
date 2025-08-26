@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +36,8 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Checkbox } from '../ui/checkbox';
 import { Slider } from '../ui/slider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useWorkspace } from '@/context/workspace-context';
+import { Separator } from '../ui/separator';
 
 
 const assignmentSchema = z.object({
@@ -78,7 +80,8 @@ const weekDays = [
 ];
 
 function AssigneePopover({ form }: { form: any }) {
-    const { users } = useUsers();
+    const { users: liveUsers } = useUsers();
+    const { workspaceData } = useWorkspace();
     const [isOpen, setIsOpen] = useState(false);
 
     const currentAssignments = form.watch('assignments') || [];
@@ -89,6 +92,12 @@ function AssigneePopover({ form }: { form: any }) {
         setSelectedUsers(assignments.map((a: Assignment) => a.assigneeId));
     }, [currentAssignments, form]);
 
+    const { importedUsers } = useMemo(() => {
+      const imported = workspaceData?.members || [];
+      const liveIds = new Set(liveUsers.map(u => u.id));
+      const uniqueImported = imported.filter(importedUser => !liveIds.has(importedUser.id));
+      return { importedUsers: uniqueImported };
+    }, [liveUsers, workspaceData]);
 
     const handleDone = () => {
         const currentAssignments = form.getValues('assignments') || [];
@@ -125,9 +134,9 @@ function AssigneePopover({ form }: { form: any }) {
                     <CommandInput placeholder="Search members..." />
                     <CommandList>
                         <CommandEmpty>No members found.</CommandEmpty>
-                        <CommandGroup>
-                            <ScrollArea className="h-48">
-                                {users.map(user => (
+                         <CommandGroup heading="Workspace Members">
+                            <ScrollArea className="max-h-32">
+                                {liveUsers.map(user => (
                                     <CommandItem
                                         key={user.id}
                                         value={user.name}
@@ -145,6 +154,31 @@ function AssigneePopover({ form }: { form: any }) {
                                 ))}
                             </ScrollArea>
                         </CommandGroup>
+                        {importedUsers.length > 0 && (
+                          <>
+                            <Separator />
+                            <CommandGroup heading="Assign Other Team Members">
+                                <ScrollArea className="max-h-32">
+                                {importedUsers.map(user => (
+                                    <CommandItem
+                                        key={user.id}
+                                        value={user.name}
+                                        onSelect={() => handleUserSelect(user.id)}
+                                        className="flex items-center"
+                                    >
+                                        <Checkbox
+                                            id={`user-edit-task-imported-${user.id}`}
+                                            checked={selectedUsers.includes(user.id)}
+                                            onCheckedChange={() => handleUserSelect(user.id)}
+                                            className="mr-2"
+                                        />
+                                        <label htmlFor={`user-edit-task-imported-${user.id}`} className="flex-1 cursor-pointer text-blue-400">{user.name}</label>
+                                    </CommandItem>
+                                ))}
+                                </ScrollArea>
+                            </CommandGroup>
+                          </>
+                        )}
                     </CommandList>
                      <div className="p-2 border-t flex justify-end">
                         <Button onClick={handleDone}>Save</Button>
@@ -156,7 +190,8 @@ function AssigneePopover({ form }: { form: any }) {
 }
 
 export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: EditTaskDialogProps) {
-  const { users } = useUsers();
+  const { users: liveUsers } = useUsers();
+  const { workspaceData } = useWorkspace();
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -179,8 +214,15 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
         hours: task.hours,
     })
   }, [task, form, isOpen]);
+
+  const allUsers = useMemo(() => {
+    const all = new Map<string, User>();
+    liveUsers.forEach(u => all.set(u.id, u));
+    (workspaceData?.members || []).forEach(u => all.set(u.id, u));
+    return Array.from(all.values());
+  }, [liveUsers, workspaceData]);
   
-  const getUserById = (id: string) => users.find(u => u.id === id);
+  const getUserById = (id: string) => allUsers.find(u => u.id === id);
 
 
   const onSubmit = (data: TaskFormValues) => {
@@ -411,5 +453,3 @@ export default function EditTaskDialog({ isOpen, onClose, onUpdateTask, task }: 
     </Dialog>
   );
 }
-
-    
