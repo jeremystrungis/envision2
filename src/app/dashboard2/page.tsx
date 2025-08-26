@@ -18,7 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Team, User, Project, Task, Assignment } from '@/lib/firebase-types';
-import { importPrincipals } from '@/ai/flows/import-principals-flow';
+import { useTeams } from '@/hooks/use-teams';
+import { useUsers } from '@/hooks/use-users';
 
 
 // Define a more specific type for the data coming from the JSON file
@@ -44,6 +45,9 @@ export default function Dashboard2() {
   const fileAddRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  const { teams: existingTeams, addTeam } = useTeams();
+  const { users: existingUsers, addUser } = useUsers();
+
   const workspaceLoading = authLoading || contextLoading;
 
 
@@ -56,22 +60,48 @@ export default function Dashboard2() {
     return null;
   }
 
-  const syncPrincipalsToBackend = async (data: WorkspaceJsonData) => {
+  const syncPrincipals = async (data: WorkspaceJsonData) => {
     try {
-        await importPrincipals({
-            teams: data.teams,
-            members: data.members,
-        });
-        toast({
-            title: 'Sync Successful',
-            description: 'Teams and Members from the imported file have been added to the main workspace.',
-        });
+        const existingTeamNames = new Set(existingTeams.map(t => t.name));
+        const existingMemberNames = new Set(existingUsers.map(u => u.name));
+        
+        let teamsAdded = 0;
+        let membersAdded = 0;
+
+        for (const team of data.teams) {
+            if (!existingTeamNames.has(team.name)) {
+                await addTeam({ name: team.name });
+                teamsAdded++;
+                existingTeamNames.add(team.name); // Add to set to handle duplicates in same file
+            }
+        }
+
+        for (const member of data.members) {
+            if (!existingMemberNames.has(member.name)) {
+                await addUser(member);
+                membersAdded++;
+                existingMemberNames.add(member.name); // Add to set to handle duplicates in same file
+            }
+        }
+
+        if (teamsAdded > 0 || membersAdded > 0) {
+             toast({
+                title: 'Backend Sync Successful',
+                description: `Added ${teamsAdded} new team(s) and ${membersAdded} new member(s) to the main workspace.`,
+            });
+        } else {
+             toast({
+                title: 'Backend Sync Complete',
+                description: 'No new teams or members needed to be added.',
+            });
+        }
+
     } catch (e) {
         const error = e as Error;
         console.error("Failed to sync principals:", error);
          toast({
             title: 'Backend Sync Failed',
-            description: `Could not add teams/members to the main database. ${error.message}`,
+            description: `Could not sync teams/members to the main database. ${error.message}`,
             variant: 'destructive',
         });
     }
@@ -103,7 +133,7 @@ export default function Dashboard2() {
         });
         
         // Trigger backend sync after setting data
-        syncPrincipalsToBackend(data);
+        syncPrincipals(data);
 
     } catch (e) {
         const error = e as Error;
@@ -175,7 +205,7 @@ export default function Dashboard2() {
         });
 
         // Trigger backend sync for the new data
-        syncPrincipalsToBackend(newData);
+        syncPrincipals(newData);
 
 
       } catch(e) {
