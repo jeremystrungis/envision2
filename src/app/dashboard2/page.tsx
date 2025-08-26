@@ -176,8 +176,11 @@ export default function Dashboard2() {
     if (!workspaceData) {
         return (
             <Alert>
-                <AlertTitle>No Data Imported</AlertTitle>
-                <AlertDescription>Use the button above to import a `pmvision_export.json` file to view the data here.</AlertDescription>
+                <AlertTitle>No Data Loaded</AlertTitle>
+                <AlertDescription>
+                  This dashboard reflects new additions from your main workspace in real-time. 
+                  You can also manually load a `pmvision_export.json` file to view a complete dataset.
+                </AlertDescription>
             </Alert>
         );
     }
@@ -240,8 +243,8 @@ export default function Dashboard2() {
           <main className="flex-1 p-6 flex flex-col gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Imported Data Dashboard (Sandbox)</CardTitle>
-                <CardDescription>This dashboard provides a sandboxed view of an imported JSON workspace file. Data here is session-only and does not affect the main database.</CardDescription>
+                <CardTitle>Hybrid Data Dashboard</CardTitle>
+                <CardDescription>This dashboard provides a hybrid view. It automatically syncs new data from the live workspace and allows manual import of JSON files.</CardDescription>
               </CardHeader>
                <CardContent>
                 <div className="flex gap-4">
@@ -279,3 +282,4 @@ export default function Dashboard2() {
     </>
   );
 }
+
