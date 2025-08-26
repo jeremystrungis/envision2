@@ -18,10 +18,12 @@ import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Team, User, Project, Task, Assignment } from '@/lib/firebase-types';
+import { importPrincipals } from '@/ai/flows/import-principals-flow';
 
 
 // Define a more specific type for the data coming from the JSON file
-interface JsonTask extends Omit<Task, 'startDate' | 'endDate'> {
+interface JsonTask extends Omit<Task, 'startDate' | 'endDate' | 'id'> {
+    id?: string; // ID from file is optional
     startDate: string; // ISO string
     endDate: string; // ISO string
 }
@@ -53,6 +55,27 @@ export default function Dashboard2() {
     router.push('/login');
     return null;
   }
+
+  const syncPrincipalsToBackend = async (data: WorkspaceJsonData) => {
+    try {
+        await importPrincipals({
+            teams: data.teams,
+            members: data.members,
+        });
+        toast({
+            title: 'Sync Successful',
+            description: 'Teams and Members from the imported file have been added to the main workspace.',
+        });
+    } catch (e) {
+        const error = e as Error;
+        console.error("Failed to sync principals:", error);
+         toast({
+            title: 'Backend Sync Failed',
+            description: `Could not add teams/members to the main database. ${error.message}`,
+            variant: 'destructive',
+        });
+    }
+  };
   
   const parseAndSetData = (jsonString: string) => {
     try {
@@ -78,6 +101,10 @@ export default function Dashboard2() {
             title: 'Import Successful',
             description: 'Workspace data loaded into Dashboard 2.',
         });
+        
+        // Trigger backend sync after setting data
+        syncPrincipalsToBackend(data);
+
     } catch (e) {
         const error = e as Error;
         console.error("Failed to parse JSON:", error);
@@ -146,6 +173,10 @@ export default function Dashboard2() {
             title: 'Data Added Successfully',
             description: 'New data has been added to Dashboard 2.',
         });
+
+        // Trigger backend sync for the new data
+        syncPrincipalsToBackend(newData);
+
 
       } catch(e) {
         const error = e as Error;
@@ -282,4 +313,3 @@ export default function Dashboard2() {
     </>
   );
 }
-
