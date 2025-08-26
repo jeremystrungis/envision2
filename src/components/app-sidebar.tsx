@@ -28,7 +28,6 @@ export default function AppSidebar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard2', label: 'Dashboard 2', icon: FileJson },
     { href: '/gantt', label: 'Gantt', icon: GanttChartSquare },
     { href: '/teams', label: 'Teams', icon: Users },
@@ -41,7 +40,7 @@ export default function AppSidebar() {
     <aside className="hidden w-56 flex-col border-r bg-background sm:flex">
         <nav className="flex flex-col gap-4 p-4">
           <Link
-            href="/"
+            href="/teams"
             className="group mb-4 flex h-9 shrink-0 items-center gap-2"
           >
             <AppLogo className="h-8 w-8 text-primary" />

@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-       router.push('/');
+       router.push('/teams');
     } catch (error) {
       console.error("Error signing in with Google: ", error);
     }
