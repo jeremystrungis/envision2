@@ -122,7 +122,11 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
     const allUsers = useMemo(() => {
         const all = new Map<string, User>();
         liveUsers.forEach(u => all.set(u.id, u));
-        (workspaceData?.members || []).forEach(u => all.set(u.id, u));
+        (workspaceData?.members || []).forEach(u => {
+            if (!all.has(u.id)) {
+                all.set(u.id, u);
+            }
+        });
         return Array.from(all.values());
     }, [liveUsers, workspaceData]);
 
@@ -242,7 +246,11 @@ export default function AddProjectDialog({ isOpen, onClose, onAddProject }: AddP
   const allUsers = useMemo(() => {
     const all = new Map<string, User>();
     users.forEach(u => all.set(u.id, u));
-    (workspaceData?.members || []).forEach(u => all.set(u.id, u));
+    (workspaceData?.members || []).forEach(u => {
+        if (!all.has(u.id)) {
+            all.set(u.id, u);
+        }
+    });
     return Array.from(all.values());
     }, [users, workspaceData]);
 

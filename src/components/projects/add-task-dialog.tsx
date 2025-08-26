@@ -99,6 +99,17 @@ function AssigneePopover({ form }: { form: any }) {
       return { importedUsers: uniqueImported };
     }, [liveUsers, workspaceData]);
 
+    const allUsers = useMemo(() => {
+        const all = new Map<string, User>();
+        liveUsers.forEach(u => all.set(u.id, u));
+        (workspaceData?.members || []).forEach(u => {
+            if (!all.has(u.id)) {
+                all.set(u.id, u);
+            }
+        });
+        return Array.from(all.values());
+    }, [liveUsers, workspaceData]);
+
     const handleDone = () => {
         const currentAssignments = form.getValues('assignments') || [];
         const newAssignments = selectedUsers.map(userId => {
@@ -208,7 +219,11 @@ export default function AddTaskDialog({ isOpen, onClose, onAddTask }: AddTaskDia
   const allUsers = useMemo(() => {
     const all = new Map<string, User>();
     liveUsers.forEach(u => all.set(u.id, u));
-    (workspaceData?.members || []).forEach(u => all.set(u.id, u));
+    (workspaceData?.members || []).forEach(u => {
+        if (!all.has(u.id)) {
+            all.set(u.id, u);
+        }
+    });
     return Array.from(all.values());
   }, [liveUsers, workspaceData]);
 
