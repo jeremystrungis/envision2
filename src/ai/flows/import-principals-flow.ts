@@ -36,7 +36,7 @@ const PrincipalsInputSchema = z.object({
 export type PrincipalsInput = z.infer<typeof PrincipalsInputSchema>;
 
 
-export async function importPrincipals(input: PrincipalsInput): Promise<{ success: boolean }> {
+export async function importPrincipals(input: PrincipalsInput): Promise<{ success: boolean; teamsAdded: number; membersAdded: number }> {
   return await importPrincipalsFlow(input);
 }
 
@@ -45,7 +45,7 @@ const importPrincipalsFlow = ai.defineFlow(
   {
     name: 'importPrincipalsFlow',
     inputSchema: PrincipalsInputSchema,
-    outputSchema: z.object({ success: z.boolean() }),
+    outputSchema: z.object({ success: z.boolean(), teamsAdded: z.number(), membersAdded: z.number() }),
   },
   async (input) => {
     const batch = writeBatch(db);
@@ -60,12 +60,16 @@ const importPrincipalsFlow = ai.defineFlow(
     const existingTeamNames = new Set(existingTeamsSnapshot.docs.map(d => d.data().name));
     const existingMemberNames = new Set(existingMembersSnapshot.docs.map(d => d.data().name));
 
+    let teamsAdded = 0;
+    let membersAdded = 0;
+
     // Import Teams if they don't already exist
     for (const team of input.teams) {
       if (!existingTeamNames.has(team.name)) {
         const newTeamRef = doc(teamsCollection);
         batch.set(newTeamRef, team);
         existingTeamNames.add(team.name); // Add to set to handle duplicates within the same file
+        teamsAdded++;
       }
     }
     
@@ -77,11 +81,12 @@ const importPrincipalsFlow = ai.defineFlow(
         const { id, ...memberData } = member as any; 
         batch.set(newMemberRef, memberData);
         existingMemberNames.add(member.name); // Add to set to handle duplicates within the same file
+        membersAdded++;
       }
     }
 
     await batch.commit();
 
-    return { success: true };
+    return { success: true, teamsAdded, membersAdded };
   }
 );
