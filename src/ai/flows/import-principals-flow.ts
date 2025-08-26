@@ -11,7 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getFirestore, writeBatch, collection, doc, getDocs, query, where } from 'firebase/firestore';
+import { getFirestore, writeBatch, collection, doc, getDocs, query } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
@@ -73,9 +73,10 @@ const importPrincipalsFlow = ai.defineFlow(
     for (const member of input.members) {
       if (!existingMemberNames.has(member.name)) {
         const newMemberRef = doc(membersCollection);
-        const { id, ...memberData } = member as any; // Ignore ID from file
+        // Omit any 'id' field from the file, as Firestore generates its own.
+        const { id, ...memberData } = member as any; 
         batch.set(newMemberRef, memberData);
-        existingMemberNames.add(member.name);
+        existingMemberNames.add(member.name); // Add to set to handle duplicates within the same file
       }
     }
 
