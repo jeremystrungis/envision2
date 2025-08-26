@@ -94,8 +94,9 @@ function AssigneePopover({ form }: { form: any }) {
 
     const { importedUsers } = useMemo(() => {
       const imported = workspaceData?.members || [];
-      const liveIds = new Set(liveUsers.map(u => u.id));
-      const uniqueImported = imported.filter(importedUser => !liveIds.has(importedUser.id));
+      const uniqueImported = imported.filter(importedUser => 
+          !liveUsers.some(liveUser => liveUser.name === importedUser.name)
+      );
       return { importedUsers: uniqueImported };
     }, [liveUsers, workspaceData]);
 
@@ -183,7 +184,7 @@ function AssigneePopover({ form }: { form: any }) {
                                             onCheckedChange={() => handleUserSelect(user.id)}
                                             className="mr-2"
                                         />
-                                        <label htmlFor={`user-edit-task-imported-${user.id}`} className="flex-1 cursor-pointer text-blue-400">{user.name}</label>
+                                        <label htmlFor={`user-edit-task-imported-${user.id}`} className="flex-1 cursor-pointer text-white hover:text-blue-200">{user.name}</label>
                                     </CommandItem>
                                 ))}
                                 </ScrollArea>

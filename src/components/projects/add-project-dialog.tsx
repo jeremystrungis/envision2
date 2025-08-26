@@ -106,14 +106,15 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
         setSelectedUsers(assignments.map((a: Assignment) => a.assigneeId));
     }, [currentAssignments, form, taskIndex]);
 
-    const { combinedUsers, importedUsers, liveUserIds } = useMemo(() => {
+    const { importedUsers, liveUserIds } = useMemo(() => {
       const imported = workspaceData?.members || [];
       const liveIds = new Set(liveUsers.map(u => u.id));
       
-      const uniqueImported = imported.filter(importedUser => !liveIds.has(importedUser.id));
+      const uniqueImported = imported.filter(importedUser => 
+          !liveUsers.some(liveUser => liveUser.name === importedUser.name)
+      );
 
       return { 
-          combinedUsers: [...liveUsers, ...uniqueImported],
           importedUsers: uniqueImported,
           liveUserIds: liveIds
       };
@@ -206,7 +207,7 @@ function AssigneePopover({ taskIndex, form }: { taskIndex: number, form: any }) 
                                                 onCheckedChange={() => handleUserSelect(user.id)}
                                                 className="mr-2"
                                             />
-                                            <label htmlFor={`user-${user.id}`} className="flex-1 cursor-pointer text-blue-400">{user.name}</label>
+                                            <label htmlFor={`user-${user.id}`} className="flex-1 cursor-pointer text-white hover:text-blue-200">{user.name}</label>
                                         </CommandItem>
                                     ))}
                                 </ScrollArea>
