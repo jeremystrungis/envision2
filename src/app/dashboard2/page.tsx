@@ -15,7 +15,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useWorkspace } from '@/context/workspace-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Upload } from 'lucide-react';
+import { Upload, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Team, User, Project, Task, Assignment } from '@/lib/firebase-types';
 import { importPrincipals } from '@/ai/flows/import-principals-flow';
@@ -108,7 +108,7 @@ export default function Dashboard2() {
         setWorkspaceData(formattedData);
         toast({
             title: 'Import Successful',
-            description: 'Workspace data loaded into Dashboard 2.',
+            description: 'Workspace data loaded into Main Dashboard.',
         });
         
         // Trigger backend sync after setting data
@@ -180,7 +180,7 @@ export default function Dashboard2() {
         setWorkspaceData(mergedData);
         toast({
             title: 'Data Added Successfully',
-            description: 'New data has been added to Dashboard 2.',
+            description: 'New data has been added to the dashboard.',
         });
 
         // Trigger backend sync for the new data
@@ -196,6 +196,54 @@ export default function Dashboard2() {
             variant: 'destructive',
         });
       }
+  };
+
+  const handleExport = () => {
+    if (!workspaceData) {
+      toast({
+        title: 'No Data to Export',
+        description: 'Load data before exporting.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      const exportData = {
+        teams: workspaceData.teams.map(({ id, ...rest }) => ({...rest})),
+        members: workspaceData.members.map(({ id, ...rest }) => ({ ...rest })),
+        projects: workspaceData.projects.map(({ id, ...rest }) => ({ ...rest })),
+        tasks: workspaceData.tasks.map(({ id, startDate, endDate, ...rest }) => ({
+          ...rest,
+          // Ensure dates are converted to ISO strings for compatibility
+          startDate: (startDate instanceof Date) ? startDate.toISOString() : startDate,
+          endDate: (endDate instanceof Date) ? endDate.toISOString() : endDate,
+        })),
+      };
+
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'pmvision_export.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export Successful',
+        description: 'Your workspace data has been downloaded.',
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: 'Export Failed',
+        description: 'Could not export your workspace data. See console for details.',
+        variant: 'destructive',
+      });
+    }
   };
 
 
@@ -284,7 +332,7 @@ export default function Dashboard2() {
             <Card>
               <CardHeader>
                 <CardTitle>Hybrid Data Dashboard</CardTitle>
-                <CardDescription>This dashboard provides a hybrid view. It automatically syncs new data from the live workspace and allows manual import of JSON files.</CardDescription>
+                <CardDescription>This dashboard provides a hybrid view. It automatically syncs new data from the live workspace and allows manual import/export of JSON files.</CardDescription>
               </CardHeader>
                <CardContent>
                 <div className="flex gap-4">
@@ -309,6 +357,10 @@ export default function Dashboard2() {
                    <Button onClick={() => fileAddRef.current?.click()} variant="outline">
                     <Upload className="mr-2 h-4 w-4" />
                     Add Data from File
+                  </Button>
+                  <Button onClick={handleExport} variant="secondary">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export to JSON
                   </Button>
                 </div>
               </CardContent>
