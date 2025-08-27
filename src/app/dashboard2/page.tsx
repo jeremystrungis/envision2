@@ -94,15 +94,35 @@ export default function Dashboard2() {
         if (!data.projects || !data.tasks || !data.members) {
              throw new Error("Invalid JSON format: missing projects, tasks, or members.");
         }
+        
+        // ** WORKAROUND FIX **
+        // Re-hydrate the references from names back to IDs for client-side components.
+        // The export uses names for portability, but the heatmap component needs IDs to link data.
+        const memberNameToIdMap = new Map(data.members.map(m => [m.name, m.id]));
+        const projectNameToIdMap = new Map(data.projects.map(p => [p.name, p.id]));
+        
+        const rehydratedTasks = data.tasks.map(task => {
+            // Re-link projectId from name back to ID
+            const projectId = projectNameToIdMap.get(task.projectId as any) || task.projectId;
+            
+            // Re-link assigneeId in assignments from name back to ID
+            const assignments = task.assignments.map(a => {
+                const assigneeId = memberNameToIdMap.get(a.assigneeId as any) || a.assigneeId;
+                return {...a, assigneeId };
+            });
+
+            return {
+                ...task,
+                projectId,
+                assignments,
+                startDate: new Date(task.startDate),
+                endDate: new Date(task.endDate)
+            };
+        });
 
         const formattedData = {
             ...data,
-            // Convert date strings back to Date objects
-            tasks: data.tasks.map(task => ({
-                ...task,
-                startDate: new Date(task.startDate),
-                endDate: new Date(task.endDate)
-            }))
+            tasks: rehydratedTasks
         } as any; // Cast to any to align with context type
 
         setWorkspaceData(formattedData);
@@ -112,6 +132,7 @@ export default function Dashboard2() {
         });
         
         // Trigger backend sync after setting data
+        // The backend flow still expects names, so we pass the original 'data' object
         syncPrincipalsToBackend(data);
 
     } catch (e) {
@@ -385,5 +406,3 @@ export default function Dashboard2() {
     </>
   );
 }
-
-    
