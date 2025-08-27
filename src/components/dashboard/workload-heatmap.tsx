@@ -458,5 +458,3 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
     </Card>
   );
 }
-
-    

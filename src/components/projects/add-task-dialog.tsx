@@ -177,7 +177,7 @@ function AssigneePopover({ form }: { form: any }) {
                                         key={user.id}
                                         value={user.name}
                                         onSelect={() => handleUserSelect(user.id)}
-                                        className="flex items-center"
+                                        className="flex items-center aria-selected:bg-blue-500/20"
                                     >
                                         <Checkbox
                                             id={`user-add-task-imported-${user.id}`}
@@ -185,7 +185,7 @@ function AssigneePopover({ form }: { form: any }) {
                                             onCheckedChange={() => handleUserSelect(user.id)}
                                             className="mr-2"
                                         />
-                                        <label htmlFor={`user-add-task-imported-${user.id}`} className="flex-1 cursor-pointer text-white hover:text-blue-200">{user.name}</label>
+                                        <label htmlFor={`user-add-task-imported-${user.id}`} className="flex-1 cursor-pointer text-white">{user.name}</label>
                                     </CommandItem>
                                 ))}
                                 </ScrollArea>
