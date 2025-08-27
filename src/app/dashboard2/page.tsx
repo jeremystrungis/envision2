@@ -209,12 +209,23 @@ export default function Dashboard2() {
     }
     
     try {
+      // Create lookup maps for performance
+      const memberMap = new Map(workspaceData.members.map(m => [m.id, m.name]));
+      const projectMap = new Map(workspaceData.projects.map(p => [p.id, p.name]));
+
       const exportData = {
-        teams: workspaceData.teams.map(({ id, ...rest }) => ({...rest})),
-        members: workspaceData.members.map(({ id, ...rest }) => ({ ...rest })),
-        projects: workspaceData.projects.map(({ id, ...rest }) => ({ ...rest })),
-        tasks: workspaceData.tasks.map(({ id, startDate, endDate, ...rest }) => ({
+        teams: workspaceData.teams.map(({ ...rest }) => ({...rest})),
+        members: workspaceData.members.map(({ ...rest }) => ({ ...rest })),
+        projects: workspaceData.projects.map(({ ...rest }) => ({ ...rest })),
+        tasks: workspaceData.tasks.map(({ id, startDate, endDate, projectId, assignments, ...rest }) => ({
+          id,
           ...rest,
+          // Convert IDs to names for portability
+          projectId: projectMap.get(projectId) || projectId,
+          assignments: assignments.map(a => ({
+              ...a,
+              assigneeId: memberMap.get(a.assigneeId) || a.assigneeId,
+          })),
           // Ensure dates are converted to ISO strings for compatibility
           startDate: (startDate instanceof Date) ? startDate.toISOString() : startDate,
           endDate: (endDate instanceof Date) ? endDate.toISOString() : endDate,
