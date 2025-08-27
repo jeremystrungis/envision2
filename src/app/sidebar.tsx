@@ -28,7 +28,7 @@ export default function AppSidebar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/dashboard2', label: 'Dashboard 2', icon: FileJson },
+    { href: '/dashboard2', label: 'Main Dashboard', icon: FileJson },
     { href: '/gantt', label: 'Gantt', icon: GanttChartSquare },
     { href: '/teams', label: 'Teams', icon: Users },
     { href: '/projects', label: 'Projects', icon: ClipboardList },
