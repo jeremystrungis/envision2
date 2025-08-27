@@ -209,14 +209,14 @@ export default function Dashboard2() {
     }
     
     try {
-      // Create lookup maps for performance
+      // Create lookup maps for performance to convert IDs to Names for portability
       const memberMap = new Map(workspaceData.members.map(m => [m.id, m.name]));
       const projectMap = new Map(workspaceData.projects.map(p => [p.id, p.name]));
 
       const exportData = {
-        teams: workspaceData.teams.map(({ ...rest }) => ({...rest})),
-        members: workspaceData.members.map(({ ...rest }) => ({ ...rest })),
-        projects: workspaceData.projects.map(({ ...rest }) => ({ ...rest })),
+        teams: workspaceData.teams.map(({ id, ...rest }) => ({id, ...rest})),
+        members: workspaceData.members.map(({ id, ...rest }) => ({ id, ...rest })),
+        projects: workspaceData.projects.map(({ id, ...rest }) => ({ id, ...rest })),
         tasks: workspaceData.tasks.map(({ id, startDate, endDate, projectId, assignments, ...rest }) => ({
           id,
           ...rest,
@@ -385,3 +385,5 @@ export default function Dashboard2() {
     </>
   );
 }
+
+    
