@@ -67,7 +67,6 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
 
   const { dateInterval, columns, title, monthGrid, threeMonthGrid } = useMemo(() => {
     let start: Date, end: Date, titleStr: string;
-    const today = startOfDay(new Date());
 
     switch(viewMode) {
       case 'month':
@@ -81,7 +80,7 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
         return { dateInterval: [], columns: [], title: titleStr, monthGrid: grid, threeMonthGrid: [] };
       
       case '3-month':
-        const months = Array.from({ length: 3 }, (_, i) => addMonths(currentDate, i));
+        const months = Array.from({ length: 3 }, (_, i) => addMonths(startOfMonth(currentDate), i));
         titleStr = `${format(months[0], 'MMM yyyy')} - ${format(months[2], 'MMM yyyy')}`;
         const quarterlyGrid = months.map(month => {
           const monthStart = startOfMonth(month);
@@ -137,9 +136,16 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
 
       return tasksOnDay.reduce((acc, task) => {
           const assignment = task.assignments.find(a => a.assigneeId === user.id)!;
-          const taskWorkDays = assignment.workingDays.length;
+          
+          const taskStart = getTaskDate(task.startDate);
+          const taskEnd = getTaskDate(task.endDate);
+
+          const allDaysInInterval = eachDayOfInterval({ start: taskStart, end: taskEnd });
+          const workingDaysForAssignment = allDaysInInterval.filter(day => assignment.workingDays.includes(getDay(day))).length;
+          
           const assignedHours = task.hours * (assignment.effort / 100);
-          const dailyHours = taskWorkDays > 0 ? assignedHours / taskWorkDays : 0;
+          const dailyHours = workingDaysForAssignment > 0 ? assignedHours / workingDaysForAssignment : 0;
+
           return acc + dailyHours;
       }, 0);
   };
@@ -147,16 +153,26 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
   const getAverageWorkloadForInterval = (user: User, intervalStart: Date, intervalEnd: Date): number => {
     const interval = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
     if (interval.length === 0) return 0;
-    const totalWorkload = interval.reduce((sum, day) => sum + getWorkloadForDate(user, day), 0);
-    const businessDays = interval.filter(day => getDay(day) !== 0 && getDay(day) !== 6).length;
-    return businessDays > 0 ? totalWorkload / businessDays : 0;
+
+    let totalWorkload = 0;
+    let businessDaysInInterval = 0;
+
+    interval.forEach(day => {
+        const dayOfWeek = getDay(day);
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Consider Mon-Fri as business days for averaging
+            businessDaysInInterval++;
+        }
+        totalWorkload += getWorkloadForDate(user, day);
+    });
+
+    return businessDaysInInterval > 0 ? totalWorkload / businessDaysInInterval : 0;
   };
 
   const workloadData = useMemo(() => {
     return filteredUsers.map((user: User) => {
         return { user };
     });
-  }, [filteredUsers, dateInterval, columns, tasks, viewMode]);
+  }, [filteredUsers]);
 
   const getWorkloadColor = (workload: number, capacity: number) => {
     if (capacity === 0 && workload > 0) return 'bg-red-500/20 hover:bg-red-500/30 border border-red-500/30';
@@ -442,3 +458,5 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
     </Card>
   );
 }
+
+    
