@@ -16,6 +16,7 @@ import {
   isSameDay,
   isSameMonth,
   startOfDay,
+  isWithinInterval,
 } from 'date-fns';
 import { User, Task, Team } from '@/lib/firebase-types';
 import {
@@ -64,34 +65,50 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('week');
 
-  const { dateInterval, columns, title } = useMemo(() => {
-    let start: Date, end: Date;
-    let title: string;
+  const { dateInterval, columns, title, monthGrid, threeMonthGrid } = useMemo(() => {
+    let start: Date, end: Date, titleStr: string;
+    const today = startOfDay(new Date());
+
     switch(viewMode) {
       case 'month':
         start = startOfMonth(currentDate);
         end = endOfMonth(currentDate);
-        title = format(currentDate, 'MMMM yyyy');
-        return { dateInterval: eachDayOfInterval({start, end}), columns: [], title};
+        titleStr = format(currentDate, 'MMMM yyyy');
+        const monthWeeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 });
+        const grid = monthWeeks.map(weekStart => {
+          return eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, { weekStartsOn: 1 }) });
+        });
+        return { dateInterval: [], columns: [], title: titleStr, monthGrid: grid, threeMonthGrid: [] };
+      
       case '3-month':
-        start = startOfWeek(currentDate, { weekStartsOn: 1 });
-        end = endOfWeek(addMonths(currentDate, 2), { weekStartsOn: 1 });
-        title = `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
-        return { dateInterval: [], columns: eachWeekOfInterval({ start, end }, { weekStartsOn: 1 }), title };
+        const months = Array.from({ length: 3 }, (_, i) => addMonths(currentDate, i));
+        titleStr = `${format(months[0], 'MMM yyyy')} - ${format(months[2], 'MMM yyyy')}`;
+        const quarterlyGrid = months.map(month => {
+          const monthStart = startOfMonth(month);
+          const monthEnd = endOfMonth(month);
+          return {
+            monthName: format(month, 'MMMM'),
+            weeks: eachWeekOfInterval({ start: monthStart, end: monthEnd }, { weekStartsOn: 1 })
+          }
+        });
+        return { dateInterval: [], columns: [], title: titleStr, monthGrid: [], threeMonthGrid: quarterlyGrid };
+
       case '12-month':
         start = startOfWeek(currentDate, { weekStartsOn: 1 });
         end = endOfWeek(addMonths(currentDate, 11), { weekStartsOn: 1 });
-        title = `${format(start, 'MMM yyyy')} - ${format(end, 'MMM yyyy')}`;
-        return { dateInterval: [], columns: eachWeekOfInterval({ start, end }, { weekStartsOn: 1 }), title };
+        titleStr = `${format(start, 'MMM yyyy')} - ${format(end, 'MMM yyyy')}`;
+        return { dateInterval: [], columns: eachWeekOfInterval({ start, end }, { weekStartsOn: 1 }), title: titleStr, monthGrid: [], threeMonthGrid: [] };
+      
       case 'week':
       default:
         start = startOfWeek(currentDate, { weekStartsOn: 1 });
         end = endOfWeek(currentDate, { weekStartsOn: 1 });
-        title = `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
+        titleStr = `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
         const weekDays = eachDayOfInterval({start, end});
-        return { dateInterval: weekDays, columns: [], title};
+        return { dateInterval: weekDays, columns: [], title: titleStr, monthGrid: [], threeMonthGrid: [] };
     }
   }, [currentDate, viewMode]);
+
 
   const teamNames = useMemo(() => ['All', ...teams.map(t => t.name)], [teams]);
 
@@ -107,8 +124,7 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
 
   const getWorkloadForDate = (user: User, date: Date): number => {
       if(!user || !date) return 0;
-      const dayOfWeek = getDay(date); // Sunday is 0, Monday is 1...
-      
+      const dayOfWeek = getDay(date);
       const startOfDayDate = startOfDay(date);
       
       const tasksOnDay = tasks.filter(task => {
@@ -128,21 +144,17 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
       }, 0);
   };
   
-  const getAverageWorkloadForInterval = (user: User, interval: Date[]): number => {
+  const getAverageWorkloadForInterval = (user: User, intervalStart: Date, intervalEnd: Date): number => {
+    const interval = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
     if (interval.length === 0) return 0;
     const totalWorkload = interval.reduce((sum, day) => sum + getWorkloadForDate(user, day), 0);
-    return totalWorkload / interval.length;
+    const businessDays = interval.filter(day => getDay(day) !== 0 && getDay(day) !== 6).length;
+    return businessDays > 0 ? totalWorkload / businessDays : 0;
   };
 
   const workloadData = useMemo(() => {
     return filteredUsers.map((user: User) => {
-        const workload = (viewMode === 'week' || viewMode === 'month')
-            ? dateInterval.map(day => getWorkloadForDate(user, day))
-            : columns.map(weekStart => {
-                const weekInterval = eachDayOfInterval({start: weekStart, end: endOfWeek(weekStart, { weekStartsOn: 1})});
-                return getAverageWorkloadForInterval(user, weekInterval);
-            });
-        return { user, workload };
+        return { user };
     });
   }, [filteredUsers, dateInterval, columns, tasks, viewMode]);
 
@@ -169,10 +181,202 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
     });
   };
 
-  const gridTemplateColumns = useMemo(() => {
-    const length = viewMode === 'week' || viewMode === 'month' ? dateInterval.length : columns.length;
-    return `minmax(110px, 1.5fr) repeat(${length}, minmax(40px, 1fr))`;
-  }, [viewMode, dateInterval, columns]);
+  const gridTemplateColumnsWeek = `minmax(110px, 1.5fr) repeat(${dateInterval.length}, minmax(40px, 1fr))`;
+  const gridTemplateColumnsYear = `minmax(110px, 1.5fr) repeat(${columns.length}, minmax(40px, 1fr))`;
+
+  const renderWeekView = () => (
+     <div className="overflow-x-auto">
+        <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsWeek }}>
+            {/* Header */}
+            <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
+            {dateInterval.map((day) => (
+            <div key={day.toISOString()} className="p-2 text-center text-sm font-semibold bg-muted/50">
+                <div className="text-xs text-muted-foreground">{format(day, 'E')}</div>
+                <div className={cn("mt-1 font-medium", isSameDay(day, new Date()) ? 'text-primary' : '')}>
+                    {isSameDay(day, new Date()) ? 
+                        <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center mx-auto">{format(day, 'd')}</span> :
+                        format(day, 'd')
+                    }
+                </div>
+            </div>
+            ))}
+
+            {/* User Rows */}
+            {workloadData.map(({ user }) => (
+            <React.Fragment key={user.id}>
+                <div className="sticky left-0 p-2 flex items-center gap-2 bg-muted/30 z-10">
+                    <Avatar className="h-6 w-6"><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
+                    <span className="text-xs font-medium truncate">{user.name}</span>
+                </div>
+                {dateInterval.map((day, index) => {
+                    const load = getWorkloadForDate(user, day);
+                    return (
+                    <Tooltip key={index} delayDuration={100}>
+                    <TooltipTrigger asChild>
+                        <div className={cn('h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors', getWorkloadColor(load, user.capacity))} />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="font-bold">{user.name}</p>
+                        <p className="text-sm">Avg: {load.toFixed(1)}h / {user.capacity}h allocated</p>
+                        <p className="text-xs text-muted-foreground mt-1">{format(day, 'MMMM d, yyyy')}</p>
+                    </TooltipContent>
+                    </Tooltip>
+                )})}
+            </React.Fragment>
+            ))}
+        </div>
+    </div>
+  );
+
+  const renderMonthView = () => (
+    <div className="flex gap-8">
+      <div className="w-[180px] flex-shrink-0 space-y-px">
+        <div className="h-10 p-2 text-sm font-semibold bg-muted/50 invisible">Member</div>
+        {workloadData.map(({ user }) => (
+          <div key={user.id} className="h-14 p-2 flex items-center gap-2 bg-muted/30">
+            <Avatar className="h-8 w-8"><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
+            <span className="text-xs font-medium truncate">{user.name}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1">
+        <div className="grid grid-cols-7 gap-px">
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+            <div key={day} className="h-10 p-2 text-center text-sm font-semibold bg-muted/50">{day}</div>
+          ))}
+        </div>
+        {monthGrid.map((week, weekIndex) => (
+          <div key={weekIndex} className="grid grid-cols-7 gap-px border-t">
+            {week.map((day, dayIndex) => {
+              const isCurrentMonth = isSameMonth(day, currentDate);
+              return (
+                <div key={dayIndex} className={cn("relative h-14 p-1", isCurrentMonth ? 'bg-background' : 'bg-muted/30')}>
+                  <span className={cn("text-xs", isCurrentMonth ? 'text-foreground' : 'text-muted-foreground/50')}>{format(day, 'd')}</span>
+                  <div className="absolute inset-0 top-[18px] space-y-px">
+                    {workloadData.map(({ user }) => {
+                        const load = isCurrentMonth ? getWorkloadForDate(user, day) : 0;
+                        return(
+                        <Tooltip key={user.id} delayDuration={100}>
+                            <TooltipTrigger asChild>
+                            <div className={cn("h-1.5 w-full", isCurrentMonth ? getWorkloadColor(load, user.capacity) : '')} />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p className="font-bold">{user.name}</p>
+                                <p className="text-sm">Avg: {load.toFixed(1)}h / {user.capacity}h allocated</p>
+                                <p className="text-xs text-muted-foreground mt-1">{format(day, 'MMMM d, yyyy')}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    )})}
+                  </div>
+                   {isSameDay(day, new Date()) && <div className="absolute inset-0 border-2 border-red-500 pointer-events-none rounded-sm" />}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  
+  const renderThreeMonthView = () => (
+     <div className="flex gap-8">
+        <div className="w-[180px] flex-shrink-0 space-y-px">
+             <div className="h-10 p-2 text-sm font-semibold bg-muted/50 invisible">Member</div>
+             {workloadData.map(({user}) => (
+                <div key={user.id} className="h-[102px] p-2 flex items-center gap-2 bg-muted/30">
+                    <Avatar className="h-8 w-8"><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
+                    <span className="text-xs font-medium truncate">{user.name}</span>
+                </div>
+             ))}
+        </div>
+        <div className="flex-1 space-y-4">
+          {threeMonthGrid.map(({monthName, weeks}, monthIndex) => (
+             <div key={monthIndex}>
+                 <h3 className="font-semibold mb-1">{monthName}</h3>
+                 <div className="grid grid-cols-6 gap-px">
+                     {weeks.map((week, weekIndex) => {
+                         const weekEnd = endOfWeek(week, {weekStartsOn: 1});
+                         return (
+                            <div key={weekIndex} className="relative h-[102px] p-1 bg-background border rounded-sm">
+                                <span className="text-xs text-muted-foreground">{format(week, 'd')}</span>
+                                <div className="absolute inset-0 top-[18px] space-y-px">
+                                     {workloadData.map(({ user }) => {
+                                        const load = getAverageWorkloadForInterval(user, week, weekEnd);
+                                        return (
+                                            <Tooltip key={user.id} delayDuration={100}>
+                                                <TooltipTrigger asChild><div className={cn("h-2.5 w-full", getWorkloadColor(load, user.capacity))} /></TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p className="font-bold">{user.name}</p>
+                                                    <p className="text-sm">Avg: {load.toFixed(1)}h / {user.capacity}h allocated</p>
+                                                    <p className="text-xs text-muted-foreground mt-1">{format(week, 'MMM d')} - {format(weekEnd, 'MMM d')}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )
+                                    })}
+                                </div>
+                                {isWithinInterval(new Date(), {start: week, end: weekEnd}) && <div className="absolute inset-0 border-2 border-red-500 pointer-events-none rounded-sm" />}
+                            </div>
+                         )
+                     })}
+                 </div>
+             </div>
+          ))}
+        </div>
+     </div>
+  );
+
+  const renderYearView = () => (
+     <div className="overflow-x-auto">
+        <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsYear }}>
+            {/* Header */}
+            <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
+             {columns.map((week, index) => (
+                <div key={index} className="p-2 text-center text-sm font-semibold bg-muted/50">
+                <div className={cn("text-xs", isSameMonth(week, new Date()) ? "font-bold text-primary" : "text-muted-foreground")}>{format(week, 'MMM')}</div>
+                <div className="text-xs">{format(week, 'd')}</div>
+                </div>
+            ))}
+
+            {/* User Rows */}
+            {workloadData.map(({ user }) => (
+            <React.Fragment key={user.id}>
+                <div className="sticky left-0 p-2 flex items-center gap-2 bg-muted/30 z-10">
+                    <Avatar className="h-6 w-6"><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
+                    <span className="text-xs font-medium truncate">{user.name}</span>
+                </div>
+                {columns.map((weekStart, index) => {
+                     const weekEnd = endOfWeek(weekStart, {weekStartsOn: 1});
+                     const load = getAverageWorkloadForInterval(user, weekStart, weekEnd);
+                     return (
+                         <Tooltip key={index} delayDuration={100}>
+                             <TooltipTrigger asChild>
+                                 <div className={cn("h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors", getWorkloadColor(load, user.capacity))} />
+                             </TooltipTrigger>
+                             <TooltipContent>
+                                <p className="font-bold">{user.name}</p>
+                                <p className="text-sm">Avg: {load.toFixed(1)}h / {user.capacity}h allocated</p>
+                                <p className="text-xs text-muted-foreground mt-1">{format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}</p>
+                             </TooltipContent>
+                         </Tooltip>
+                     )
+                })}
+            </React.Fragment>
+            ))}
+        </div>
+    </div>
+  );
+
+  const renderContent = () => {
+    switch(viewMode) {
+      case 'month': return renderMonthView();
+      case '3-month': return renderThreeMonthView();
+      case '12-month': return renderYearView();
+      case 'week':
+      default:
+        return renderWeekView();
+    }
+  }
+
 
   return (
     <Card>
@@ -220,70 +424,7 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
       <CardContent>
         <TooltipProvider>
           <div className="space-y-4">
-            <div className="overflow-x-auto">
-              <div className="grid gap-px bg-border" style={{ gridTemplateColumns }}>
-                {/* Header */}
-                <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
-                
-                {(viewMode === 'week' || viewMode === 'month') ? (
-                  dateInterval.map((day) => (
-                    <div key={day.toISOString()} className="p-2 text-center text-sm font-semibold bg-muted/50">
-                      <div className="text-xs text-muted-foreground">{format(day, 'E')}</div>
-                      <div className={cn("mt-1 font-medium", isSameDay(day, new Date()) ? 'text-primary' : '')}>
-                          {isSameDay(day, new Date()) ? 
-                              <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center mx-auto">{format(day, 'd')}</span> :
-                              format(day, 'd')
-                          }
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                    columns.map((week, index) => (
-                      <div key={index} className="p-2 text-center text-sm font-semibold bg-muted/50">
-                        <div className={cn("text-xs", isSameMonth(week, new Date()) ? "font-bold text-primary" : "text-muted-foreground")}>{format(week, 'MMM')}</div>
-                        <div className="text-xs">{format(week, 'd')}</div>
-                      </div>
-                    ))
-                )}
-
-
-                {/* User Rows */}
-                {workloadData.map(({ user, workload }) => (
-                  <React.Fragment key={user.id}>
-                    <div className="sticky left-0 p-2 flex items-center gap-2 bg-muted/30 z-10">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs font-medium truncate">{user.name}</span>
-                    </div>
-                    {workload.map((load, index) => (
-                      <Tooltip key={index} delayDuration={100}>
-                        <TooltipTrigger asChild>
-                          <div
-                            className={cn(
-                              'h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors',
-                              getWorkloadColor(load, user.capacity)
-                            )}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                           <p className="font-bold">{user.name}</p>
-                           <p className="text-sm">Avg: {load.toFixed(1)}h / {user.capacity}h allocated</p>
-                           <p className="text-xs text-muted-foreground mt-1">
-                                {
-                                    (viewMode === 'week' || viewMode === 'month') 
-                                        ? format(dateInterval[index], 'MMMM d, yyyy')
-                                        : `${format(columns[index], 'MMM d')} - ${format(endOfWeek(columns[index], {weekStartsOn: 1}), 'MMM d, yyyy')}`
-                                }
-                           </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
+            {renderContent()}
             <div className="flex flex-wrap items-center justify-end space-x-4 pt-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>Legend:</span>
