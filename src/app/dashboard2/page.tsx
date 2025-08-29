@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import AppHeader from '@/components/app-header';
 import WorkloadHeatmap from '@/components/dashboard/workload-heatmap';
@@ -15,10 +15,14 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useWorkspace } from '@/context/workspace-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Upload, Download } from 'lucide-react';
+import { Upload, Download, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Team, User, Project, Task, Assignment } from '@/lib/firebase-types';
 import { importPrincipals } from '@/ai/flows/import-principals-flow';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 // Define a more specific type for the data coming from the JSON file
@@ -43,6 +47,7 @@ export default function Dashboard2() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileAddRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [selectedAllocationDate, setSelectedAllocationDate] = useState<Date>(new Date());
 
   const workspaceLoading = authLoading || contextLoading;
 
@@ -90,22 +95,16 @@ export default function Dashboard2() {
     try {
         const data: WorkspaceJsonData = JSON.parse(jsonString);
         
-        // Basic validation
         if (!data.projects || !data.tasks || !data.members) {
              throw new Error("Invalid JSON format: missing projects, tasks, or members.");
         }
         
-        // ** WORKAROUND FIX **
-        // Re-hydrate the references from names back to IDs for client-side components.
-        // The export uses names for portability, but the heatmap component needs IDs to link data.
         const memberNameToIdMap = new Map(data.members.map(m => [m.name, m.id]));
         const projectNameToIdMap = new Map(data.projects.map(p => [p.name, p.id]));
         
         const rehydratedTasks = data.tasks.map(task => {
-            // Re-link projectId from name back to ID
             const projectId = projectNameToIdMap.get(task.projectId as any) || task.projectId;
             
-            // Re-link assigneeId in assignments from name back to ID
             const assignments = task.assignments.map(a => {
                 const assigneeId = memberNameToIdMap.get(a.assigneeId as any) || a.assigneeId;
                 return {...a, assigneeId };
@@ -123,7 +122,7 @@ export default function Dashboard2() {
         const formattedData = {
             ...data,
             tasks: rehydratedTasks
-        } as any; // Cast to any to align with context type
+        } as any;
 
         setWorkspaceData(formattedData);
         toast({
@@ -131,8 +130,6 @@ export default function Dashboard2() {
             description: 'Workspace data loaded into Main Dashboard.',
         });
         
-        // Trigger backend sync after setting data
-        // The backend flow still expects names, so we pass the original 'data' object
         syncPrincipalsToBackend(data);
 
     } catch (e) {
@@ -160,13 +157,11 @@ export default function Dashboard2() {
       }
     };
     reader.readAsText(file);
-    // Reset file input
     event.target.value = '';
   };
   
   const handleFileAdd = (jsonString: string) => {
       if (!workspaceData) {
-          // If there's no data, an "add" is the same as a "replace"
           parseAndSetData(jsonString);
           return;
       }
@@ -174,18 +169,15 @@ export default function Dashboard2() {
       try {
         const newData: WorkspaceJsonData = JSON.parse(jsonString);
         
-        // Basic validation
         if (!newData.projects || !newData.tasks || !newData.members) {
              throw new Error("Invalid JSON format: missing projects, tasks, or members.");
         }
         
         const mergedData = {
-            // Add teams, ensuring no duplicates by name
             teams: [
                 ...workspaceData.teams,
                 ...newData.teams.filter(newTeam => !workspaceData.teams.some(existing => existing.name === newTeam.name))
             ],
-            // Simply concatenate members, projects, and tasks
             members: [...workspaceData.members, ...newData.members],
             projects: [...workspaceData.projects, ...newData.projects],
             tasks: [
@@ -204,9 +196,7 @@ export default function Dashboard2() {
             description: 'New data has been added to the dashboard.',
         });
 
-        // Trigger backend sync for the new data
         syncPrincipalsToBackend(newData);
-
 
       } catch(e) {
         const error = e as Error;
@@ -230,7 +220,6 @@ export default function Dashboard2() {
     }
     
     try {
-      // Create lookup maps for performance to convert IDs to Names for portability
       const memberMap = new Map(workspaceData.members.map(m => [m.id, m.name]));
       const projectMap = new Map(workspaceData.projects.map(p => [p.id, p.name]));
 
@@ -241,13 +230,11 @@ export default function Dashboard2() {
         tasks: workspaceData.tasks.map(({ id, startDate, endDate, projectId, assignments, ...rest }) => ({
           id,
           ...rest,
-          // Convert IDs to names for portability
           projectId: projectMap.get(projectId) || projectId,
           assignments: assignments.map(a => ({
               ...a,
               assigneeId: memberMap.get(a.assigneeId) || a.assigneeId,
           })),
-          // Ensure dates are converted to ISO strings for compatibility
           startDate: (startDate instanceof Date) ? startDate.toISOString() : startDate,
           endDate: (endDate instanceof Date) ? endDate.toISOString() : endDate,
         })),
@@ -315,13 +302,39 @@ export default function Dashboard2() {
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
-                <CardHeader>
-                <CardTitle>Resource Allocation</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Resource Allocation</CardTitle>
+                        <CardDescription>Daily workload vs. capacity for the selected date.</CardDescription>
+                    </div>
+                     <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                            "w-[240px] justify-start text-left font-normal",
+                            !selectedAllocationDate && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedAllocationDate ? format(selectedAllocationDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                            mode="single"
+                            selected={selectedAllocationDate}
+                            onSelect={(date) => setSelectedAllocationDate(date || new Date())}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
                 </CardHeader>
                 <CardContent>
                 <ResourceAllocationChart 
                     users={workspaceData.members}
                     tasks={workspaceData.tasks}
+                    selectedDay={selectedAllocationDate}
                 />
                 </CardContent>
             </Card>

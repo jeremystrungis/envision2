@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -102,4 +103,12 @@ export default {
     },
   },
   plugins: [require('tailwindcss-animate')],
+  safelist: [
+    'fill-sky-500',
+    'fill-green-500',
+    'fill-yellow-500',
+    'fill-orange-500',
+    'fill-red-500',
+    'fill-muted',
+  ]
 } satisfies Config;

@@ -1,23 +1,38 @@
 
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import {
   ChartContainer,
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { useUsers as useUsersFromHook } from '@/hooks/use-users';
 import { useTasks as useTasksFromHook } from '@/hooks/use-tasks';
-import { getDay, isWithinInterval, eachDayOfInterval } from 'date-fns';
+import { getDay, isWithinInterval, eachDayOfInterval, startOfDay } from 'date-fns';
 import { useMemo } from 'react';
 import { Task, User } from '@/lib/firebase-types';
+import { cn } from '@/lib/utils';
+
 
 interface ResourceAllocationChartProps {
   users?: User[];
   tasks?: Task[];
+  selectedDay: Date;
 }
 
-export default function ResourceAllocationChart({ users: usersProp, tasks: tasksProp }: ResourceAllocationChartProps) {
+const getWorkloadColorClass = (workload: number, capacity: number) => {
+    if (capacity === 0) return 'fill-muted';
+    const ratio = workload / capacity;
+    if (ratio === 0) return 'fill-muted';
+    if (ratio < 0.5) return 'fill-sky-500';
+    if (ratio < 0.9) return 'fill-green-500';
+    if (ratio <= 1) return 'fill-yellow-500';
+    if (ratio <= 1.2) return 'fill-orange-500';
+    return 'fill-red-500';
+};
+
+
+export default function ResourceAllocationChart({ users: usersProp, tasks: tasksProp, selectedDay }: ResourceAllocationChartProps) {
   const { users: usersFromHook } = useUsersFromHook();
   const { tasks: tasksFromHook } = useTasksFromHook();
   
@@ -30,41 +45,37 @@ export default function ResourceAllocationChart({ users: usersProp, tasks: tasks
   }
 
   const allocationData = useMemo(() => {
-    const today = new Date();
-    const todayDay = getDay(today);
+    const dayToAnalyze = startOfDay(selectedDay);
+    const dayOfWeek = getDay(dayToAnalyze);
 
     return users.map((user) => {
-      // Find all tasks assigned to this user that are active today.
-      const tasksToday = tasks.filter(task => {
+      // Find all tasks assigned to this user that are active on the selected day.
+      const tasksOnDay = tasks.filter(task => {
           const startDate = getTaskDate(task.startDate);
           const endDate = getTaskDate(task.endDate);
 
-          const isTaskActive = isWithinInterval(today, { start: startDate, end: endDate });
+          const isTaskActive = isWithinInterval(dayToAnalyze, { start: startDate, end: endDate });
           if (!isTaskActive) return false;
           
-          const isAssigned = task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(todayDay));
+          const isAssigned = task.assignments.some(a => a.assigneeId === user.id && a.workingDays.includes(dayOfWeek));
           return isAssigned;
       });
 
-      // Calculate the total allocated hours for today from all assigned tasks.
-      const allocatedHoursToday = tasksToday.reduce((total, task) => {
+      // Calculate the total allocated hours for the selected day from all assigned tasks.
+      const allocatedHours = tasksOnDay.reduce((total, task) => {
           const assignment = task.assignments.find(a => a.assigneeId === user.id);
           if (!assignment) return total;
           
           const startDate = getTaskDate(task.startDate);
           const endDate = getTaskDate(task.endDate);
           
-          // Get all days in the task's date range
           const allDaysInInterval = eachDayOfInterval({ start: startDate, end: endDate });
           
-          // Filter to get only the days the user is scheduled to work
-          const workingDaysInInterval = allDaysInInterval.filter(day => assignment.workingDays.includes(getDay(day))).length;
+          const workingDaysForAssignment = allDaysInInterval.filter(day => assignment.workingDays.includes(getDay(day))).length;
           
-          // Calculate the total hours assigned to this user for this task
           const assignedHoursForTask = task.hours * (assignment.effort / 100);
 
-          // Calculate the average daily hours based on their specific working days
-          const dailyHours = workingDaysInInterval > 0 ? assignedHoursForTask / workingDaysInInterval : 0;
+          const dailyHours = workingDaysForAssignment > 0 ? assignedHoursForTask / workingDaysForAssignment : 0;
           
           return total + dailyHours;
       }, 0);
@@ -72,14 +83,15 @@ export default function ResourceAllocationChart({ users: usersProp, tasks: tasks
       return {
         name: user.name.split(' ')[0], // Use first name for brevity
         capacity: user.capacity,
-        allocated: allocatedHoursToday,
+        allocated: allocatedHours,
+        colorClass: getWorkloadColorClass(allocatedHours, user.capacity),
       };
     });
-  }, [users, tasks]);
+  }, [users, tasks, selectedDay]);
 
   const chartConfig = {
     allocated: {
-      label: 'Allocated Today',
+      label: 'Allocated Workload',
       color: 'hsl(var(--primary))',
     },
     capacity: {
@@ -118,10 +130,13 @@ export default function ResourceAllocationChart({ users: usersProp, tasks: tasks
         />
         <Bar
           dataKey="allocated"
-          fill="var(--color-allocated)"
           radius={[4, 4, 0, 0]}
-          name="Current Daily Workload"
-        />
+          name="Allocated Workload"
+        >
+          {allocationData.map((entry, index) => (
+            <Cell key={`cell-${index}`} className={cn(entry.colorClass)} />
+          ))}
+        </Bar>
       </BarChart>
     </ChartContainer>
   );
