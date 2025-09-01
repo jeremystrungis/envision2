@@ -173,7 +173,6 @@ export default function Dashboard2() {
              throw new Error("Invalid JSON format: missing projects, tasks, or members.");
         }
         
-        // Re-hydrate the new tasks before merging them
         const memberNameToIdMap = new Map(newData.members.map(m => [(m as any).name, (m as any).id]));
         const projectNameToIdMap = new Map(newData.projects.map(p => [(p as any).name, (p as any).id]));
 
@@ -199,8 +198,14 @@ export default function Dashboard2() {
                 ...workspaceData.teams,
                 ...newData.teams.filter(newTeam => !workspaceData.teams.some(existing => existing.name === newTeam.name))
             ],
-            members: [...workspaceData.members, ...newData.members],
-            projects: [...workspaceData.projects, ...newData.projects],
+            members: [
+                ...workspaceData.members, 
+                ...newData.members.filter(newMember => !workspaceData.members.some(existing => existing.name === newMember.name))
+            ],
+            projects: [
+                ...workspaceData.projects, 
+                ...newData.projects.filter(newProject => !workspaceData.projects.some(existing => existing.name === newProject.name))
+            ],
             tasks: [
                 ...workspaceData.tasks,
                 ...rehydratedNewTasks
@@ -436,7 +441,5 @@ export default function Dashboard2() {
     </>
   );
 }
-
-    
 
     
