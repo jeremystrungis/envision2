@@ -36,29 +36,23 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
 
   const [selectedProjectId, setSelectedProjectId] = useState(projects.length > 0 ? 'all' : '');
   
-  // Always use the props for tasks if they are provided, as this component on dashboard2 is for display only.
   const { tasks: tasksFromHook, updateTask } = useTasks(isStatic ? undefined : (selectedProjectId !== 'all' ? selectedProjectId : undefined));
   const allTasks = tasksProp || tasksFromHook;
   
   const tasks = useMemo(() => {
-    // Start with all available tasks from props
     const tasksForSelectedProject = selectedProjectId === 'all'
         ? allTasks
         : allTasks.filter(t => t.projectId === selectedProjectId);
 
-    // Group by project if 'All Projects' is selected and there are multiple projects
     if (selectedProjectId === 'all' && projects.length > 1) {
         const grouped: GroupedTask[] = [];
         projects.forEach(project => {
-            // Find tasks for the current project *within the already filtered list*
             const projectTasks = tasksForSelectedProject.filter(t => t.projectId === project.id);
             if (projectTasks.length > 0) {
-              // Add a "header" task for the project
               grouped.push({ 
                   id: `header-${project.id}`, 
                   name: project.name, 
                   isGroupHeader: true,
-                  // These fields are not used for headers but satisfy the type
                   projectId: project.id,
                   assignments: [],
                   startDate: new Date() as any,
@@ -82,11 +76,9 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // If there is no selected project but there are projects available, default to 'all'
     if (projects.length > 0 && !selectedProjectId) {
       setSelectedProjectId('all');
     }
-     // If the selected project is no longer in the list (and it's not 'all'), default back to 'all'
     if (selectedProjectId !== 'all' && !projects.find(p => p.id === selectedProjectId)) {
         if (projects.length > 0) {
             setSelectedProjectId('all');
@@ -94,11 +86,10 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
             setSelectedProjectId('');
         }
     }
-
   }, [projects, selectedProjectId]);
 
 
-  const getTaskDate = (date: any) => {
+  const getTaskDate = (date: any): Date => {
       if (!date) return new Date();
       if (date instanceof Date) return date;
       return date.toDate ? date.toDate() : new Date(date);
@@ -339,5 +330,7 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
     </>
   );
 }
+
+    
 
     
