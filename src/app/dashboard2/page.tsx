@@ -173,6 +173,27 @@ export default function Dashboard2() {
              throw new Error("Invalid JSON format: missing projects, tasks, or members.");
         }
         
+        // Re-hydrate the new tasks before merging them
+        const memberNameToIdMap = new Map(newData.members.map(m => [(m as any).name, (m as any).id]));
+        const projectNameToIdMap = new Map(newData.projects.map(p => [(p as any).name, (p as any).id]));
+
+        const rehydratedNewTasks = newData.tasks.map(task => {
+            const projectId = projectNameToIdMap.get(task.projectId as any) || task.projectId;
+            
+            const assignments = task.assignments.map(a => {
+                const assigneeId = memberNameToIdMap.get(a.assigneeId as any) || a.assigneeId;
+                return {...a, assigneeId };
+            });
+
+            return {
+                ...task,
+                projectId,
+                assignments,
+                startDate: new Date(task.startDate),
+                endDate: new Date(task.endDate)
+            };
+        });
+
         const mergedData = {
             teams: [
                 ...workspaceData.teams,
@@ -182,11 +203,7 @@ export default function Dashboard2() {
             projects: [...workspaceData.projects, ...newData.projects],
             tasks: [
                 ...workspaceData.tasks,
-                ...newData.tasks.map(task => ({
-                    ...task,
-                    startDate: new Date(task.startDate),
-                    endDate: new Date(task.endDate)
-                }))
+                ...rehydratedNewTasks
             ]
         } as any;
 
