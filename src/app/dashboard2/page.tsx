@@ -99,8 +99,8 @@ export default function Dashboard2() {
              throw new Error("Invalid JSON format: missing projects, tasks, or members.");
         }
         
-        const memberNameToIdMap = new Map(data.members.map(m => [m.name, m.id]));
-        const projectNameToIdMap = new Map(data.projects.map(p => [p.name, p.id]));
+        const memberNameToIdMap = new Map(data.members.map(m => [(m as any).name, (m as any).id]));
+        const projectNameToIdMap = new Map(data.projects.map(p => [(p as any).name, (p as any).id]));
         
         const rehydratedTasks = data.tasks.map(task => {
             const projectId = projectNameToIdMap.get(task.projectId as any) || task.projectId;
