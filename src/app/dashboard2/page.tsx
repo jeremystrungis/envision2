@@ -7,7 +7,6 @@ import AppHeader from '@/components/app-header';
 import WorkloadHeatmap from '@/components/dashboard/workload-heatmap';
 import GanttChart from '@/components/dashboard/gantt-chart';
 import ResourceAllocationChart from '@/components/dashboard/resource-allocation-chart';
-import ProjectStatusChart from '@/components/dashboard/project-status-chart';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
