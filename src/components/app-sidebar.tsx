@@ -29,7 +29,6 @@ export default function AppSidebar() {
 
   const navItems = [
     { href: '/dashboard2', label: 'Main Dashboard', icon: FileJson },
-    { href: '/gantt', label: 'Gantt', icon: GanttChartSquare },
     { href: '/teams', label: 'Teams', icon: Users },
     { href: '/projects', label: 'Projects', icon: ClipboardList },
     { href: '/risk-assessment', label: 'Risk Assessment', icon: TriangleAlert },

@@ -322,7 +322,7 @@ export default function Dashboard2() {
                 teams={workspaceData.teams}
             />
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
@@ -361,14 +361,6 @@ export default function Dashboard2() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                <CardTitle>Project Status</CardTitle>
-                </CardHeader>
-                <CardContent>
-                <ProjectStatusChart projects={workspaceData.projects} />
-                </CardContent>
-            </Card>
             </div>
             
             <Card>
