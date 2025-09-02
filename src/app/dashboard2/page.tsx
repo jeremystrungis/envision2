@@ -14,7 +14,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useWorkspace } from '@/context/workspace-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Upload, Download, Calendar as CalendarIcon } from 'lucide-react';
+import { Upload, Download, Calendar as CalendarIcon, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Team, User, Project, Task, Assignment } from '@/lib/firebase-types';
 import { importPrincipals } from '@/ai/flows/import-principals-flow';
@@ -22,6 +22,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import EditTeams from '@/components/dashboard/edit-teams';
+import EditMembers from '@/components/dashboard/edit-members';
+import EditProjects from '@/components/dashboard/edit-projects';
+import EditTasks from '@/components/dashboard/edit-tasks';
 
 
 // Define a more specific type for the data coming from the JSON file
@@ -47,6 +52,7 @@ export default function Dashboard2() {
   const fileAddRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [selectedAllocationDate, setSelectedAllocationDate] = useState<Date>(new Date());
+  const [openCollapsible, setOpenCollapsible] = useState<string | null>(null);
 
   const workspaceLoading = authLoading || contextLoading;
 
@@ -286,6 +292,10 @@ export default function Dashboard2() {
     }
   };
 
+  const toggleSection = (section: string) => {
+    setOpenCollapsible(prev => prev === section ? null : section);
+  }
+
 
   const renderDashboardContent = () => {
     if (workspaceLoading && !workspaceData) {
@@ -424,6 +434,47 @@ export default function Dashboard2() {
               </CardContent>
             </Card>
             
+            <Card>
+                <CardHeader>
+                    <CardTitle>Edit Workspace Data</CardTitle>
+                    <CardDescription>Make temporary edits to the local data shown in this dashboard. These changes will not be saved to the database.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Collapsible open={openCollapsible === 'teams'} onOpenChange={() => toggleSection('teams')}>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Edit Teams</Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="py-4">
+                           {workspaceData && <EditTeams workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                        </CollapsibleContent>
+                    </Collapsible>
+                     <Collapsible open={openCollapsible === 'members'} onOpenChange={() => toggleSection('members')}>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Edit Members</Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="py-4">
+                            {workspaceData && <EditMembers workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                        </CollapsibleContent>
+                    </Collapsible>
+                     <Collapsible open={openCollapsible === 'projects'} onOpenChange={() => toggleSection('projects')}>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Edit Projects</Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="py-4">
+                            {workspaceData && <EditProjects workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                        </CollapsibleContent>
+                    </Collapsible>
+                     <Collapsible open={openCollapsible === 'tasks'} onOpenChange={() => toggleSection('tasks')}>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Edit Tasks</Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="py-4">
+                           {workspaceData && <EditTasks workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                        </CollapsibleContent>
+                    </Collapsible>
+                </CardContent>
+            </Card>
+
             {renderDashboardContent()}
 
           </main>
@@ -432,5 +483,3 @@ export default function Dashboard2() {
     </>
   );
 }
-
-    
