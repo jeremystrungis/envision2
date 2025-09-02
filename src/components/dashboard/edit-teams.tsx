@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -45,6 +45,10 @@ export default function EditTeams({ workspaceData, setWorkspaceData }: EditTeams
       teams: workspaceData.teams,
     },
   });
+
+  useEffect(() => {
+    form.reset({ teams: workspaceData.teams });
+  }, [workspaceData, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -125,3 +129,5 @@ export default function EditTeams({ workspaceData, setWorkspaceData }: EditTeams
     </Form>
   )
 }
+
+    

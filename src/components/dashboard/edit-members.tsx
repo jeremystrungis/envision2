@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -52,6 +52,10 @@ export default function EditMembers({ workspaceData, setWorkspaceData }: EditMem
       members: workspaceData.members,
     },
   });
+
+  useEffect(() => {
+    form.reset({ members: workspaceData.members });
+  }, [workspaceData, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -205,3 +209,5 @@ export default function EditMembers({ workspaceData, setWorkspaceData }: EditMem
     </Form>
   )
 }
+
+    

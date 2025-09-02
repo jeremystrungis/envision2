@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -65,6 +65,16 @@ export default function EditTasks({ workspaceData, setWorkspaceData }: EditTasks
       })),
     },
   });
+
+  useEffect(() => {
+    form.reset({
+      tasks: workspaceData.tasks.map(t => ({
+          ...t,
+          startDate: t.startDate instanceof Date ? t.startDate : new Date(t.startDate),
+          endDate: t.endDate instanceof Date ? t.endDate : new Date(t.endDate),
+      })),
+    });
+  }, [workspaceData, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -179,3 +189,5 @@ export default function EditTasks({ workspaceData, setWorkspaceData }: EditTasks
     </Form>
   )
 }
+
+    

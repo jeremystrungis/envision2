@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import AppHeader from '@/components/app-header';
 import WorkloadHeatmap from '@/components/dashboard/workload-heatmap';
@@ -330,46 +330,82 @@ export default function Dashboard2() {
                 tasks={workspaceData.tasks}
                 teams={workspaceData.teams}
             />
-            
-            <div className="grid grid-cols-1 gap-6">
+
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Resource Allocation</CardTitle>
-                        <CardDescription>Daily workload vs. capacity for the selected date.</CardDescription>
-                    </div>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                            "w-[240px] justify-start text-left font-normal",
-                            !selectedAllocationDate && "text-muted-foreground"
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedAllocationDate ? format(selectedAllocationDate, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
-                        <Calendar
-                            mode="single"
-                            selected={selectedAllocationDate}
-                            onSelect={(date) => setSelectedAllocationDate(date || new Date())}
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
+                <CardHeader>
+                    <CardTitle>Edit Workspace Data</CardTitle>
+                    <CardDescription>Make temporary edits to the local data shown in this dashboard. These changes will not be saved to the database.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <ResourceAllocationChart 
-                    users={workspaceData.members}
-                    tasks={workspaceData.tasks}
-                    selectedDay={selectedAllocationDate}
-                />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <Collapsible open={openCollapsible === 'teams'} onOpenChange={() => toggleSection('teams')}>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Teams</Button>
+                            </CollapsibleTrigger>
+                        </Collapsible>
+                        <Collapsible open={openCollapsible === 'members'} onOpenChange={() => toggleSection('members')}>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Members</Button>
+                            </CollapsibleTrigger>
+                        </Collapsible>
+                        <Collapsible open={openCollapsible === 'projects'} onOpenChange={() => toggleSection('projects')}>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Projects</Button>
+                            </CollapsibleTrigger>
+                        </Collapsible>
+                        <Collapsible open={openCollapsible === 'tasks'} onOpenChange={() => toggleSection('tasks')}>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Tasks</Button>
+                            </CollapsibleTrigger>
+                        </Collapsible>
+                    </div>
+                     <CollapsibleContent className="pt-4 -mx-6 px-6">
+                        {openCollapsible === 'teams' && workspaceData && <EditTeams workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                        {openCollapsible === 'members' && workspaceData && <EditMembers workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                        {openCollapsible === 'projects' && workspaceData && <EditProjects workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                        {openCollapsible === 'tasks' && workspaceData && <EditTasks workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                    </CollapsibleContent>
                 </CardContent>
             </Card>
-
+            
+            <div className="grid grid-cols-1 gap-6">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Resource Allocation</CardTitle>
+                            <CardDescription>Daily workload vs. capacity for the selected date.</CardDescription>
+                        </div>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-[240px] justify-start text-left font-normal",
+                                !selectedAllocationDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {selectedAllocationDate ? format(selectedAllocationDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                            <Calendar
+                                mode="single"
+                                selected={selectedAllocationDate}
+                                onSelect={(date) => setSelectedAllocationDate(date || new Date())}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                    </CardHeader>
+                    <CardContent>
+                    <ResourceAllocationChart 
+                        users={workspaceData.members}
+                        tasks={workspaceData.tasks}
+                        selectedDay={selectedAllocationDate}
+                    />
+                    </CardContent>
+                </Card>
             </div>
             
             <Card>
@@ -433,47 +469,6 @@ export default function Dashboard2() {
                 </div>
               </CardContent>
             </Card>
-            
-            <Card>
-                <CardHeader>
-                    <CardTitle>Edit Workspace Data</CardTitle>
-                    <CardDescription>Make temporary edits to the local data shown in this dashboard. These changes will not be saved to the database.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Collapsible open={openCollapsible === 'teams'} onOpenChange={() => toggleSection('teams')}>
-                        <CollapsibleTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Edit Teams</Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="py-4">
-                           {workspaceData && <EditTeams workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
-                        </CollapsibleContent>
-                    </Collapsible>
-                     <Collapsible open={openCollapsible === 'members'} onOpenChange={() => toggleSection('members')}>
-                        <CollapsibleTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Edit Members</Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="py-4">
-                            {workspaceData && <EditMembers workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
-                        </CollapsibleContent>
-                    </Collapsible>
-                     <Collapsible open={openCollapsible === 'projects'} onOpenChange={() => toggleSection('projects')}>
-                        <CollapsibleTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Edit Projects</Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="py-4">
-                            {workspaceData && <EditProjects workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
-                        </CollapsibleContent>
-                    </Collapsible>
-                     <Collapsible open={openCollapsible === 'tasks'} onOpenChange={() => toggleSection('tasks')}>
-                        <CollapsibleTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Edit Tasks</Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="py-4">
-                           {workspaceData && <EditTasks workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
-                        </CollapsibleContent>
-                    </Collapsible>
-                </CardContent>
-            </Card>
 
             {renderDashboardContent()}
 
@@ -483,3 +478,5 @@ export default function Dashboard2() {
     </>
   );
 }
+
+    
