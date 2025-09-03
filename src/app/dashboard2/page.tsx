@@ -337,34 +337,40 @@ export default function Dashboard2() {
                     <CardDescription>Make temporary edits to the local data shown in this dashboard. These changes will not be saved to the database.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-4">
                         <Collapsible open={openCollapsible === 'teams'} onOpenChange={() => toggleSection('teams')}>
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Teams</Button>
                             </CollapsibleTrigger>
+                             <CollapsibleContent className="pt-4">
+                                {workspaceData && <EditTeams workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                            </CollapsibleContent>
                         </Collapsible>
                         <Collapsible open={openCollapsible === 'members'} onOpenChange={() => toggleSection('members')}>
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Members</Button>
                             </CollapsibleTrigger>
+                            <CollapsibleContent className="pt-4">
+                                {workspaceData && <EditMembers workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                            </CollapsibleContent>
                         </Collapsible>
                         <Collapsible open={openCollapsible === 'projects'} onOpenChange={() => toggleSection('projects')}>
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Projects</Button>
                             </CollapsibleTrigger>
+                             <CollapsibleContent className="pt-4">
+                                {workspaceData && <EditProjects workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                            </CollapsibleContent>
                         </Collapsible>
                         <Collapsible open={openCollapsible === 'tasks'} onOpenChange={() => toggleSection('tasks')}>
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Tasks</Button>
                             </CollapsibleTrigger>
+                            <CollapsibleContent className="pt-4">
+                                {workspaceData && <EditTasks workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
+                            </CollapsibleContent>
                         </Collapsible>
                     </div>
-                     <CollapsibleContent className="pt-4 -mx-6 px-6">
-                        {openCollapsible === 'teams' && workspaceData && <EditTeams workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
-                        {openCollapsible === 'members' && workspaceData && <EditMembers workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
-                        {openCollapsible === 'projects' && workspaceData && <EditProjects workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
-                        {openCollapsible === 'tasks' && workspaceData && <EditTasks workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} />}
-                    </CollapsibleContent>
                 </CardContent>
             </Card>
             
@@ -478,5 +484,3 @@ export default function Dashboard2() {
     </>
   );
 }
-
-    
