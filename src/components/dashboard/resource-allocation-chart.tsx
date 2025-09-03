@@ -39,9 +39,10 @@ export default function ResourceAllocationChart({ users: usersProp, tasks: tasks
   const users = usersProp || usersFromHook;
   const tasks = tasksProp || tasksFromHook;
 
-  const getTaskDate = (date: any) => {
+  const getTaskDate = (date: any): Date => {
       if (!date) return new Date();
-      return date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
+      if (date instanceof Date) return date;
+      return date.toDate ? date.toDate() : new Date(date);
   }
 
   const allocationData = useMemo(() => {

@@ -39,10 +39,22 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
   const { tasks: tasksFromHook, updateTask } = useTasks(isStatic ? undefined : (selectedProjectId !== 'all' ? selectedProjectId : undefined));
   const allTasks = tasksProp || tasksFromHook;
   
+  const getTaskDate = (date: any): Date => {
+      if (!date) return new Date();
+      if (date instanceof Date) return date;
+      return date.toDate ? date.toDate() : new Date(date);
+  }
+
   const tasks = useMemo(() => {
+    const tasksWithDates = allTasks.map(t => ({
+      ...t,
+      startDate: getTaskDate(t.startDate),
+      endDate: getTaskDate(t.endDate)
+    }));
+
     const tasksForSelectedProject = selectedProjectId === 'all'
-        ? allTasks
-        : allTasks.filter(t => t.projectId === selectedProjectId);
+        ? tasksWithDates
+        : tasksWithDates.filter(t => t.projectId === selectedProjectId);
 
     if (selectedProjectId === 'all' && projects.length > 1) {
         const grouped: GroupedTask[] = [];
@@ -88,12 +100,6 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
     }
   }, [projects, selectedProjectId]);
 
-
-  const getTaskDate = (date: any): Date => {
-      if (!date) return new Date();
-      if (date instanceof Date) return date;
-      return date.toDate ? date.toDate() : new Date(date);
-  }
 
   const { startDate, endDate, dateInterval, totalDays, monthIntervals } = useMemo(() => {
     const tasksWithDates = tasks.filter(t => !t.isGroupHeader);
