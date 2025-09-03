@@ -27,6 +27,12 @@ interface GroupedTask extends Task {
   isGroupHeader?: boolean;
 }
 
+const getTaskDate = (date: any): Date => {
+    if (!date) return new Date();
+    if (date instanceof Date) return date; // Already a Date object
+    return date.toDate ? date.toDate() : new Date(date); // Handle Timestamp or string
+}
+
 export default function GanttChart({ projects: projectsProp, tasks: tasksProp, users: usersProp, isStatic = false }: GanttChartProps) {
   const { projects: projectsFromHook } = useProjectsFromHook();
   const { users: usersFromHook } = useUsersFromHook();
@@ -38,12 +44,6 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
   
   const { tasks: tasksFromHook, updateTask } = useTasks(isStatic ? undefined : (selectedProjectId !== 'all' ? selectedProjectId : undefined));
   const allTasks = tasksProp || tasksFromHook;
-  
-  const getTaskDate = (date: any): Date => {
-      if (!date) return new Date();
-      if (date instanceof Date) return date;
-      return date.toDate ? date.toDate() : new Date(date);
-  }
 
   const tasks = useMemo(() => {
     const tasksWithDates = allTasks.map(t => ({
@@ -336,7 +336,7 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
     </>
   );
 }
-
     
 
     
+

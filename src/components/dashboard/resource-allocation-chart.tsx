@@ -31,6 +31,12 @@ const getWorkloadColorClass = (workload: number, capacity: number) => {
     return 'fill-red-500';
 };
 
+const getTaskDate = (date: any): Date => {
+    if (!date) return new Date();
+    if (date instanceof Date) return date; // Already a Date object
+    return date.toDate ? date.toDate() : new Date(date); // Handle Timestamp or string
+}
+
 
 export default function ResourceAllocationChart({ users: usersProp, tasks: tasksProp, selectedDay }: ResourceAllocationChartProps) {
   const { users: usersFromHook } = useUsersFromHook();
@@ -38,12 +44,6 @@ export default function ResourceAllocationChart({ users: usersProp, tasks: tasks
   
   const users = usersProp || usersFromHook;
   const tasks = tasksProp || tasksFromHook;
-
-  const getTaskDate = (date: any): Date => {
-      if (!date) return new Date();
-      if (date instanceof Date) return date;
-      return date.toDate ? date.toDate() : new Date(date);
-  }
 
   const allocationData = useMemo(() => {
     const dayToAnalyze = startOfDay(selectedDay);
