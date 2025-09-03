@@ -21,9 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useProjects } from '@/hooks/use-projects';
-import { useTasks } from '@/hooks/use-tasks';
-import { useUsers } from '@/hooks/use-users';
+import { useWorkspace } from '@/context/workspace-context';
 
 function ProjectPlanAnalyzer() {
   const [projectDescription, setProjectDescription] = useState('');
@@ -184,17 +182,15 @@ function ProjectPlanAnalyzer() {
 }
 
 function PortfolioHealthAnalyzer() {
-  const { projects } = useProjects();
-  const { tasks } = useTasks();
-  const { users } = useUsers();
+  const { workspaceData, loading: contextLoading } = useWorkspace();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PortfolioHealthOutput | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const analyze = async () => {
-      // Only run analysis if we have all data points.
-      if (projects.length === 0 || tasks.length === 0 || users.length === 0) {
+      // Only run analysis if we have all data points from the context.
+      if (!workspaceData || contextLoading || workspaceData.projects.length === 0 || workspaceData.tasks.length === 0 || workspaceData.members.length === 0) {
         setIsLoading(false);
         setResult(null);
         return;
@@ -203,14 +199,14 @@ function PortfolioHealthAnalyzer() {
       setIsLoading(true);
       try {
         const input: PortfolioHealthInput = {
-            projects: projects.map(p => ({...p})),
-            tasks: tasks.map(t => ({
+            projects: workspaceData.projects.map(p => ({...p})),
+            tasks: workspaceData.tasks.map(t => ({
                 ...t,
-                startDate: t.startDate.toDate().toISOString(),
-                endDate: t.endDate.toDate().toISOString(),
+                startDate: (t.startDate instanceof Date ? t.startDate : new Date(t.startDate)).toISOString(),
+                endDate: (t.endDate instanceof Date ? t.endDate : new Date(t.endDate)).toISOString(),
                 assigneeIds: t.assignments.map(a => a.assigneeId)
             })),
-            users: users.map(u => ({...u, team: u.teams ? u.teams.join(', ') : ''}))
+            users: workspaceData.members.map(u => ({...u, team: u.teams ? u.teams.join(', ') : ''}))
         };
         const analysisResult = await assessPortfolioHealth(input);
         setResult(analysisResult);
@@ -229,9 +225,9 @@ function PortfolioHealthAnalyzer() {
     
     analyze();
 
-  }, [projects, tasks, users, toast]);
+  }, [workspaceData, contextLoading, toast]);
 
-  if (isLoading) {
+  if (isLoading || contextLoading) {
     return (
         <Card>
             <CardHeader>
@@ -251,8 +247,8 @@ function PortfolioHealthAnalyzer() {
     return (
         <Alert variant="default">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>No Data for Analysis</AlertTitle>
-            <AlertDescription>Add projects, tasks, and users to enable the portfolio health analysis.</AlertDescription>
+            <AlertTitle>Not Enough Data for Analysis</AlertTitle>
+            <AlertDescription>The AI requires projects, tasks, and team members in the main dashboard to perform a portfolio health analysis.</AlertDescription>
         </Alert>
     )
   }
