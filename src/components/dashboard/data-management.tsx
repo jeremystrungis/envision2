@@ -21,8 +21,13 @@ export default function DataManagement() {
   const { toast } = useToast();
 
   const handleExport = () => {
+    if (!user) {
+        toast({ title: 'Authentication Error', description: 'You must be logged in to export data.', variant: 'destructive'});
+        return;
+    }
     try {
       const exportData = {
+        userId: user.uid,
         teams: teams.map(({ ...rest }) => ({ ...rest })),
         members: members.map(({ ...rest }) => ({ ...rest })),
         projects: projects.map(({ ...rest }) => ({ ...rest })),
