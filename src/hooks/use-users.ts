@@ -7,9 +7,6 @@ import { db } from '@/lib/firebase';
 import { User } from '@/lib/firebase-types';
 import { useAuth } from './use-auth';
 
-// All data will be stored under a single workspace for all users.
-const WORKSPACE_ID = 'main';
-
 export function useUsers() {
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -21,8 +18,9 @@ export function useUsers() {
         setLoading(false);
         return;
     };
-
-    const q = query(collection(db, `workspaces/${WORKSPACE_ID}/members`));
+    
+    const workspaceId = user.uid;
+    const q = query(collection(db, `workspaces/${workspaceId}/members`));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const workspaceMembers: User[] = [];
       querySnapshot.forEach((doc) => {
@@ -49,18 +47,20 @@ export function useUsers() {
 
   const addUser = async (newUser: Omit<User, 'id'>) => {
     if (!user) return;
+    const workspaceId = user.uid;
     // If this is the very first user being added, associate them with the logged-in auth user.
     const isFirstUser = users.length === 0;
     const userData = {
         ...newUser,
         ...(isFirstUser && { authUid: user.uid })
     };
-    await addDoc(collection(db, `workspaces/${WORKSPACE_ID}/members`), userData);
+    await addDoc(collection(db, `workspaces/${workspaceId}/members`), userData);
   };
   
   const updateUser = async (userId: string, data: Partial<Omit<User, 'id'>>) => {
       if (!user) return;
-      const userRef = doc(db, `workspaces/${WORKSPACE_ID}/members`, userId);
+      const workspaceId = user.uid;
+      const userRef = doc(db, `workspaces/${workspaceId}/members`, userId);
       await updateDoc(userRef, data);
   }
 

@@ -83,7 +83,7 @@ const importWorkspaceDataFlow = ai.defineFlow(
     const isNewFormat = input.projects.every(p => p.id) && input.members.every(m => m.id) && input.tasks.every(t => t.id);
 
     const batch = writeBatch(db);
-    const workspaceId = 'main';
+    const workspaceId = userId; // Use the user's UID as the workspace ID
 
     const idMaps = {
         members: {} as Record<string, string>,

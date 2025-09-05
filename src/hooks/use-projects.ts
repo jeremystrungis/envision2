@@ -7,9 +7,6 @@ import { db } from '@/lib/firebase';
 import { Project, Task } from '@/lib/firebase-types';
 import { useAuth } from './use-auth';
 
-// All data will be stored under a single workspace for all users.
-const WORKSPACE_ID = 'main';
-
 export function useProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -21,14 +18,18 @@ export function useProjects() {
       setLoading(false);
       return;
     };
-
-    const q = query(collection(db, `workspaces/${WORKSPACE_ID}/projects`));
+    
+    const workspaceId = user.uid;
+    const q = query(collection(db, `workspaces/${workspaceId}/projects`));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userProjects: Project[] = [];
       querySnapshot.forEach((doc) => {
         userProjects.push({ id: doc.id, ...doc.data() } as Project);
       });
       setProjects(userProjects);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching projects:", error);
       setLoading(false);
     });
 
@@ -38,9 +39,10 @@ export function useProjects() {
   const addProject = async (project: Omit<Project, 'id'>, newTasks: Omit<Task, 'id' | 'projectId' | 'dependencies'>[]) => {
     if (!user) return;
     try {
+      const workspaceId = user.uid;
       const batch = writeBatch(db);
       
-      const projectRef = doc(collection(db, `workspaces/${WORKSPACE_ID}/projects`));
+      const projectRef = doc(collection(db, `workspaces/${workspaceId}/projects`));
       batch.set(projectRef, project);
 
       const tasksToAdd: Omit<Task, 'id'>[] = newTasks
@@ -54,7 +56,7 @@ export function useProjects() {
         }));
 
       tasksToAdd.forEach(task => {
-        const taskRef = doc(collection(db, `workspaces/${WORKSPACE_ID}/tasks`));
+        const taskRef = doc(collection(db, `workspaces/${workspaceId}/tasks`));
         batch.set(taskRef, task);
       });
 
@@ -66,7 +68,8 @@ export function useProjects() {
 
   const updateProject = async (projectId: string, data: Partial<Omit<Project, 'id'>>) => {
       if (!user) return;
-      const projectRef = doc(db, `workspaces/${WORKSPACE_ID}/projects`, projectId);
+      const workspaceId = user.uid;
+      const projectRef = doc(db, `workspaces/${workspaceId}/projects`, projectId);
       await setDoc(projectRef, data, { merge: true });
   }
 

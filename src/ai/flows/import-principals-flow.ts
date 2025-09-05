@@ -15,7 +15,6 @@ import { getFirestore, writeBatch, collection, doc, getDocs, query } from 'fireb
 import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
-const workspaceId = 'main'; // All data is under a single workspace
 
 const TeamSchema = z.object({
     name: z.string(),
@@ -30,6 +29,7 @@ const MemberSchema = z.object({
 });
 
 const PrincipalsInputSchema = z.object({
+  userId: z.string().describe("The UID of the user initiating the import."),
   teams: z.array(TeamSchema),
   members: z.array(MemberSchema),
 });
@@ -48,6 +48,11 @@ const importPrincipalsFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), teamsAdded: z.number(), membersAdded: z.number() }),
   },
   async (input) => {
+    const { userId } = input;
+    if (!userId) {
+        throw new Error("User ID is required to import principals.");
+    }
+    const workspaceId = userId;
     const batch = writeBatch(db);
 
     // Fetch existing teams and members to avoid duplicates
