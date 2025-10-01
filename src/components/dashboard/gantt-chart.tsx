@@ -339,3 +339,5 @@ export default function GanttChart({ projects: projectsProp, tasks: tasksProp, u
     </>
   );
 }
+
+    

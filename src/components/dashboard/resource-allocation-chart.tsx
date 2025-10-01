@@ -65,8 +65,7 @@ export default function ResourceAllocationChart({ users: usersProp, tasks: tasks
 
       // Calculate the total allocated hours for the selected day from all assigned tasks.
       const allocatedHours = tasksOnDay.reduce((total, task) => {
-          const assignment = task.assignments.find(a => a.assigneeId === user.id);
-          if (!assignment) return total;
+          const assignment = task.assignments.find(a => a.assigneeId === user.id)!;
           
           const startDate = getTaskDate(task.startDate);
           const endDate = getTaskDate(task.endDate);
@@ -145,3 +144,5 @@ export default function ResourceAllocationChart({ users: usersProp, tasks: tasks
     </div>
   );
 }
+
+    
