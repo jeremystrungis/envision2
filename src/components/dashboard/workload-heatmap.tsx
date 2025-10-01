@@ -118,7 +118,9 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
 
   const getTaskDate = (date: any) => {
       if (!date) return new Date();
-      return date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
+      if (date instanceof Date) return date;
+      if (date.toDate) return date.toDate();
+      return new Date(date);
   }
 
   const getWorkloadForDate = (user: User, date: Date): number => {
@@ -201,11 +203,12 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
   const gridTemplateColumnsYear = `minmax(110px, 1.5fr) repeat(${columns.length}, minmax(40px, 1fr))`;
 
   const renderWeekView = () => (
-    <div className="relative max-h-[400px] overflow-auto border rounded-lg">
-        <div className="grid gap-px bg-border sticky top-0 z-20" style={{ gridTemplateColumns: gridTemplateColumnsWeek }}>
-            <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
+    <div className="overflow-auto max-h-[400px] border rounded-lg">
+        <div className="relative grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsWeek }}>
+            {/* Headers */}
+            <div className="sticky top-0 left-0 p-2 text-sm font-semibold bg-muted/50 z-20">Member</div>
             {dateInterval.map((day) => (
-            <div key={day.toISOString()} className="p-2 text-center text-sm font-semibold bg-muted/50">
+            <div key={day.toISOString()} className="sticky top-0 p-2 text-center text-sm font-semibold bg-muted/50 z-10">
                 <div className="text-xs text-muted-foreground">{format(day, 'E')}</div>
                 <div className={cn("mt-1 font-medium", isSameDay(day, new Date()) ? 'text-primary' : '')}>
                     {isSameDay(day, new Date()) ? 
@@ -215,8 +218,8 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
                 </div>
             </div>
             ))}
-        </div>
-        <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsWeek }}>
+            
+            {/* Rows */}
             {workloadData.map(({ user }) => (
             <React.Fragment key={user.id}>
                 <div className="sticky left-0 p-2 flex items-center gap-2 bg-muted/30 z-10 border-t">
@@ -244,57 +247,60 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
   );
 
   const renderMonthView = () => (
-    <div className="flex gap-8 relative max-h-[400px] overflow-auto border rounded-lg p-2">
-      <div className="w-[180px] flex-shrink-0 space-y-px sticky left-0 z-10 bg-background/95">
-        <div className="h-10 p-2 text-sm font-semibold bg-muted/50 invisible">Member</div>
-        {workloadData.map(({ user }) => (
-          <div key={user.id} className="h-14 p-2 flex items-center gap-2 bg-muted/30">
-            <Avatar className="h-8 w-8"><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
-            <span className="text-xs font-medium truncate">{user.name}</span>
-          </div>
-        ))}
-      </div>
-      <div className="flex-1">
-        <div className="grid grid-cols-7 gap-px sticky top-0 z-10 bg-background/95">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-            <div key={day} className="h-10 p-2 text-center text-sm font-semibold bg-muted/50">{day}</div>
+    <div className="overflow-auto max-h-[400px] border rounded-lg p-2">
+      <div className="flex gap-8 relative">
+        <div className="w-[180px] flex-shrink-0 space-y-px sticky left-0 z-10 bg-background/95">
+          <div className="h-10 p-2 text-sm font-semibold bg-muted/50 invisible">Member</div>
+          {workloadData.map(({ user }) => (
+            <div key={user.id} className="h-14 p-2 flex items-center gap-2 bg-muted/30">
+              <Avatar className="h-8 w-8"><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
+              <span className="text-xs font-medium truncate">{user.name}</span>
+            </div>
           ))}
         </div>
-        {monthGrid.map((week, weekIndex) => (
-          <div key={weekIndex} className="grid grid-cols-7 gap-px border-t">
-            {week.map((day, dayIndex) => {
-              const isCurrentMonth = isSameMonth(day, currentDate);
-              return (
-                <div key={dayIndex} className={cn("relative h-14 p-1", isCurrentMonth ? 'bg-background' : 'bg-muted/30')}>
-                  <span className={cn("text-xs", isCurrentMonth ? 'text-foreground' : 'text-muted-foreground/50')}>{format(day, 'd')}</span>
-                  <div className="absolute inset-0 top-[18px] space-y-px">
-                    {workloadData.map(({ user }) => {
-                        const load = isCurrentMonth ? getWorkloadForDate(user, day) : 0;
-                        return(
-                        <Tooltip key={user.id} delayDuration={100}>
-                            <TooltipTrigger asChild>
-                            <div className={cn("h-1.5 w-full", isCurrentMonth ? getWorkloadColor(load, user.capacity) : '')} />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p className="font-bold">{user.name}</p>
-                                <p className="text-sm">Avg: {load.toFixed(1)}h / {user.capacity}h allocated</p>
-                                <p className="text-xs text-muted-foreground mt-1">{format(day, 'MMMM d, yyyy')}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    )})}
-                  </div>
-                   {isSameDay(day, new Date()) && <div className="absolute inset-0 border-2 border-red-500 pointer-events-none rounded-sm" />}
-                </div>
-              );
-            })}
+        <div className="flex-1">
+          <div className="grid grid-cols-7 gap-px sticky top-0 z-10 bg-background/95">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+              <div key={day} className="h-10 p-2 text-center text-sm font-semibold bg-muted/50">{day}</div>
+            ))}
           </div>
-        ))}
+          {monthGrid.map((week, weekIndex) => (
+            <div key={weekIndex} className="grid grid-cols-7 gap-px border-t">
+              {week.map((day, dayIndex) => {
+                const isCurrentMonth = isSameMonth(day, currentDate);
+                return (
+                  <div key={dayIndex} className={cn("relative h-14 p-1", isCurrentMonth ? 'bg-background' : 'bg-muted/30')}>
+                    <span className={cn("text-xs", isCurrentMonth ? 'text-foreground' : 'text-muted-foreground/50')}>{format(day, 'd')}</span>
+                    <div className="absolute inset-0 top-[18px] space-y-px">
+                      {workloadData.map(({ user }) => {
+                          const load = isCurrentMonth ? getWorkloadForDate(user, day) : 0;
+                          return(
+                          <Tooltip key={user.id} delayDuration={100}>
+                              <TooltipTrigger asChild>
+                              <div className={cn("h-1.5 w-full", isCurrentMonth ? getWorkloadColor(load, user.capacity) : '')} />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                  <p className="font-bold">{user.name}</p>
+                                  <p className="text-sm">Avg: {load.toFixed(1)}h / {user.capacity}h allocated</p>
+                                  <p className="text-xs text-muted-foreground mt-1">{format(day, 'MMMM d, yyyy')}</p>
+                              </TooltipContent>
+                          </Tooltip>
+                      )})}
+                    </div>
+                     {isSameDay(day, new Date()) && <div className="absolute inset-0 border-2 border-red-500 pointer-events-none rounded-sm" />}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
   
   const renderThreeMonthView = () => (
-     <div className="flex gap-8 relative max-h-[400px] overflow-auto border rounded-lg p-2">
+     <div className="overflow-auto max-h-[400px] border rounded-lg p-2">
+      <div className="flex gap-8 relative">
         <div className="w-[180px] flex-shrink-0 space-y-px sticky left-0 z-10 bg-background/95">
              <div className="h-10 p-2 text-sm font-semibold bg-muted/50 invisible">Member</div>
              {workloadData.map(({user}) => (
@@ -338,21 +344,20 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
           ))}
         </div>
      </div>
+     </div>
   );
 
   const renderYearView = () => (
-     <div className="relative max-h-[400px] overflow-auto border rounded-lg">
-        <div className="grid gap-px bg-border sticky top-0 z-20" style={{ gridTemplateColumns: gridTemplateColumnsYear }}>
+     <div className="overflow-auto max-h-[400px] border rounded-lg">
+      <div className="relative grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsYear }}>
             {/* Header */}
-            <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
+            <div className="sticky top-0 left-0 p-2 text-sm font-semibold bg-muted/50 z-20">Member</div>
              {columns.map((week, index) => (
-                <div key={index} className="p-2 text-center text-sm font-semibold bg-muted/50">
+                <div key={index} className="sticky top-0 p-2 text-center text-sm font-semibold bg-muted/50 z-10">
                 <div className={cn("text-xs", isSameMonth(week, new Date()) ? "font-bold text-primary" : "text-muted-foreground")}>{format(week, 'MMM')}</div>
                 <div className="text-xs">{format(week, 'd')}</div>
                 </div>
             ))}
-        </div>
-         <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsYear }}>
             {/* User Rows */}
             {workloadData.map(({ user }) => (
             <React.Fragment key={user.id}>
@@ -458,5 +463,3 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
     </Card>
   );
 }
-
-    
