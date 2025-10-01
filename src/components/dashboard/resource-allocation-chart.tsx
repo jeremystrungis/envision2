@@ -33,8 +33,9 @@ const getWorkloadColorClass = (workload: number, capacity: number) => {
 
 const getTaskDate = (date: any): Date => {
     if (!date) return new Date();
-    if (date instanceof Date) return date; // Already a Date object
-    return date.toDate ? date.toDate() : new Date(date); // Handle Timestamp or string
+    if (date instanceof Date) return date;
+    if (date.toDate) return date.toDate();
+    return new Date(date);
 }
 
 
@@ -102,45 +103,49 @@ export default function ResourceAllocationChart({ users: usersProp, tasks: tasks
   };
 
   return (
-    <ChartContainer config={chartConfig} className="h-[250px] w-full">
-      <BarChart data={allocationData} accessibilityLayer barGap={4}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="name"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-        />
-        <YAxis
-            tickLine={false}
-            axisLine={false}
-            tickMargin={10}
-            unit="h"
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-        />
-        <Tooltip
-          cursor={false}
-          content={<ChartTooltipContent indicator="dot" />}
-        />
-        <Bar
-          dataKey="capacity"
-          fill="var(--color-capacity)"
-          radius={[4, 4, 0, 0]}
-          name="Daily Capacity"
-        />
-        <Bar
-          dataKey="allocated"
-          radius={[4, 4, 0, 0]}
-          name="Allocated Workload"
-        >
-          {allocationData.map((entry, index) => (
-            <Cell key={`cell-${index}`} className={cn(entry.colorClass)} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ChartContainer>
+    <div className="overflow-x-auto">
+        <ChartContainer config={chartConfig} className="h-[250px] min-w-[600px] w-full">
+            <BarChart data={allocationData} accessibilityLayer barGap={4}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                dataKey="name"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                />
+                <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    unit="h"
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                />
+                <Tooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="dot" />}
+                />
+                <Bar
+                dataKey="capacity"
+                fill="var(--color-capacity)"
+                radius={[4, 4, 0, 0]}
+                name="Daily Capacity"
+                />
+                <Bar
+                dataKey="allocated"
+                radius={[4, 4, 0, 0]}
+                name="Allocated Workload"
+                >
+                {allocationData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} className={cn(entry.colorClass)} />
+                ))}
+                </Bar>
+            </BarChart>
+        </ChartContainer>
+    </div>
   );
 }
+
+    
 
     

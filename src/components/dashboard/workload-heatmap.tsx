@@ -201,9 +201,8 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
   const gridTemplateColumnsYear = `minmax(110px, 1.5fr) repeat(${columns.length}, minmax(40px, 1fr))`;
 
   const renderWeekView = () => (
-     <div className="overflow-x-auto">
-        <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsWeek }}>
-            {/* Header */}
+    <div className="relative max-h-[400px] overflow-auto border rounded-lg">
+        <div className="grid gap-px bg-border sticky top-0 z-20" style={{ gridTemplateColumns: gridTemplateColumnsWeek }}>
             <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
             {dateInterval.map((day) => (
             <div key={day.toISOString()} className="p-2 text-center text-sm font-semibold bg-muted/50">
@@ -216,11 +215,11 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
                 </div>
             </div>
             ))}
-
-            {/* User Rows */}
+        </div>
+        <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsWeek }}>
             {workloadData.map(({ user }) => (
             <React.Fragment key={user.id}>
-                <div className="sticky left-0 p-2 flex items-center gap-2 bg-muted/30 z-10">
+                <div className="sticky left-0 p-2 flex items-center gap-2 bg-muted/30 z-10 border-t">
                     <Avatar className="h-6 w-6"><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
                     <span className="text-xs font-medium truncate">{user.name}</span>
                 </div>
@@ -229,7 +228,7 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
                     return (
                     <Tooltip key={index} delayDuration={100}>
                     <TooltipTrigger asChild>
-                        <div className={cn('h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors', getWorkloadColor(load, user.capacity))} />
+                        <div className={cn('h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors border-t', getWorkloadColor(load, user.capacity))} />
                     </TooltipTrigger>
                     <TooltipContent>
                         <p className="font-bold">{user.name}</p>
@@ -245,8 +244,8 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
   );
 
   const renderMonthView = () => (
-    <div className="flex gap-8">
-      <div className="w-[180px] flex-shrink-0 space-y-px">
+    <div className="flex gap-8 relative max-h-[400px] overflow-auto border rounded-lg p-2">
+      <div className="w-[180px] flex-shrink-0 space-y-px sticky left-0 z-10 bg-background/95">
         <div className="h-10 p-2 text-sm font-semibold bg-muted/50 invisible">Member</div>
         {workloadData.map(({ user }) => (
           <div key={user.id} className="h-14 p-2 flex items-center gap-2 bg-muted/30">
@@ -256,7 +255,7 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
         ))}
       </div>
       <div className="flex-1">
-        <div className="grid grid-cols-7 gap-px">
+        <div className="grid grid-cols-7 gap-px sticky top-0 z-10 bg-background/95">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
             <div key={day} className="h-10 p-2 text-center text-sm font-semibold bg-muted/50">{day}</div>
           ))}
@@ -295,8 +294,8 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
   );
   
   const renderThreeMonthView = () => (
-     <div className="flex gap-8">
-        <div className="w-[180px] flex-shrink-0 space-y-px">
+     <div className="flex gap-8 relative max-h-[400px] overflow-auto border rounded-lg p-2">
+        <div className="w-[180px] flex-shrink-0 space-y-px sticky left-0 z-10 bg-background/95">
              <div className="h-10 p-2 text-sm font-semibold bg-muted/50 invisible">Member</div>
              {workloadData.map(({user}) => (
                 <div key={user.id} className="h-[102px] p-2 flex items-center gap-2 bg-muted/30">
@@ -308,7 +307,7 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
         <div className="flex-1 space-y-4">
           {threeMonthGrid.map(({monthName, weeks}, monthIndex) => (
              <div key={monthIndex}>
-                 <h3 className="font-semibold mb-1">{monthName}</h3>
+                 <h3 className="font-semibold mb-1 sticky top-0 bg-background/95 z-10 py-1">{monthName}</h3>
                  <div className="grid grid-cols-6 gap-px">
                      {weeks.map((week, weekIndex) => {
                          const weekEnd = endOfWeek(week, {weekStartsOn: 1});
@@ -342,8 +341,8 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
   );
 
   const renderYearView = () => (
-     <div className="overflow-x-auto">
-        <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsYear }}>
+     <div className="relative max-h-[400px] overflow-auto border rounded-lg">
+        <div className="grid gap-px bg-border sticky top-0 z-20" style={{ gridTemplateColumns: gridTemplateColumnsYear }}>
             {/* Header */}
             <div className="sticky left-0 p-2 text-sm font-semibold bg-muted/50 z-10">Member</div>
              {columns.map((week, index) => (
@@ -352,11 +351,12 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
                 <div className="text-xs">{format(week, 'd')}</div>
                 </div>
             ))}
-
+        </div>
+         <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridTemplateColumnsYear }}>
             {/* User Rows */}
             {workloadData.map(({ user }) => (
             <React.Fragment key={user.id}>
-                <div className="sticky left-0 p-2 flex items-center gap-2 bg-muted/30 z-10">
+                <div className="sticky left-0 p-2 flex items-center gap-2 bg-muted/30 z-10 border-t">
                     <Avatar className="h-6 w-6"><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
                     <span className="text-xs font-medium truncate">{user.name}</span>
                 </div>
@@ -366,7 +366,7 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
                      return (
                          <Tooltip key={index} delayDuration={100}>
                              <TooltipTrigger asChild>
-                                 <div className={cn("h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors", getWorkloadColor(load, user.capacity))} />
+                                 <div className={cn("h-full min-h-12 w-full cursor-pointer rounded-sm transition-colors border-t", getWorkloadColor(load, user.capacity))} />
                              </TooltipTrigger>
                              <TooltipContent>
                                 <p className="font-bold">{user.name}</p>
@@ -458,3 +458,5 @@ export default function WorkloadHeatmap({ users: usersProp, tasks: tasksProp, te
     </Card>
   );
 }
+
+    
