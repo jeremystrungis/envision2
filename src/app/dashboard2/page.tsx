@@ -98,6 +98,13 @@ export default function Dashboard2() {
     }
   };
   
+  const getTaskDate = (date: any): Date => {
+    if (!date) return new Date();
+    if (date instanceof Date) return date;
+    if (date.toDate) return date.toDate();
+    return new Date(date);
+  }
+
   const parseAndSetData = (jsonString: string) => {
     try {
         const data: WorkspaceJsonData = JSON.parse(jsonString);
@@ -344,29 +351,35 @@ export default function Dashboard2() {
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Teams</Button>
                             </CollapsibleTrigger>
+                             <CollapsibleContent forceMount className={cn("transition-all duration-300 ease-in-out col-span-full", openCollapsible === 'teams' ? 'mt-4' : 'mt-0')}>
+                                {openCollapsible === 'teams' && <div className="pt-4 border-t"><EditTeams workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} /></div>}
+                            </CollapsibleContent>
                         </Collapsible>
                          <Collapsible open={openCollapsible === 'members'} onOpenChange={() => toggleSection('members')}>
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Members</Button>
                             </CollapsibleTrigger>
+                             <CollapsibleContent forceMount className={cn("transition-all duration-300 ease-in-out col-span-full", openCollapsible === 'members' ? 'mt-4' : 'mt-0')}>
+                                {openCollapsible === 'members' && <div className="pt-4 border-t"><EditMembers workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} /></div>}
+                            </CollapsibleContent>
                         </Collapsible>
                          <Collapsible open={openCollapsible === 'projects'} onOpenChange={() => toggleSection('projects')}>
                             <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Projects</Button>
                             </CollapsibleTrigger>
+                             <CollapsibleContent forceMount className={cn("transition-all duration-300 ease-in-out col-span-full", openCollapsible === 'projects' ? 'mt-4' : 'mt-0')}>
+                                {openCollapsible === 'projects' && <div className="pt-4 border-t"><EditProjects workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} /></div>}
+                            </CollapsibleContent>
                         </Collapsible>
                          <Collapsible open={openCollapsible === 'tasks'} onOpenChange={() => toggleSection('tasks')}>
                              <CollapsibleTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start"><Edit className="mr-2 h-4 w-4" /> Tasks</Button>
                             </CollapsibleTrigger>
+                             <CollapsibleContent forceMount className={cn("transition-all duration-300 ease-in-out col-span-full", openCollapsible === 'tasks' ? 'mt-4' : 'mt-0')}>
+                                {openCollapsible === 'tasks' && <div className="pt-4 border-t"><EditTasks workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} /></div>}
+                            </CollapsibleContent>
                         </Collapsible>
                     </div>
-                     <CollapsibleContent forceMount className={cn("transition-all duration-300 ease-in-out", openCollapsible ? 'mt-4' : 'mt-0')}>
-                        {openCollapsible === 'teams' && <div className="pt-4 border-t"><EditTeams workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} /></div>}
-                        {openCollapsible === 'members' && <div className="pt-4 border-t"><EditMembers workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} /></div>}
-                        {openCollapsible === 'projects' && <div className="pt-4 border-t"><EditProjects workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} /></div>}
-                        {openCollapsible === 'tasks' && <div className="pt-4 border-t"><EditTasks workspaceData={workspaceData} setWorkspaceData={setWorkspaceData} /></div>}
-                    </CollapsibleContent>
                 </CardContent>
             </Card>
             
@@ -433,8 +446,8 @@ export default function Dashboard2() {
       <AppSidebar />
       <div className="flex flex-1 flex-col sm:overflow-hidden">
         <AppHeader />
-        <main className="flex-1 p-6 flex flex-col gap-6 sm:overflow-auto">
-          <div className="flex flex-col gap-6 min-w-0">
+        <main className="flex-1 p-6 flex flex-col gap-6 sm:overflow-auto min-w-0">
+          <div className="flex flex-col gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Hybrid Data Dashboard</CardTitle>
