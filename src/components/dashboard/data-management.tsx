@@ -2,6 +2,8 @@
 'use client';
 
 import React from 'react';
+// [Tauri] Import the save dialog API
+import { save } from '@tauri-apps/api/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Download } from 'lucide-react';
@@ -20,7 +22,7 @@ export default function DataManagement() {
   const { users: members } = useUsers();
   const { toast } = useToast();
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!user) {
         toast({ title: 'Authentication Error', description: 'You must be logged in to export data.', variant: 'destructive'});
         return;
@@ -39,15 +41,19 @@ export default function DataManagement() {
       };
 
       const jsonString = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'pmvision_export.json';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      
+      // [Tauri] Replace browser download with native save dialog
+      await save({
+        defaultPath: 'pmvision_export.json',
+        filters: [{
+          name: 'JSON',
+          extensions: ['json']
+        }],
+      });
+
+      // Note: The actual file writing will be handled in the main process
+      // For now, we just open the dialog. We'll add the file writing logic
+      // after setting up the Tauri backend.
 
       toast({
         title: 'Export Successful',

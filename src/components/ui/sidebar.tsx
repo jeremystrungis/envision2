@@ -4,6 +4,10 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
+// [Tauri] Import filesystem and path APIs
+import { writeTextFile, readTextFile, exists } from '@tauri-apps/api/fs';
+import { BaseDirectory } from '@tauri-apps/api/path';
+
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -19,8 +23,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+// [Tauri] Define a settings file for storing state
+const SETTINGS_FILE = 'settings.json';
+
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
@@ -74,6 +79,37 @@ const SidebarProvider = React.forwardRef<
     // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
+
+    // [Tauri] Save sidebar state to a file
+    const saveSidebarState = async (state: boolean) => {
+      try {
+        const content = JSON.stringify({ sidebarOpen: state });
+        await writeTextFile(SETTINGS_FILE, content, { dir: BaseDirectory.AppConfig });
+      } catch (error) {
+        console.error("Failed to save sidebar state:", error);
+      }
+    };
+
+    // [Tauri] Load sidebar state on component mount
+    React.useEffect(() => {
+      const loadSidebarState = async () => {
+        try {
+          const fileExists = await exists(SETTINGS_FILE, { dir: BaseDirectory.AppConfig });
+          if (fileExists) {
+            const content = await readTextFile(SETTINGS_FILE, { dir: BaseDirectory.AppConfig });
+            const settings = JSON.parse(content);
+            if (typeof settings.sidebarOpen === 'boolean') {
+              _setOpen(settings.sidebarOpen);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load sidebar state:", error);
+        }
+      };
+      loadSidebarState();
+    }, []);
+
+
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === "function" ? value(open) : value
@@ -82,9 +118,8 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setOpen(openState)
         }
-
-        // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        // [Tauri] Save state to file instead of cookie
+        saveSidebarState(openState);
       },
       [setOpenProp, open]
     )

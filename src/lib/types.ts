@@ -1,5 +1,4 @@
-
-import { Timestamp } from "firebase/firestore";
+// This file defines the core data structures for the application.
 
 export interface Team {
   id: string;
@@ -8,7 +7,7 @@ export interface Team {
 
 export interface User {
   id: string;
-  authUid?: string; // Firebase Auth User ID, to link member to a login
+  authUid?: string;
   name: string;
   teams: string[];
   avatar: string;
@@ -24,16 +23,21 @@ export interface Assignment {
 export interface Task {
   id: string;
   name: string;
+  description: string;
   projectId: string;
   assignments: Assignment[];
-  startDate: Timestamp;
-  endDate: Timestamp;
+  startDate: string; // ISO 8601 date string
+  endDate: string;   // ISO 8601 date string
   dependencies: string[];
   hours: number;
+  status: 'Todo' | 'In Progress' | 'Done';
 }
 
 export interface Project {
   id: string;
   name: string;
+  description: string;
+  startDate: string; // ISO 8601 date string
+  endDate: string;   // ISO 8601 date string
   status: 'On Track' | 'At Risk' | 'Off Track';
 }

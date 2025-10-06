@@ -1,10 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { User } from '@/lib/firebase-types';
+import { useState, useEffect, useCallback } from 'react';
+import { getDb } from '@/lib/db';
+import { User } from '@/lib/types';
 import { useAuth } from './use-auth';
 
 export function useUsers() {
@@ -12,57 +11,79 @@ export function useUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchUsers = useCallback(async () => {
     if (!user) {
-        setUsers([]);
-        setLoading(false);
-        return;
-    };
-    
-    const workspaceId = user.uid;
-    const q = query(collection(db, `workspaces/${workspaceId}/members`));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const workspaceMembers: User[] = [];
-      querySnapshot.forEach((doc) => {
-        workspaceMembers.push({ id: doc.id, ...doc.data() } as User);
-      });
+      setUsers([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const db = await getDb();
+      const fetchedUsers = await db.select('SELECT * FROM users');
       
-      const currentUserInTeam = workspaceMembers.find(u => u.authUid === user.uid);
+      // Teams are stored as JSON strings, so we parse them.
+      const workspaceMembers = fetchedUsers.map((u: any) => ({
+          ...u,
+          teams: JSON.parse(u.teams || '[]')
+      }));
+
+      const currentUserInTeam = workspaceMembers.find((u: User) => u.authUid === user.uid);
 
       if (currentUserInTeam) {
-        // Ensure current user is always first in the list for UI purposes (e.g., "(Me)" badge)
-        setUsers([currentUserInTeam, ...workspaceMembers.filter(u => u.authUid !== user.uid)]);
+        setUsers([currentUserInTeam, ...workspaceMembers.filter((u: User) => u.authUid !== user.uid)]);
       } else {
-         setUsers(workspaceMembers);
+        setUsers(workspaceMembers);
       }
-
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
       setLoading(false);
-    }, (error) => {
-        console.error("Error fetching team members:", error);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const addUser = async (newUser: Omit<User, 'id'>) => {
     if (!user) return;
-    const workspaceId = user.uid;
-    // If this is the very first user being added, associate them with the logged-in auth user.
-    const isFirstUser = users.length === 0;
-    const userData = {
-        ...newUser,
-        ...(isFirstUser && { authUid: user.uid })
-    };
-    await addDoc(collection(db, `workspaces/${workspaceId}/members`), userData);
+    try {
+      const db = await getDb();
+      const isFirstUser = users.length === 0;
+      const authUid = isFirstUser ? user.uid : newUser.authUid || null;
+
+      await db.execute(
+        'INSERT INTO users (name, teams, avatar, capacity, authUid) VALUES (?, ?, ?, ?, ?)',
+        [newUser.name, JSON.stringify(newUser.teams || []), newUser.avatar, newUser.capacity, authUid]
+      );
+      await fetchUsers();
+    } catch (error) {
+      console.error("Error adding user:", error);
+    }
   };
   
   const updateUser = async (userId: string, data: Partial<Omit<User, 'id'>>) => {
-      if (!user) return;
-      const workspaceId = user.uid;
-      const userRef = doc(db, `workspaces/${workspaceId}/members`, userId);
-      await updateDoc(userRef, data);
+    if (!user) return;
+    try {
+      const db = await getDb();
+      const fields = Object.keys(data);
+      const values = Object.values(data).map(v => 
+        (Array.isArray(v) ? JSON.stringify(v) : v)
+      );
+
+      if (fields.length === 0) return;
+
+      const setClause = fields.map(field => `${field} = ?`).join(', ');
+      await db.execute(
+        `UPDATE users SET ${setClause} WHERE id = ?`,
+        [...values, userId]
+      );
+      await fetchUsers();
+    } catch (error) {
+      console.error("Error updating user:", error);
+    }
   }
 
-  return { users, loading, addUser, updateUser };
+  return { users, loading, addUser, updateUser, refreshUsers: fetchUsers };
 }

@@ -16,8 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Upload, Download, Calendar as CalendarIcon, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Team, User, Project, Task, Assignment } from '@/lib/firebase-types';
-import { importPrincipals } from '@/ai/flows/import-principals-flow';
+import { Team, User, Project, Task, Assignment } from '@/lib/types'; // Updated import
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -30,16 +29,17 @@ import EditTasks from '@/components/dashboard/edit-tasks';
 
 
 // Define a more specific type for the data coming from the JSON file
-interface JsonTask extends Omit<Task, 'startDate' | 'endDate' | 'id'> {
+// Using the updated types from '@/lib/types'
+interface JsonTask extends Omit<Task, 'startDate' | 'endDate' | 'id'> { // Omit 'id' as well
     id?: string; // ID from file is optional
     startDate: string; // ISO string
     endDate: string; // ISO string
 }
 
 interface WorkspaceJsonData {
-    teams: Omit<Team, 'id'>[];
-    members: Omit<User, 'id'>[];
-    projects: Omit<Project, 'id'>[];
+    teams: Team[];
+    members: User[];
+    projects: Project[];
     tasks: JsonTask[];
 }
 
@@ -65,38 +65,6 @@ export default function Dashboard2() {
     router.push('/login');
     return null;
   }
-
-  const syncPrincipalsToBackend = async (data: WorkspaceJsonData) => {
-    if (!user) return;
-    try {
-        const result = await importPrincipals({
-            userId: user.uid,
-            teams: data.teams,
-            members: data.members,
-        });
-
-        if (result.teamsAdded > 0 || result.membersAdded > 0) {
-             toast({
-                title: 'Backend Sync Successful',
-                description: `Added ${result.teamsAdded} new team(s) and ${result.membersAdded} new member(s) to your workspace.`,
-            });
-        } else {
-             toast({
-                title: 'Backend Sync Complete',
-                description: 'No new teams or members needed to be added.',
-            });
-        }
-
-    } catch (e) {
-        const error = e as Error;
-        console.error("Failed to sync principals:", error);
-         toast({
-            title: 'Backend Sync Failed',
-            description: `Could not sync teams/members to the main database. ${error.message}`,
-            variant: 'destructive',
-        });
-    }
-  };
   
   const getTaskDate = (date: any): Date => {
     if (!date) return new Date();
@@ -117,10 +85,10 @@ export default function Dashboard2() {
         const memberNameToIdMap = new Map(data.members.map(m => [(m as any).name, (m as any).id]));
         const projectNameToIdMap = new Map(data.projects.map(p => [(p as any).name, (p as any).id]));
         
-        const rehydratedTasks = data.tasks.map(task => {
+        const rehydratedTasks = data.tasks.map((task: JsonTask) => { // Explicitly type task
             const projectId = projectNameToIdMap.get(task.projectId as any) || task.projectId;
             
-            const assignments = task.assignments.map(a => {
+            const assignments = task.assignments.map((a: Assignment) => { // Explicitly type a
                 const assigneeId = memberNameToIdMap.get(a.assigneeId as any) || a.assigneeId;
                 return {...a, assigneeId };
             });
@@ -145,7 +113,8 @@ export default function Dashboard2() {
             description: 'Workspace data loaded into Main Dashboard.',
         });
         
-        syncPrincipalsToBackend(data);
+        // Removed syncPrincipalsToBackend as it's for cloud backend
+        // syncPrincipalsToBackend(data);
 
     } catch (e) {
         const error = e as Error;
@@ -191,10 +160,10 @@ export default function Dashboard2() {
         const memberNameToIdMap = new Map(newData.members.map(m => [(m as any).name, (m as any).id]));
         const projectNameToIdMap = new Map(newData.projects.map(p => [(p as any).name, (p as any).id]));
 
-        const rehydratedNewTasks = newData.tasks.map(task => {
+        const rehydratedNewTasks = newData.tasks.map((task: JsonTask) => { // Explicitly type task
             const projectId = projectNameToIdMap.get(task.projectId as any) || task.projectId;
             
-            const assignments = task.assignments.map(a => {
+            const assignments = task.assignments.map((a: Assignment) => { // Explicitly type a
                 const assigneeId = memberNameToIdMap.get(a.assigneeId as any) || a.assigneeId;
                 return {...a, assigneeId };
             });
@@ -233,7 +202,8 @@ export default function Dashboard2() {
             description: 'New data has been added to the dashboard.',
         });
 
-        syncPrincipalsToBackend(newData);
+        // Removed syncPrincipalsToBackend as it's for cloud backend
+        // syncPrincipalsToBackend(newData);
 
       } catch(e) {
         const error = e as Error;
@@ -246,7 +216,7 @@ export default function Dashboard2() {
       }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!workspaceData) {
       toast({
         title: 'No Data to Export',
@@ -268,7 +238,7 @@ export default function Dashboard2() {
           id,
           ...rest,
           projectId: projectMap.get(projectId) || projectId,
-          assignments: assignments.map(a => ({
+          assignments: assignments.map((a: Assignment) => ({ // Explicitly type 'a'
               ...a,
               assigneeId: memberMap.get(a.assigneeId) || a.assigneeId,
           })),
@@ -278,20 +248,28 @@ export default function Dashboard2() {
       };
 
       const jsonString = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'pmvision_export.json';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: 'Export Successful',
-        description: 'Your workspace data has been downloaded.',
+      
+      // [Electron] Replace browser download with native save dialog via IPC
+      const { filePath } = await window.electron.dialog.showSaveDialog({
+        defaultPath: 'pmvision_export.json',
+        filters: [{
+          name: 'JSON',
+          extensions: ['json']
+        }],
       });
+
+      if (filePath) {
+        await window.electron.fs.writeFile(filePath, jsonString);
+        toast({
+          title: 'Export Successful',
+          description: 'Your workspace data has been downloaded.',
+        });
+      } else {
+        toast({
+          title: 'Export Cancelled',
+          description: 'File export was cancelled.',
+        });
+      }
     } catch (error) {
       console.error('Export failed:', error);
       toast({
@@ -543,5 +521,3 @@ export default function Dashboard2() {
     </div>
   );
 }
-
-    

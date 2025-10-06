@@ -1,77 +1,92 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, doc, setDoc, writeBatch, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Project, Task } from '@/lib/firebase-types';
+import { useState, useEffect, useCallback } from 'react';
+import { getDb } from '@/lib/db';
+import { Project, Task } from '@/lib/types';
 import { useAuth } from './use-auth';
+
+// Note: We will need to define the database schema. For now, we assume tables
+// 'projects' and 'tasks' exist with columns matching the 'Project' and 'Task' types.
 
 export function useProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchProjects = useCallback(async () => {
     if (!user) {
       setProjects([]);
       setLoading(false);
       return;
-    };
-    
-    const workspaceId = user.uid;
-    const q = query(collection(db, `workspaces/${workspaceId}/projects`));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userProjects: Project[] = [];
-      querySnapshot.forEach((doc) => {
-        userProjects.push({ id: doc.id, ...doc.data() } as Project);
-      });
-      setProjects(userProjects);
-      setLoading(false);
-    }, (error) => {
+    }
+    setLoading(true);
+    try {
+      const db = await getDb();
+      // In a real scenario, dates would be stored as ISO strings or numbers
+      // and converted back to Date objects here.
+      const fetchedProjects = await db.select('SELECT * FROM projects');
+      setProjects(fetchedProjects);
+    } catch (error) {
       console.error("Error fetching projects:", error);
+    } finally {
       setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const addProject = async (project: Omit<Project, 'id'>, newTasks: Omit<Task, 'id' | 'projectId' | 'dependencies'>[]) => {
     if (!user) return;
     try {
-      const workspaceId = user.uid;
-      const batch = writeBatch(db);
+      const db = await getDb();
       
-      const projectRef = doc(collection(db, `workspaces/${workspaceId}/projects`));
-      batch.set(projectRef, project);
+      // Insert the project and get its ID
+      const projectResult = await db.execute(
+        'INSERT INTO projects (name, description, startDate, endDate, status) VALUES (?, ?, ?, ?, ?)',
+        [project.name, project.description, project.startDate, project.endDate, project.status]
+      );
+      const newProjectId = projectResult.lastInsertId;
 
-      const tasksToAdd: Omit<Task, 'id'>[] = newTasks
-        .filter(task => task.name)
-        .map(task => ({
-          ...task,
-          projectId: projectRef.id,
-          dependencies: [],
-          startDate: Timestamp.fromDate(task.startDate as any),
-          endDate: Timestamp.fromDate(task.endDate as any),
-        }));
-
-      tasksToAdd.forEach(task => {
-        const taskRef = doc(collection(db, `workspaces/${workspaceId}/tasks`));
-        batch.set(taskRef, task);
-      });
-
-      await batch.commit();
+      // Insert associated tasks
+      for (const task of newTasks.filter(t => t.name)) {
+        await db.execute(
+          'INSERT INTO tasks (name, description, projectId, startDate, endDate, status) VALUES (?, ?, ?, ?, ?, ?)',
+          [task.name, task.description, newProjectId, task.startDate, task.endDate, task.status]
+        );
+      }
+      
+      // Refetch projects to update the UI
+      await fetchProjects();
     } catch (error) {
       console.error("Error adding project with tasks: ", error);
     }
   };
 
   const updateProject = async (projectId: string, data: Partial<Omit<Project, 'id'>>) => {
-      if (!user) return;
-      const workspaceId = user.uid;
-      const projectRef = doc(db, `workspaces/${workspaceId}/projects`, projectId);
-      await setDoc(projectRef, data, { merge: true });
+    if (!user) return;
+    try {
+        const db = await getDb();
+        const fields = Object.keys(data);
+        const values = Object.values(data);
+        
+        if (fields.length === 0) return;
+
+        const setClause = fields.map(field => `${field} = ?`).join(', ');
+        
+        await db.execute(
+            `UPDATE projects SET ${setClause} WHERE id = ?`,
+            [...values, projectId]
+        );
+
+        // Refetch projects to update the UI
+        await fetchProjects();
+    } catch (error) {
+        console.error("Error updating project:", error);
+    }
   }
 
-  return { projects, loading, addProject, updateProject };
+  return { projects, loading, addProject, updateProject, refreshProjects: fetchProjects };
 }

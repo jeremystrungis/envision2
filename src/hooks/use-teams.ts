@@ -1,10 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Team } from '@/lib/firebase-types';
+import { useState, useEffect, useCallback } from 'react';
+import { getDb } from '@/lib/db';
+import { Team } from '@/lib/types';
 import { useAuth } from './use-auth';
 
 export function useTeams() {
@@ -12,42 +11,49 @@ export function useTeams() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchTeams = useCallback(async () => {
     if (!user) {
-        setTeams([]);
-        setLoading(false);
-        return;
-    };
-
-    const workspaceId = user.uid;
-    const q = query(collection(db, `workspaces/${workspaceId}/teams`));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userTeams: Team[] = [];
-      querySnapshot.forEach((doc) => {
-        userTeams.push({ id: doc.id, ...doc.data() } as Team);
-      });
-      setTeams(userTeams);
+      setTeams([]);
       setLoading(false);
-    }, (error) => {
-        console.error("Error fetching teams:", error);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
+      return;
+    }
+    setLoading(true);
+    try {
+      const db = await getDb();
+      const fetchedTeams = await db.select('SELECT * FROM teams');
+      setTeams(fetchedTeams);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchTeams();
+  }, [fetchTeams]);
 
   const addTeam = async (newTeam: Omit<Team, 'id'>) => {
     if (!user) return;
-    const workspaceId = user.uid;
-    await addDoc(collection(db, `workspaces/${workspaceId}/teams`), newTeam);
+    try {
+      const db = await getDb();
+      await db.execute('INSERT INTO teams (name) VALUES (?)', [newTeam.name]);
+      await fetchTeams();
+    } catch (error) {
+      console.error("Error adding team:", error);
+    }
   };
   
   const deleteTeam = async (teamId: string) => {
-      if (!user) return;
-      const workspaceId = user.uid;
-      const teamRef = doc(db, `workspaces/${workspaceId}/teams`, teamId);
-      await deleteDoc(teamRef);
+    if (!user) return;
+    try {
+      const db = await getDb();
+      await db.execute('DELETE FROM teams WHERE id = ?', [teamId]);
+      await fetchTeams();
+    } catch (error) {
+      console.error("Error deleting team:", error);
+    }
   }
 
-  return { teams, loading, addTeam, deleteTeam };
+  return { teams, loading, addTeam, deleteTeam, refreshTeams: fetchTeams };
 }
