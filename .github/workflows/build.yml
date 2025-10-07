@@ -11,6 +11,8 @@ jobs:
   build:
     # Use a Windows runner to build the Windows .exe
     runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: 1. Check out the repository code
