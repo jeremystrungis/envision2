@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "electron-dev": "electron .",
     "electron-pack": "electron-builder -w",
-    "dist": "npm run build && npx electron-builder -w > electron-build.log 2>&1"
+    "dist": "npm run build && npx electron-builder -w"
   },
   "build": {
     "appId": "com.envision.app",
