@@ -16,12 +16,14 @@
     "dist": "npm run build && npx electron-builder -w"
   },
   "build": {
-    "appId": "com.envision.app-dev2",
-    "productName": "ENvision-Dev2",
+    "appId": "com.envision.app-dev3",
+    "productName": "ENvision-Dev3",
     "asar": false,
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "artifactName": "${productName}-${version}.${ext}",
+      "unicode": true
     },
     "files": [
       "main.js",
