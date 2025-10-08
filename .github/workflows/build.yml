@@ -30,4 +30,4 @@ jobs:
         run: npm run build
 
       - name: Build Tauri app for Windows
-        run: tauri build --target-dir dist --win
+        run: tauri build --target dist --win
