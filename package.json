@@ -16,9 +16,10 @@
     "dist": "npm run build && npx electron-builder -w"
   },
   "build": {
-    "appId": "com.envision.app-dev5",
-    "productName": "ENvision-Dev5",
+    "appId": "com.envision.app-dev6",
+    "productName": "ENvision-Dev6",
     "asar": false,
+    "nodeGypRebuild": false,
     "win": {
       "target": "nsis",
       "icon": "assets/icon.png",
@@ -28,7 +29,8 @@
       "main.js",
       "preload.js",
       ".next/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "!**/*.map"
     ],
     "directories": {
       "buildResources": "assets"
