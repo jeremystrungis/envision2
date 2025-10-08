@@ -16,8 +16,8 @@
     "dist": "npm run build && npx electron-builder -w"
   },
   "build": {
-    "appId": "com.envision.app",
-    "productName": "ENvision",
+    "appId": "com.envision.app-dev",
+    "productName": "ENvision-Dev",
     "win": {
       "target": "nsis",
       "icon": "assets/icon.png"
