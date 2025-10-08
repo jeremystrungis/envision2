@@ -1,6 +1,5 @@
-name: Build ENvision Electron App
+name: Build ENvision Tauri App
 
-# This workflow runs on pushes to the main branch and on any pull request
 on:
   push:
     branches: [ "main", "master" ]
@@ -9,28 +8,26 @@ on:
 
 jobs:
   build:
-    # Use a Windows runner to build the Windows .exe
     runs-on: windows-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     steps:
-      - name: 1. Check out the repository code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 2. Set up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use a current LTS version of Node.js
+          node-version: '20'
 
-      - name: 3. Install dependencies
+      - name: Install Tauri CLI
+        run: |
+          npm install -g @tauri-apps/cli@latest
+          tauri --version
+
+      - name: Install dependencies
         run: npm install
 
-      - name: 4. Build the application
-        run: npm run dist
+      - name: Build Next.js app
+        run: npm run build
 
-      - name: 5. Upload the build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ENvision-windows-build # The name of the downloadable file
-          path: dist/ # The folder containing the built .exe
+      - name: Build Tauri app for Windows
+        run: tauri build --target-dir dist --win
