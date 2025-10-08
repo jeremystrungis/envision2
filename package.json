@@ -16,14 +16,13 @@
     "dist": "npm run build && npx electron-builder -w"
   },
   "build": {
-    "appId": "com.envision.app-dev3",
-    "productName": "ENvision-Dev3",
+    "appId": "com.envision.app-dev4",
+    "productName": "ENvision-Dev4",
     "asar": false,
     "win": {
       "target": "nsis",
       "icon": "assets/icon.png",
-      "artifactName": "${productName}-${version}.${ext}",
-      "unicode": true
+      "artifactName": "${productName}-${version}.${ext}"
     },
     "files": [
       "main.js",
@@ -34,6 +33,9 @@
     "directories": {
       "buildResources": "assets"
     }
+  },
+  "nsis": {
+    "unicode": true
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
