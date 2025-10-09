@@ -29,5 +29,11 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
-      - name: Build Tauri app for Windows
-        run: tauri build --target dist --win
+      - name: Build Tauri app
+        run: tauri build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: ENvision-windows-build
+          path: src-tauri/target/release/ENvision.exe
