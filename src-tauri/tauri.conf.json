@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "identifier": "com.envision.app",
   "build": {
-    "frontendDist": "../.next"
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
   },
   "app": {
     "windows": [
