@@ -31,7 +31,7 @@ jobs:
         working-directory: envision2
 
       - name: Build Tauri app
-        run: tauri build --frontend-dist ../.next
+        run: tauri build
         working-directory: envision2
 
       - name: Upload Build Artifact
