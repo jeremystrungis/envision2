@@ -10,10 +10,6 @@ jobs:
   build:
     runs-on: windows-latest
 
-    defaults:
-      run:
-        working-directory: ./envision2
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,15 +24,18 @@ jobs:
 
       - name: Install project dependencies
         run: npm install
+        working-directory: envision2
 
       - name: Build Next.js app
         run: npm run build
+        working-directory: envision2
 
       - name: Build Tauri app
         run: tauri build
+        working-directory: envision2
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ENvision-windows-build
-          path: envision2/src-tauri/target/release/ENvision.exe
+          path: envision2/src-tauri/target/release/
