@@ -29,16 +29,13 @@ jobs:
         working-directory: envision2
 
       - name: Install project dependencies
-        run: npm install
-        working-directory: envision2
+        run: cd envision2 && npm install
 
       - name: Build Next.js app
-        run: npm run build
-        working-directory: envision2
+        run: cd envision2 && npm run build
 
       - name: Build Tauri app
-        run: tauri build
-        working-directory: envision2
+        run: cd envision2 && tauri build
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
