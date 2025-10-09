@@ -33,7 +33,7 @@ jobs:
         run: tauri build
 
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ENvision-windows-build
           path: src-tauri/target/release/ENvision.exe
