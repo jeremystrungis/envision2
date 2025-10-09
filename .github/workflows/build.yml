@@ -21,7 +21,7 @@ jobs:
       - name: Initial Directory Check (Repo Root)
         run: |
           pwd
-          ls -la
+          Get-ChildItem -Force
         working-directory: . # Explicitly run from repo root
 
       - name: Set up Node.js
@@ -36,7 +36,7 @@ jobs:
       - name: Print working directory and list files (Project Root)
         run: |
           pwd
-          ls -la
+          Get-ChildItem -Force
         # This step will now run in ./envision2 due to defaults.run.working-directory
 
       - name: Install project dependencies
