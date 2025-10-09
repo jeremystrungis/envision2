@@ -10,9 +10,19 @@ jobs:
   build:
     runs-on: windows-latest
 
+    defaults:
+      run:
+        working-directory: ./envision2 # Set default working directory for project-specific steps
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Initial Directory Check (Repo Root)
+        run: |
+          pwd
+          ls -la
+        working-directory: . # Explicitly run from repo root
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -21,24 +31,28 @@ jobs:
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli@latest
+        working-directory: . # Explicitly run from repo root
 
-      - name: Print working directory and list files
+      - name: Print working directory and list files (Project Root)
         run: |
           pwd
           ls -la
-        working-directory: envision2
+        # This step will now run in ./envision2 due to defaults.run.working-directory
 
       - name: Install project dependencies
-        run: cd envision2 && npm install
+        run: npm install
+        # This step will now run in ./envision2 due to defaults.run.working-directory
 
       - name: Build Next.js app
-        run: cd envision2 && npm run build
+        run: npm run build
+        # This step will now run in ./envision2 due to defaults.run.working-directory
 
       - name: Build Tauri app
-        run: cd envision2 && tauri build
+        run: tauri build
+        # This step will now run in ./envision2 due to defaults.run.working-directory
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ENvision-windows-build
-          path: envision2/src-tauri/target/release/
+          path: envision2/src-tauri/target/release/ # Path relative to repo root
