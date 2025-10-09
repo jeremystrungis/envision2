@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "identifier": "com.envision.app",
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
-    "devUrl": "http://localhost:9002",
     "frontendDist": "../.next"
   },
   "app": {
