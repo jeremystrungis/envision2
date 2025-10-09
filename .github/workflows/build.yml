@@ -9,6 +9,11 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+
+    defaults:
+      run:
+        working-directory: ./envision2
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,11 +24,9 @@ jobs:
           node-version: '20'
 
       - name: Install Tauri CLI
-        run: |
-          npm install -g @tauri-apps/cli@latest
-          tauri --version
+        run: npm install -g @tauri-apps/cli@latest
 
-      - name: Install dependencies
+      - name: Install project dependencies
         run: npm install
 
       - name: Build Next.js app
@@ -36,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ENvision-windows-build
-          path: src-tauri/target/release/ENvision.exe
+          path: envision2/src-tauri/target/release/ENvision.exe
