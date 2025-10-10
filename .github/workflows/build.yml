@@ -1,4 +1,4 @@
-name: Build ENvision Tauri App
+name: '[DEBUG] Build ENvision Tauri App'
 
 on:
   push:
@@ -9,46 +9,37 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    # Using the default powershell
+    defaults:
+      run:
+        shell: pwsh
 
     steps:
-      - name: Checkout code
+      - name: 1. Checkout code
         uses: actions/checkout@v4
 
-      - name: Initial Directory Check (Repo Root)
-        run: |
-          pwd
-          Get-ChildItem -Force
-        working-directory: . # Explicitly run from repo root
-
-      - name: Set up Node.js
+      - name: 2. Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          
+      - name: 3. Install Rust and Tauri Prerequisites
+        uses: tauri-apps/tauri-action@v0
+        
+      - name: 4. DEBUG BEFORE NPM INSTALL
+        run: Get-Location | Select-Object -ExpandProperty Path
 
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli@latest
-        working-directory: . # Explicitly run from repo root
-
-      - name: Print working directory and list files (Project Root)
-        run: |
-          pwd
-          Get-ChildItem -Force
-        working-directory: ./envision2
-
-      - name: Install project dependencies
+      - name: 5. Install project dependencies
         run: npm install
-        working-directory: ./envision2
 
-      - name: Build Next.js app
-        run: npm run build
-        working-directory: ./envision2
+      - name: 6. DEBUG BEFORE TAURI BUILD
+        run: Get-Location | Select-Object -ExpandProperty Path
+        
+      - name: 7. Build Tauri app
+        run: npm run tauri build
 
-      - name: Build Tauri app
-        run: tauri build
-        working-directory: ./envision2
-
-      - name: Upload Build Artifact
+      - name: 8. Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ENvision-windows-build
-          path: envision2/src-tauri/target/release/ # Path relative to repo root
+          path: src-tauri/target/release/ENvision*.msi
