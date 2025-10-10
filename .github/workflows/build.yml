@@ -18,27 +18,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
-      # This step sets up Rust and the system dependencies needed by Tauri
-      - name: Install Rust and Tauri Prerequisites
-        uses: tauri-apps/tauri-action@v0
-        with:
-          # We will run the build command manually in a later step
-          build: false 
-          
-      - name: Install project dependencies
-        run: npm install
 
-      # This is the crucial missing step. It builds your Next.js app.
-      - name: Build Next.js frontend
-        run: npm run build
-
-      # Now that the frontend is built, we can build the Tauri app
+      # This step sets up Rust, Tauri prerequisites, and builds the Tauri app
       - name: Build Tauri application
-        run: npx tauri build
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required for the action
+        with:
+          # The path to the Tauri project root relative to the repository root
+          projectPath: envision2
+          # The path to the frontend distribution directory relative to the Tauri project root
+          distPath: ./.next
+          # The path to the icon file relative to the Tauri project root
+          iconPath: assets/icon.png
+          # The name of the application
+          appName: ENvision
+          # The version of the application
+          appVersion: 0.1.0
+          # The bundle identifier
+          bundleIdentifier: com.envision.app
+          # The target platform to build for (e.g., 'msi' for Windows)
+          args: --target msi
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ENvision-windows-build
-          path: src-tauri/target/release/ENvision*.msi
+          path: envision2/src-tauri/target/release/ENvision*.msi
