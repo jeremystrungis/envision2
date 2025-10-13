@@ -2,7 +2,6 @@
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
-  "main": "main.js",
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
@@ -11,26 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "electron-dev": "electron .",
-    "electron-pack": "electron-builder -w",
-    "dist": "npm run build && npx electron-builder -w > electron-build.log 2>&1"
-  },
-  "build": {
-    "appId": "com.envision.app",
-    "productName": "ENvision",
-    "win": {
-      "target": "nsis",
-      "icon": "assets/icon.png"
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      ".next/**/*",
-      "node_modules/**/*"
-    ],
-    "directories": {
-      "buildResources": "assets"
-    }
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
@@ -80,12 +61,12 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/cli": "^2.8.4",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^9.0.8",
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1",
     "genkit-cli": "^1.14.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
